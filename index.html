@@ -19,15 +19,29 @@
     <div class="rays"></div>
     <div id="canMove" class="hidden">
       <div id="canBob">
-        <svg id="can" viewBox="0 0 200 400" role="img" aria-label="Energidrikkboks med lynsymbol og batterimåler">
+        <svg id="can" viewBox="0 0 200 400" role="img" aria-label="Battery Fresh-boks med pluss- og likhetstegn som batterimåler">
           <defs>
-            <linearGradient id="metal" x1="0" x2="1">
+            <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e9b85a"/>
+              <stop offset=".3" stop-color="#f2a447"/>
+              <stop offset=".6" stop-color="#f27a4a"/>
+              <stop offset=".85" stop-color="#ea4a5e"/>
+              <stop offset="1" stop-color="#e23a60"/>
+            </linearGradient>
+            <linearGradient id="cyl" x1="0" x2="1">
+              <stop offset="0" stop-color="#000" stop-opacity=".45"/>
+              <stop offset=".14" stop-color="#000" stop-opacity=".08"/>
+              <stop offset=".3" stop-color="#fff" stop-opacity=".28"/>
+              <stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".8" stop-color="#000" stop-opacity=".08"/>
+              <stop offset="1" stop-color="#000" stop-opacity=".5"/>
+            </linearGradient>
+            <linearGradient id="rim" x1="0" x2="1">
               <stop offset="0" stop-color="#050505"/>
-              <stop offset=".16" stop-color="#2b2b2b"/>
-              <stop offset=".3" stop-color="#5c5c5c"/>
-              <stop offset=".42" stop-color="#1c1c1c"/>
-              <stop offset=".82" stop-color="#090909"/>
-              <stop offset="1" stop-color="#2a2a2a"/>
+              <stop offset=".3" stop-color="#4a4a4a"/>
+              <stop offset=".55" stop-color="#151515"/>
+              <stop offset=".78" stop-color="#3a3a3a"/>
+              <stop offset="1" stop-color="#050505"/>
             </linearGradient>
             <linearGradient id="silver" x1="0" x2="1">
               <stop offset="0" stop-color="#5c6066"/>
@@ -36,42 +50,37 @@
               <stop offset=".76" stop-color="#e2e6eb"/>
               <stop offset="1" stop-color="#55595f"/>
             </linearGradient>
-            <linearGradient id="boltGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#f7ff9a"/>
-              <stop offset=".5" stop-color="#d4ff00"/>
-              <stop offset="1" stop-color="#5dff4a"/>
-            </linearGradient>
             <linearGradient id="shine" x1="0" x2="1">
               <stop offset="0" stop-color="#fff" stop-opacity="0"/>
-              <stop offset=".5" stop-color="#fff" stop-opacity=".32"/>
+              <stop offset=".5" stop-color="#fff" stop-opacity=".35"/>
               <stop offset="1" stop-color="#fff" stop-opacity="0"/>
             </linearGradient>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="4" result="b"/>
-              <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
             <clipPath id="bodyClip"><rect x="20" y="40" width="160" height="322"/></clipPath>
           </defs>
 
-          <path d="M20 42 L34 16 Q100 6 166 16 L180 42 Z" fill="url(#silver)"/>
-          <ellipse cx="100" cy="16" rx="66" ry="8" fill="#c9ced4" stroke="#7b8087"/>
-          <ellipse cx="100" cy="16" rx="56" ry="5.5" fill="#9aa0a8"/>
+          <path d="M20 42 L34 16 Q100 6 166 16 L180 42 Z" fill="url(#rim)"/>
+          <ellipse cx="100" cy="16" rx="66" ry="8" fill="#2a2a2a" stroke="#555"/>
+          <ellipse cx="100" cy="16" rx="56" ry="5.5" fill="#111"/>
           <g id="tab">
-            <rect x="86" y="9" width="30" height="11" rx="5.5" fill="#e4e8ec" stroke="#80858c"/>
+            <rect x="86" y="9" width="30" height="11" rx="5.5" fill="#d8dce1" stroke="#80858c"/>
             <circle cx="108" cy="14.5" r="3" fill="#80858c"/>
           </g>
 
-          <rect x="20" y="40" width="160" height="322" fill="url(#metal)"/>
+          <rect x="20" y="40" width="160" height="322" fill="url(#paint)"/>
           <g clip-path="url(#bodyClip)">
-            <rect x="20" y="58" width="160" height="3" fill="#d4ff00"/>
-            <text x="100" y="104" text-anchor="middle" font-family="Russo One, sans-serif" font-size="30" fill="#fff" letter-spacing="2">BATTERY</text>
-            <text x="100" y="124" text-anchor="middle" font-family="Inter, sans-serif" font-size="9.5" font-weight="700" fill="#9ba1a8" letter-spacing="4">ENERGY DRINK</text>
-            <polygon id="bolt" points="124,136 62,216 96,216 80,280 140,192 106,192 130,136" fill="url(#boltGrad)" filter="url(#glow)"/>
-            <rect x="58" y="296" width="76" height="30" rx="5" fill="none" stroke="#fff" stroke-width="3"/>
-            <rect x="134" y="304" width="7" height="14" rx="2" fill="#fff"/>
-            <rect id="lvl" x="62" y="300" width="0" height="22" rx="2" fill="#d4ff00"/>
-            <text id="pct" x="100" y="347" text-anchor="middle" font-family="Russo One, sans-serif" font-size="13" fill="#d4ff00">0%</text>
-            <rect x="20" y="354" width="160" height="2" fill="#d4ff00"/>
+            <text x="74" y="62" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#4a2c10" fill-opacity=".75" letter-spacing="1.5">EXOTIC FRUIT</text>
+            <!-- plus sign -->
+            <rect x="57" y="74" width="32" height="110" fill="#111"/>
+            <rect x="8" y="113" width="130" height="32" fill="#111"/>
+            <!-- equals sign = battery meter -->
+            <rect x="24" y="198" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
+            <rect x="24" y="224" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
+            <rect class="lvl" x="24" y="198" width="0" height="17" fill="#111"/>
+            <rect class="lvl" x="24" y="224" width="0" height="17" fill="#111"/>
+            <text id="pct" x="76" y="266" text-anchor="middle" font-family="Russo One, sans-serif" font-size="14" fill="#111">0%</text>
+            <text transform="translate(144 64) rotate(90)" font-family="Russo One, sans-serif" font-size="40" fill="#111" letter-spacing="1">BATTERY</text>
+            <text transform="translate(118 252) rotate(90)" font-family="Russo One, sans-serif" font-size="21" fill="#fff" letter-spacing="3">FRESH</text>
+            <rect x="20" y="40" width="160" height="322" fill="url(#cyl)"/>
             <g class="shine"><rect x="-90" y="30" width="56" height="340" fill="url(#shine)" transform="skewX(-14)"/></g>
           </g>
 

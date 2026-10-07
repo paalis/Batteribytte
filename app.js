@@ -4,7 +4,7 @@
   const canMove = $('#canMove');
   const can = $('#can');
   const canArea = $('#canArea');
-  const lvl = $('#lvl');
+  const lvls = document.querySelectorAll('#can .lvl');
   const pct = $('#pct');
   const tab = $('#tab');
   const headline = $('#headline');
@@ -15,7 +15,7 @@
 
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const K = RM ? 0.3 : 1;
-  const NEON = ['#d4ff00', '#e8ff6a', '#00ffa3', '#ffffff', '#ffe600'];
+  const NEON = ['#ffb43c', '#ffd98a', '#ff3d6e', '#ffffff', '#ff7a3c'];
   const pick = (a) => a[(Math.random() * a.length) | 0];
   const rand = (a, b) => a + Math.random() * (b - a);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -190,7 +190,7 @@
     if (P.length > 2600) return;
     P.push(Object.assign({
       x: 0, y: 0, vx: 0, vy: 0, g: 0, drag: 0.99, life: 1, decay: 0.01,
-      size: 2, color: '#d4ff00', type: 'dot', rot: 0, vr: 0,
+      size: 2, color: '#ffb43c', type: 'dot', rot: 0, vr: 0,
     }, o));
   }
 
@@ -208,7 +208,7 @@
       pts = n;
       disp *= 0.55;
     }
-    B.push({ pts, life: 1, decay: o.decay || 0.09, width: o.width || 2, color: o.color || '#e8ff6a' });
+    B.push({ pts, life: 1, decay: o.decay || 0.09, width: o.width || 2, color: o.color || '#ffd98a' });
     if (o.branches) {
       for (let i = 0; i < o.branches; i++) {
         const [bx, by] = pts[(rand(0.2, 0.8) * pts.length) | 0];
@@ -241,7 +241,7 @@
     const sx = c.x + Math.cos(a) * c.w * 0.45, sy = c.y + Math.sin(a) * c.h * 0.42;
     const r = c.w * rand(0.7, 1.8) * scale;
     bolt(sx, sy, sx + Math.cos(a + rand(-0.6, 0.6)) * r, sy + Math.sin(a + rand(-0.6, 0.6)) * r, {
-      width: rand(1.2, 2.5), decay: 0.14, color: pick(['#e8ff6a', '#b9fff0', '#ffffff']), branches: 1,
+      width: rand(1.2, 2.5), decay: 0.14, color: pick(['#ffd98a', '#ffc2d4', '#ffffff']), branches: 1,
     });
   }
 
@@ -282,7 +282,7 @@
       for (let i = 0; i < 7 * K; i++) {
         spawn({ x: c.x + rand(-c.w * 0.12, c.w * 0.12), y: c.top + c.h * 0.03, vx: rand(-3.5, 3.5), vy: -rand(8, 17),
           g: 0.32, drag: 0.99, decay: rand(0.012, 0.02), size: rand(1.5, 4),
-          color: pick(['#ffffff', '#e8ff6a', '#bfffe0', '#d4ff00']) });
+          color: pick(['#ffffff', '#ffd98a', '#ffe1b0', '#ffb43c']) });
       }
     }
   }
@@ -394,10 +394,12 @@
   let level = 0;
   function setLevel(v) {
     level = v;
-    lvl.setAttribute('width', (68 * Math.min(Math.max(v, 0), 100)) / 100);
-    const col = v > 100 ? '#ffffff' : v > 50 ? '#d4ff00' : v > 20 ? '#ffd000' : '#ff2d55';
-    lvl.setAttribute('fill', col);
-    pct.setAttribute('fill', v > 20 ? (v > 100 ? '#ffffff' : '#d4ff00') : '#ff2d55');
+    const col = v > 100 ? '#ffffff' : v < 20 ? '#ff2d55' : '#111111';
+    lvls.forEach((r) => {
+      r.setAttribute('width', (104 * Math.min(Math.max(v, 0), 100)) / 100);
+      r.setAttribute('fill', col);
+    });
+    pct.setAttribute('fill', v > 100 ? '#ffffff' : v < 20 ? '#ff2d55' : '#111111');
     pct.textContent = Math.round(v) + '%';
     can.classList.toggle('low', v < 20);
   }
@@ -517,7 +519,7 @@
     boom();
     shake(26, 900);
     ring();
-    setTimeout(() => ring('#00ffa3'), 140);
+    setTimeout(() => ring('#ff3d6e'), 140);
     setTimeout(() => ring('#ffffff'), 300);
     burst(c.x, c.y, 320, { max: 22, g: 0.1 });
     for (let i = 0; i < 6; i++) {
