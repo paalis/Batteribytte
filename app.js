@@ -296,18 +296,142 @@
       spawn({ x: rand(0, W), y: -10, vx: rand(-0.2, 0.2), vy: rand(0.3, 0.9), drag: 1, decay: 0.0025,
         size: rand(0.8, 2.2), color: '#8d939a', type: 'dust' });
     }
-    if (performance.now() < fizzing) {
-      for (let i = 0; i < 7 * K; i++) {
-        spawn({ x: c.x + rand(-c.w * 0.12, c.w * 0.12), y: c.top + c.h * 0.03, vx: rand(-3.5, 3.5), vy: -rand(8, 17),
-          g: 0.32, drag: 0.99, decay: rand(0.012, 0.02), size: rand(1.5, 4),
-          color: pick(['#ffffff', '#ffd98a', '#ffe1b0', '#ffb43c']) });
+    const now = performance.now();
+    if (now < fizzing) {
+      // A swaying jet out of the opening, like a shaken can that's just been cracked.
+      const left = (fizzing - now) / SPRAY_MS;           // 1 → 0 as the spray runs out
+      const ox = c.x + c.w * 0.08, oy = c.top + c.h * 0.035;
+      // Aim so the arc peaks on screen: the can sits near the top, so most of
+      // the drink should fan out sideways and rain down across the page.
+      const lift = Math.sqrt(2 * 0.42 * (oy + 40));
+      const power = (0.6 + 0.4 * left) * Math.max(W / 900, 0.55);
+      const sway = Math.sin(now / 170) * 0.9 + Math.sin(now / 430) * 0.35;
+      for (let i = 0; i < 11 * K * (0.35 + 0.65 * left); i++) {
+        const side = sway + rand(-0.12, 0.12);
+        drop(ox + rand(-4, 4), oy, side * rand(3, 5.5) * power, -lift * rand(0.75, 1.05), rand(1.3, 3));
+      }
+      if (Math.random() < 0.3 * K) {
+        drop(ox, oy, rand(-6, 6) * power, -lift * rand(0.5, 0.95), rand(3.5, 5.5));
+      }
+      if (Math.random() < 0.6 * K) {
+        drop(ox + rand(-6, 6), oy, rand(-1.5, 1.5), -rand(1, 4), rand(1.5, 4), true);
       }
     }
+  }
+
+  /* ---------- Energy drink liquid ---------- */
+
+  const SPRAY_MS = 4200;
+  const L = [];
+  const JUICE = ['#ffc04d', '#ffa63d', '#ff8a3d', '#ff6a4a', '#ff4f66'];
+  const puddle = $('#puddle');
+  let puddleH = 0;
+
+  function drop(x, y, vx, vy, r, foam = false) {
+    if (L.length > 1100) return;
+    L.push({ x, y, vx, vy, r, foam, color: foam ? '#fff6e6' : pick(JUICE), life: 1 });
+  }
+
+  function splash(x, y, n, power = 1) {
+    n = Math.round(n * K);
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + rand(-1.2, 1.2), sp = rand(2, 9) * power;
+      drop(x, y, Math.cos(a) * sp, Math.sin(a) * sp, rand(1.5, 4.5));
+    }
+  }
+
+  function splat() {
+    const el = document.createElement('div');
+    el.className = 'splat';
+    const size = rand(30, Math.min(120, W * 0.22));
+    el.style.width = el.style.height = size + 'px';
+    el.style.left = rand(0, 100) + 'vw';
+    el.style.top = rand(0, 70) + 'vh';
+    el.style.setProperty('--slide', rand(15, 45) + 'vh');
+    el.style.setProperty('--rot', rand(-30, 30) + 'deg');
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function clearLiquid() {
+    L.length = 0;
+    puddleH = 0;
+    puddle.style.height = '0px';
+    puddle.classList.remove('wet');
+    document.querySelectorAll('.splat').forEach((e) => e.remove());
+  }
+
+  const SIZES = [1.6, 2.6, 4.2];  // line-width buckets (radius) so drops batch into few strokes
+
+  let lastLiquid = 0;
+
+  function drawLiquid() {
+    // Time-based steps (in 60 fps frames) so the spray keeps its speed on slow devices.
+    const now = performance.now();
+    const k = lastLiquid ? Math.min((now - lastLiquid) / 16.7, 4) : 1;
+    lastLiquid = now;
+    const floor = H - puddleH * 0.6;
+    const buckets = new Map();
+    const foam = [];
+    for (let i = L.length - 1; i >= 0; i--) {
+      const d = L[i];
+      d.vy += (d.foam ? 0.12 : 0.42) * k;
+      d.x += d.vx * k; d.y += d.vy * k;
+      if (d.foam) d.life -= 0.012 * k;
+      if (d.y > floor && d.vy > 0) {
+        if (!d.foam) {
+          if (d.r > 3 && Math.random() < 0.5) splash(d.x, floor, 2, Math.min(d.vy / 12, 1.2));
+          puddleH = Math.min(puddleH + d.r * 0.012, H * 0.07);
+        }
+        L.splice(i, 1);
+        continue;
+      }
+      if (d.life <= 0 || d.x < -50 || d.x > W + 50) { L.splice(i, 1); continue; }
+      if (d.foam) { foam.push(d); continue; }
+      const s = d.r < 2.1 ? 0 : d.r < 3.4 ? 1 : 2;
+      const key = d.color + s;
+      if (!buckets.has(key)) buckets.set(key, { color: d.color, s, list: [] });
+      buckets.get(key).list.push(d);
+    }
+
+    // Each drop is a short streak along its motion, so the jet reads as liquid.
+    cx.lineCap = 'round';
+    cx.globalAlpha = 0.9;
+    for (const bk of buckets.values()) {
+      cx.strokeStyle = bk.color;
+      cx.lineWidth = SIZES[bk.s] * 2;
+      cx.beginPath();
+      for (const d of bk.list) { cx.moveTo(d.x - d.vx * 2.2, d.y - d.vy * 2.2); cx.lineTo(d.x, d.y); }
+      cx.stroke();
+    }
+    cx.globalAlpha = 0.55;
+    cx.strokeStyle = '#fff6e0';
+    for (let s = 0; s < 3; s++) {
+      cx.lineWidth = Math.max(SIZES[s] * 0.5, 0.8);
+      cx.beginPath();
+      for (const bk of buckets.values()) {
+        if (bk.s !== s) continue;
+        const o = SIZES[s] * 0.35;
+        for (const d of bk.list) { cx.moveTo(d.x - d.vx * 2.2 - o, d.y - d.vy * 2.2 - o); cx.lineTo(d.x - o, d.y - o); }
+      }
+      cx.stroke();
+    }
+    cx.globalAlpha = 0.7;
+    cx.strokeStyle = '#fff6e6';
+    cx.lineWidth = 1.2;
+    cx.beginPath();
+    for (const d of foam) { cx.moveTo(d.x + d.r, d.y); cx.arc(d.x, d.y, d.r, 0, Math.PI * 2); }
+    cx.stroke();
+    cx.globalAlpha = 1;
+
+    puddle.style.height = puddleH + 'px';
+    puddle.classList.toggle('wet', puddleH > 1);
   }
 
   function frame() {
     cx.clearRect(0, 0, W, H);
     ambient();
+    drawLiquid();
     cx.globalCompositeOperation = 'lighter';
     cx.lineCap = 'round';
     cx.lineJoin = 'round';
@@ -458,6 +582,7 @@
     stage.classList.remove('drained');
     headline.classList.remove('in', 'glitch');
     tab.classList.remove('pop');
+    clearLiquid();
     mode = 'calm';
     charge = 1;
     setLevel(0);
@@ -547,8 +672,14 @@
     setLevel(100);
     tab.classList.add('pop');
     setCanState('hover');
-    fizzing = performance.now() + 2600;
-    fizz(2600);
+    fizzing = performance.now() + SPRAY_MS;
+    fizz(SPRAY_MS);
+    // Initial gush when the tab pops, plus drink splashing onto the "lens".
+    const gushLift = Math.sqrt(2 * 0.42 * (c.top + 60));
+    for (let i = 0; i < 180 * K; i++) {
+      drop(c.x + rand(-8, 8), c.top + c.h * 0.04, rand(-8, 8) * Math.max(W / 900, 0.55), -gushLift * rand(0.4, 1.05), rand(1.3, 5));
+    }
+    for (let i = 0; i < (RM ? 3 : 9); i++) setTimeout(splat, 120 + i * rand(120, 380));
 
     await sleep(350);
     show('yes');
