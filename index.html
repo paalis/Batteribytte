@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Batteribytte ⚡</title>
+<meta name="description" content="Det er tid for batteribytte! Er du klar?">
+<meta name="theme-color" content="#05060a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="stage">
+  <div id="bg"><div class="grid"></div></div>
+
+  <div id="canArea">
+    <div class="rays"></div>
+    <div id="canMove" class="hidden">
+      <div id="canBob">
+        <svg id="can" viewBox="0 0 200 400" role="img" aria-label="Battery Fresh-boks med pluss- og likhetstegn som batterimåler">
+          <defs>
+            <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e9b85a"/>
+              <stop offset=".3" stop-color="#f2a447"/>
+              <stop offset=".6" stop-color="#f27a4a"/>
+              <stop offset=".85" stop-color="#ea4a5e"/>
+              <stop offset="1" stop-color="#e23a60"/>
+            </linearGradient>
+            <linearGradient id="cyl" x1="0" x2="1">
+              <stop offset="0" stop-color="#000" stop-opacity=".45"/>
+              <stop offset=".14" stop-color="#000" stop-opacity=".08"/>
+              <stop offset=".3" stop-color="#fff" stop-opacity=".28"/>
+              <stop offset=".42" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".8" stop-color="#000" stop-opacity=".08"/>
+              <stop offset="1" stop-color="#000" stop-opacity=".5"/>
+            </linearGradient>
+            <linearGradient id="rim" x1="0" x2="1">
+              <stop offset="0" stop-color="#050505"/>
+              <stop offset=".3" stop-color="#4a4a4a"/>
+              <stop offset=".55" stop-color="#151515"/>
+              <stop offset=".78" stop-color="#3a3a3a"/>
+              <stop offset="1" stop-color="#050505"/>
+            </linearGradient>
+            <linearGradient id="silver" x1="0" x2="1">
+              <stop offset="0" stop-color="#5c6066"/>
+              <stop offset=".3" stop-color="#eef1f5"/>
+              <stop offset=".52" stop-color="#9aa0a8"/>
+              <stop offset=".76" stop-color="#e2e6eb"/>
+              <stop offset="1" stop-color="#55595f"/>
+            </linearGradient>
+            <linearGradient id="shine" x1="0" x2="1">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".5" stop-color="#fff" stop-opacity=".35"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="bodyClip"><rect x="20" y="40" width="160" height="322"/></clipPath>
+          </defs>
+
+          <path d="M20 42 L34 16 Q100 6 166 16 L180 42 Z" fill="url(#rim)"/>
+          <ellipse cx="100" cy="16" rx="66" ry="8" fill="#2a2a2a" stroke="#555"/>
+          <ellipse cx="100" cy="16" rx="56" ry="5.5" fill="#111"/>
+          <g id="tab">
+            <rect x="86" y="9" width="30" height="11" rx="5.5" fill="#d8dce1" stroke="#80858c"/>
+            <circle cx="108" cy="14.5" r="3" fill="#80858c"/>
+          </g>
+
+          <rect x="20" y="40" width="160" height="322" fill="url(#paint)"/>
+          <g clip-path="url(#bodyClip)">
+            <text x="74" y="62" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#4a2c10" fill-opacity=".75" letter-spacing="1.5">EXOTIC FRUIT</text>
+            <!-- plus sign -->
+            <rect x="57" y="74" width="32" height="110" fill="#111"/>
+            <rect x="8" y="113" width="130" height="32" fill="#111"/>
+            <!-- equals sign = battery meter -->
+            <rect x="24" y="198" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
+            <rect x="24" y="224" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
+            <rect class="lvl" x="24" y="198" width="0" height="17" fill="#111"/>
+            <rect class="lvl" x="24" y="224" width="0" height="17" fill="#111"/>
+            <text id="pct" x="76" y="266" text-anchor="middle" font-family="Russo One, sans-serif" font-size="14" fill="#111">0%</text>
+            <text transform="translate(144 64) rotate(90)" font-family="Russo One, sans-serif" font-size="40" fill="#111" letter-spacing="1">BATTERY</text>
+            <text transform="translate(118 252) rotate(90)" font-family="Russo One, sans-serif" font-size="21" fill="#fff" letter-spacing="3">FRESH</text>
+            <rect x="20" y="40" width="160" height="322" fill="url(#cyl)"/>
+            <g class="shine"><rect x="-90" y="30" width="56" height="340" fill="url(#shine)" transform="skewX(-14)"/></g>
+          </g>
+
+          <path d="M20 360 L32 386 Q100 396 168 386 L180 360 Z" fill="url(#silver)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div id="panels">
+    <section id="intro">
+      <h1 id="headline" aria-label="Det er tid for batteribytte!"></h1>
+    </section>
+
+    <section id="question">
+      <h2>Er du klar?</h2>
+      <div class="choices" id="choices">
+        <label class="choice yes">
+          <input type="checkbox" id="cbYes" name="klar" value="ja">
+          <span class="box"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg></span>
+          Ja
+        </label>
+        <label class="choice no">
+          <input type="checkbox" id="cbNo" name="klar" value="nei">
+          <span class="box"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6"/></svg></span>
+          Nei
+        </label>
+      </div>
+    </section>
+
+    <section id="yes">
+      <h2 class="slam">FULLT LADET!</h2>
+      <p>Batteriet er byttet. Nå kjører vi! ⚡</p>
+      <button class="btn" id="againBtn" type="button">Én gang til</button>
+    </section>
+
+    <section id="no">
+      <h2><span class="mini-batt" aria-hidden="true"><i></i></span><span id="noTitle"></span></h2>
+      <p>Helt greit. Hvil litt – vi lader når du er klar.</p>
+      <button class="btn" id="retryBtn" type="button">Prøv igjen</button>
+    </section>
+  </div>
+
+  <canvas id="fx" aria-hidden="true"></canvas>
+</div>
+
+<div id="flash"></div>
+<button id="sound" type="button" aria-pressed="true" aria-label="Lyd">🔊 Lyd: PÅ</button>
+
+<div id="gate">
+  <button id="startBtn" type="button">⚡ Start</button>
+  <p>Skru opp lyden 🔊</p>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
