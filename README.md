@@ -8,4 +8,4 @@ med avkrysning for **Ja** og **Nei**:
 - **Nei** – strømmen flimrer, batteriet tappes til 3 %, fargene forsvinner og boksen sovner på siden: «Lavt batteri…» (med «Prøv igjen»).
 
 Ren HTML/CSS/JS uten byggesteg – åpne `index.html` eller publiser mappen statisk (f.eks. Vercel).
-Lyd er syntetisert med Web Audio og starter etter første klikk; den kan slås av øverst til høyre.
+Lyd er syntetisert med Web Audio. Siden åpner med en «Start»-knapp, slik at nettleseren (også iPhone) tillater lyd fra første sekund; lyden kan slås av øverst til høyre.

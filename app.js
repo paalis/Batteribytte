@@ -24,19 +24,35 @@
 
   let AC = null, master = null, soundOn = true;
 
+  // Must be called from inside a user gesture (click/tap/key) – browsers,
+  // and iOS Safari in particular, keep audio locked until then.
   function ac() {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
     if (!AC) {
-      AC = new (window.AudioContext || window.webkitAudioContext)();
+      // iOS: play as media, so the silent switch doesn't mute the page.
+      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+      AC = new Ctx();
+      const comp = AC.createDynamicsCompressor();
       master = AC.createGain();
-      master.gain.value = 0.55;
-      master.connect(AC.destination);
+      master.gain.value = 0.6;
+      master.connect(comp).connect(AC.destination);
     }
-    if (AC.state === 'suspended') AC.resume();
+    if (AC.state !== 'running') {
+      AC.resume().catch(() => {});
+      // Older iOS only unlocks once a buffer actually starts inside the gesture.
+      const src = AC.createBufferSource();
+      src.buffer = AC.createBuffer(1, 1, 22050);
+      src.connect(AC.destination);
+      src.start(0);
+    }
     return AC;
   }
 
   function canPlay() {
-    return soundOn && AC && AC.state === 'running';
+    if (!soundOn || !AC || AC.state === 'closed') return false;
+    if (AC.state !== 'running') AC.resume().catch(() => {});
+    return true;
   }
 
   function env(g, t, attack, peak, decay) {
@@ -159,13 +175,15 @@
   const soundBtn = $('#sound');
   soundBtn.addEventListener('click', () => {
     soundOn = !soundOn;
-    soundBtn.textContent = soundOn ? '🔊 Lyd på' : '🔇 Lyd av';
+    soundBtn.textContent = soundOn ? '🔊 Lyd: PÅ' : '🔇 Lyd: AV';
     soundBtn.setAttribute('aria-pressed', String(soundOn));
     if (soundOn) { ac(); blip(880); }
   });
-  // Browsers only allow audio after a user gesture; unlock on the first one.
-  addEventListener('pointerdown', () => soundOn && ac(), { once: true });
-  addEventListener('keydown', () => soundOn && ac(), { once: true });
+  // Keep trying to unlock on every gesture until the context runs. iOS ignores
+  // pointerdown/touchstart for this, so listen to touchend/click/keydown too.
+  ['pointerdown', 'touchend', 'click', 'keydown'].forEach((ev) =>
+    addEventListener(ev, () => { if (soundOn && (!AC || AC.state !== 'running')) ac(); }, { capture: true, passive: true })
+  );
 
   /* ---------- Canvas FX: particles + lightning ---------- */
 
@@ -626,9 +644,17 @@
     intro();
   });
 
-  if (document.fonts && document.fonts.ready) {
-    Promise.race([document.fonts.ready, sleep(1200)]).then(intro);
-  } else {
-    intro();
-  }
+  // Start screen: the tap that dismisses it also unlocks audio, so the intro
+  // plays with sound instead of starting silently.
+  const gate = $('#gate');
+  const fontsReady = document.fonts && document.fonts.ready
+    ? Promise.race([document.fonts.ready, sleep(1200)])
+    : Promise.resolve();
+  $('#startBtn').addEventListener('click', () => {
+    ac();
+    gate.classList.add('gone');
+    gate.addEventListener('transitionend', () => gate.remove(), { once: true });
+    fontsReady.then(intro);
+  }, { once: true });
+  $('#startBtn').focus({ preventScroll: true });
 })();
