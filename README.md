@@ -9,3 +9,10 @@ med avkrysning for **Ja** og **Nei**:
 
 Ren HTML/CSS/JS uten byggesteg – åpne `index.html` eller publiser mappen statisk (f.eks. Vercel).
 Lyd er syntetisert med Web Audio. Siden åpner med en «Start»-knapp, slik at nettleseren (også iPhone) tillater lyd fra første sekund; lyden kan slås av øverst til høyre.
+
+## Versjon 2 – reklamefilm (`/v2`)
+
+En filmatisk versjon inspirert av en produktreklame: crimson studiobakgrunn, isbøtte med dugg-dekkede bokser,
+boksene løftes og tømmes, makro av etiketten med kondens, diagonal skjenkenærbilde, virvel i glasset og
+pakkebilde på bordet – der «Er du klar?» stilles. Ja gir skum som renner over og sprut fra boksen; Nei slukker lyset
+og velter boksen. Egen synth-musikk og lydeffekter (Web Audio).
