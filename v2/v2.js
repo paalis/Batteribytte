@@ -23,13 +23,18 @@
     };
   }
 
+  // Geometry of the photo (assets/battery-fresh.webp) inside a 200×400 can box
+  const PHOTO = { x: 23.6, w: 152.8 };
+  const BARS = [{ x: 49.6, y: 169.6, w: 37.4, h: 21.2 }, { x: 49.6, y: 196.7, w: 37.4, h: 13.6 }];
+  const BODY = [27, 10, 173, 382];
+
   const CAN_KINDS = {
-    a:     { box: '0 0 200 400', drops: 170, area: [22, 44, 178, 358], seed: 1 },
-    b:     { box: '0 0 200 400', drops: 170, area: [22, 44, 178, 358], seed: 2 },
-    pack:  { box: '0 0 200 400', drops: 190, area: [22, 44, 178, 358], seed: 3 },
-    side:  { box: '0 0 200 400', drops: 40,  area: [22, 44, 178, 358], seed: 4 },
-    pour:  { box: '0 0 200 400', drops: 230, area: [22, 20, 178, 358], seed: 5 },
-    macro: { box: '30 120 140 200', drops: 300, area: [30, 120, 170, 320], seed: 6, big: true },
+    a:     { box: '0 0 200 400', drops: 170, area: BODY, seed: 1 },
+    b:     { box: '0 0 200 400', drops: 170, area: BODY, seed: 2 },
+    pack:  { box: '0 0 200 400', drops: 190, area: BODY, seed: 3 },
+    side:  { box: '0 0 200 400', drops: 40,  area: BODY, seed: 4 },
+    pour:  { box: '0 0 200 400', drops: 230, area: BODY, seed: 5 },
+    macro: { box: '33 70 126 180', drops: 280, area: [33, 70, 159, 250], seed: 6, big: true },
   };
 
   function dropsMarkup(k) {
@@ -59,38 +64,19 @@
   function canSVG(kind) {
     const k = CAN_KINDS[kind];
     const [mx0, my0, mx1, my1] = k.area;
+    const meter = BARS.map((b, i) =>
+      `<rect class="cover" x="${b.x + b.w}" y="${b.y}" width="0" height="${b.h}" fill="url(#c-bar${i + 1})"/>` +
+      `<rect class="lvl" x="${b.x}" y="${b.y}" width="0" height="${b.h}" fill="#ff2d55"/>` +
+      `<rect class="outline" x="${b.x + 0.8}" y="${b.y + 0.8}" width="${b.w - 1.6}" height="${b.h - 1.6}" fill="none" stroke="#141216" stroke-width="1.6" opacity="0"/>`).join('');
     return `<svg viewBox="${k.box}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <path d="M20 42 L32 18 Q100 8 168 18 L180 42 Z" fill="url(#c-lid)"/>
-      <path d="M20 42 L32 18 Q100 8 168 18 L180 42 Z" fill="url(#c-vshade)" opacity=".6"/>
-      <ellipse cx="100" cy="17" rx="68" ry="9" fill="url(#c-lid)"/>
-      <ellipse cx="100" cy="17" rx="63" ry="7.2" fill="#8d939b"/>
-      <ellipse cx="100" cy="17.6" rx="57" ry="6" fill="url(#c-lid)" opacity=".9"/>
-      <ellipse cx="100" cy="17.6" rx="57" ry="6" fill="none" stroke="#3a3d42" stroke-width=".8"/>
-      <ellipse cx="100" cy="17" rx="67" ry="8.5" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width=".8"/>
-      <g class="tab">
-        <rect x="84" y="10" width="34" height="12" rx="6" fill="url(#c-lid)" stroke="#55595f" stroke-width=".8"/>
-        <rect x="88" y="13" width="12" height="6" rx="3" fill="#2a2c30"/>
-        <circle cx="109" cy="16" r="2.4" fill="#55595f"/>
-      </g>
-      <rect x="20" y="40" width="160" height="322" fill="url(#c-paint)"/>
-      <g clip-path="url(#c-body)">
-        <text x="74" y="62" text-anchor="middle" font-family="Inter, sans-serif" font-size="8" font-weight="700" fill="#4a2c10" fill-opacity=".75" letter-spacing="1.5">EXOTIC FRUIT</text>
-        <rect x="57" y="74" width="32" height="110" fill="#111"/>
-        <rect x="8" y="113" width="130" height="32" fill="#111"/>
-        <rect x="24" y="198" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
-        <rect x="24" y="224" width="104" height="17" fill="none" stroke="#111" stroke-width="3"/>
-        <rect class="lvl" x="24" y="198" width="104" height="17" fill="#111"/>
-        <rect class="lvl" x="24" y="224" width="104" height="17" fill="#111"/>
-        <text transform="translate(144 64) rotate(90)" font-family="Russo One, sans-serif" font-size="40" fill="#111" letter-spacing="1">BATTERY</text>
-        <text transform="translate(118 252) rotate(90)" font-family="Russo One, sans-serif" font-size="21" fill="#fff" letter-spacing="3">FRESH</text>
-        <rect x="20" y="40" width="160" height="322" fill="url(#c-metal)"/>
-        <rect x="20" y="40" width="160" height="322" fill="url(#c-vshade)"/>
+      <image href="assets/battery-fresh.webp" x="${PHOTO.x}" y="0" width="${PHOTO.w}" height="400" preserveAspectRatio="none"/>
+      <g class="meter">${meter}</g>
+      <g mask="url(#c-body)">
+        <rect x="20" y="0" width="160" height="400" fill="url(#c-light)"/>
         <rect x="${mx0}" y="${my0}" width="${mx1 - mx0}" height="${my1 - my0}" filter="url(#c-mist)" opacity="${k.big ? 0.16 : 0.24}"/>
         ${dropsMarkup(k)}
       </g>
-      <path d="M20 360 L32 386 Q100 396 168 386 L180 360 Z" fill="url(#c-lid)"/>
-      <path d="M20 360 L32 386 Q100 396 168 386 L180 360 Z" fill="url(#c-vshade)" opacity=".7"/>
-      <circle class="mouth" cx="100" cy="13" r="1" fill="none"/>
+      <circle class="mouth" cx="100" cy="3" r="1" fill="none"/>
     </svg>`;
   }
 
@@ -723,9 +709,12 @@
 
   function show(id) { $$('.panel').forEach((p) => p.classList.toggle('show', p.id === id)); }
 
+  // The can's "=" bars are the battery meter: paint over them as it drains, red when nearly empty
   function setLevel(el, v) {
-    const col = v < 20 ? '#ff2d55' : '#111';
-    $$('.lvl', el).forEach((r) => { r.setAttribute('width', (104 * Math.max(0, Math.min(v, 100))) / 100); r.setAttribute('fill', col); });
+    const f = Math.max(0, Math.min(v, 100)) / 100;
+    $$('.cover', el).forEach((r, i) => { const b = BARS[i]; r.setAttribute('x', b.x + b.w * f); r.setAttribute('width', b.w * (1 - f)); });
+    $$('.lvl', el).forEach((r, i) => r.setAttribute('width', v < 20 ? BARS[i].w * f : 0));
+    $$('.outline', el).forEach((r) => r.setAttribute('opacity', f < 0.99 ? 1 : 0));
     el.classList.toggle('low', v < 20);
   }
 
@@ -754,7 +743,7 @@
     $$('.scene').forEach((s) => { s.classList.remove('on'); s.getAnimations().forEach((a) => a.cancel()); });
     current = null;
     HOME.forEach((p, el) => setPose(el, p));
-    [canA, canB, packCan].forEach((el) => { setLevel(el, 100); $('.tab', el).style.transform = ''; });
+    [canA, canB, packCan].forEach((el) => setLevel(el, 100));
     iceFront.classList.remove('jostle'); iceBack.classList.remove('jostle');
     if (camAnim) camAnim.cancel();
     camera.style.transform = '';
@@ -868,7 +857,6 @@
     document.body.classList.add('party');
     cam('scale(1)', 'scale(1.08) translateY(2%)', 900, 'cubic-bezier(.2,1.4,.4,1)');
     sfx.psst();
-    $('.tab', packCan).style.transform = 'translate(19px, 4px) rotate(-55deg) translate(-19px, -4px)';
     const { m } = axis(packCan);
     for (let i = 0; i < 160 * K; i++) {
       drop(m.x + rand(-8, 8) * S, m.y, rand(-9, 9) * S * 2, -rand(6, 20) * S * 2, rand(2, 6) * S);
