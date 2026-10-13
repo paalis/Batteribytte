@@ -1,5 +1,7 @@
 # Batteribytte ⚡
 
+## Versjon 1 (`/v1`)
+
 En animert nettside: en Battery Fresh-inspirert boks (gull → rosa, med pluss- og likhetstegn som batterimåler) lades opp med lyn og gnister, og teksten
 «Det er tid for batteribytte!» smeller inn. Til slutt kommer spørsmålet «Er du klar?»
 med avkrysning for **Ja** og **Nei**:
@@ -7,10 +9,10 @@ med avkrysning for **Ja** og **Nei**:
 - **Ja** – boksen overlades til 200 %, eksploderer i lyn, sjokkbølger og konfetti, fliken spretter og energidrikken spruter ut av boksen, regner ned over skjermen, spruter på «linsen» og samler seg i en dam: «FULLT LADET!»
 - **Nei** – strømmen flimrer, batteriet tappes til 3 %, fargene forsvinner og boksen sovner på siden: «Lavt batteri…» (med «Prøv igjen»).
 
-Ren HTML/CSS/JS uten byggesteg – åpne `index.html` eller publiser mappen statisk (f.eks. Vercel).
+Ren HTML/CSS/JS uten byggesteg. Forsiden (`index.html`) er reklamefilmen; den første versjonen ligger i `v1/`.
 Lyd er syntetisert med Web Audio. Siden åpner med en «Start»-knapp, slik at nettleseren (også iPhone) tillater lyd fra første sekund; lyden kan slås av øverst til høyre.
 
-## Versjon 2 – reklamefilm (`/v2`)
+## Forsiden – reklamefilm
 
 En filmatisk versjon inspirert av en produktreklame: crimson studiobakgrunn, isbøtte med dugg-dekkede bokser,
 boksene løftes og tømmes, makro av etiketten med kondens, diagonal skjenkenærbilde, virvel i glasset og
