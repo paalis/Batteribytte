@@ -34,6 +34,7 @@
     pack:  { box: '0 0 200 400', drops: 190, area: BODY, seed: 3 },
     side:  { box: '0 0 200 400', drops: 40,  area: BODY, seed: 4 },
     pour:  { box: '0 0 200 400', drops: 230, area: BODY, seed: 5 },
+    splash: { box: '0 0 200 400', drops: 210, area: BODY, seed: 7 },
     macro: { box: '33 70 126 180', drops: 280, area: [33, 70, 159, 250], seed: 6, big: true },
   };
 
@@ -82,33 +83,123 @@
 
   $$('[data-can]').forEach((el) => { el.innerHTML = canSVG(el.dataset.can); });
 
+  // Photographic ice cubes: rendered once on a canvas (cloudy core, fractures, trapped bubbles,
+  // frosted surface, refracting edges) and reused everywhere through <symbol>/<use>.
+  const ICE_N = 8, ICE_C = [];
+  (function iceSymbols() {
+    const IW = 240, IH = 200;
+    let out = '';
+    for (let n = 0; n < ICE_N; n++) {
+      const r = rng(500 + n), c = document.createElement('canvas');
+      c.width = IW; c.height = IH;
+      const g = c.getContext('2d');
+      const pts = [];
+      for (let i = 0; i < 28; i++) {
+        const a = (i / 28) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
+        const j = 1 + (r() - 0.5) * 0.07;
+        pts.push([IW / 2 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.4) * (IW / 2 - 10) * j,
+                  IH / 2 + Math.sign(sa) * Math.pow(Math.abs(sa), 0.4) * (IH / 2 - 10) * j]);
+      }
+      const shape = () => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
+      g.save();
+      shape(); g.clip();
+      const base = g.createLinearGradient(0, 0, IW, IH);
+      base.addColorStop(0, 'rgba(255,255,255,.42)');
+      base.addColorStop(0.4, 'rgba(255,220,228,.12)');
+      base.addColorStop(0.78, 'rgba(255,80,110,.26)');
+      base.addColorStop(1, 'rgba(255,240,245,.35)');
+      g.fillStyle = base; g.fillRect(0, 0, IW, IH);
+      // cloudy frozen core
+      g.filter = 'blur(16px)';
+      g.fillStyle = 'rgba(255,255,255,.5)';
+      g.beginPath(); g.ellipse(IW * (0.45 + r() * 0.1), IH * (0.48 + r() * 0.08), IW * 0.2, IH * 0.17, r() * 3, 0, Math.PI * 2); g.fill();
+      // internal fractures
+      g.filter = 'blur(.8px)';
+      for (let i = 0; i < 7; i++) {
+        const x0 = IW * (0.25 + r() * 0.5), y0 = IH * (0.25 + r() * 0.5), a = r() * Math.PI, l = 20 + r() * 70;
+        g.strokeStyle = `rgba(255,255,255,${(0.25 + r() * 0.45).toFixed(2)})`;
+        g.lineWidth = 0.6 + r() * 1.8;
+        g.beginPath(); g.moveTo(x0, y0);
+        g.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l);
+        g.lineTo(x0 + Math.cos(a + 0.6) * l * 1.3, y0 + Math.sin(a + 0.6) * l * 1.3);
+        g.stroke();
+      }
+      g.filter = 'none';
+      // trapped air bubbles and a frosted surface
+      for (let i = 0; i < 40; i++) {
+        g.fillStyle = `rgba(255,255,255,${(0.3 + r() * 0.5).toFixed(2)})`;
+        g.beginPath(); g.arc(IW * (0.3 + r() * 0.4), IH * (0.3 + r() * 0.4), 0.6 + r() * 1.8, 0, Math.PI * 2); g.fill();
+      }
+      for (let i = 0; i < 900; i++) {
+        g.fillStyle = `rgba(255,255,255,${(0.04 + r() * 0.12).toFixed(2)})`;
+        g.fillRect(r() * IW, r() * IH, 1 + r(), 1 + r());
+      }
+      // refracting edges: soft inner glow, dark lower-right rim, crisp outline
+      g.filter = 'blur(6px)';
+      g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 14; shape(); g.stroke();
+      g.filter = 'blur(3px)';
+      g.translate(6, 7); g.strokeStyle = 'rgba(80,0,22,.38)'; g.lineWidth = 7; shape(); g.stroke(); g.translate(-6, -7);
+      g.filter = 'none';
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; shape(); g.stroke();
+      // specular glints
+      g.globalCompositeOperation = 'lighter';
+      g.fillStyle = 'rgba(255,255,255,.9)';
+      g.beginPath(); g.ellipse(IW * 0.27, IH * 0.2, IW * 0.09, IH * 0.035, -0.5, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.6)';
+      g.beginPath(); g.ellipse(IW * 0.74, IH * 0.78, IW * 0.05, IH * 0.02, -0.5, 0, Math.PI * 2); g.fill();
+      g.restore();
+      ICE_C.push(c);
+      out += `<symbol id="iceS${n}" viewBox="0 0 ${IW} ${IH}" preserveAspectRatio="none"><image href="${c.toDataURL('image/png')}" width="${IW}" height="${IH}"/></symbol>`;
+    }
+    $('svg.defs defs').insertAdjacentHTML('beforeend', out);
+  })();
+
+  function cube(x, y, w, h, rot, r) {
+    return `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${rot.toFixed(0)})">` +
+      `<g class="cube" style="--jx:${((r() - 0.5) * 30).toFixed(0)}px;--jr:${((r() - 0.5) * 40).toFixed(0)}deg;--d:${(r() * 0.15).toFixed(2)}s">` +
+      `<use href="#iceS${(r() * ICE_N) | 0}" x="${(-w / 2).toFixed(1)}" y="${(-h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>` +
+      `</g></g>`;
+  }
+
   function iceMarkup(front) {
     const r = rng(front ? 11 : 12);
     let s = '';
     const n = front ? 11 : 9;
     for (let i = 0; i < n; i++) {
       const x = 30 + (i + r() * 0.8) * (640 / n), y = front ? 95 + r() * 55 : 60 + r() * 40;
-      const w = (front ? 64 : 56) + r() * 34, h = w * (0.75 + r() * 0.35), rot = (r() - 0.5) * 70, rr = w * 0.22;
-      const x0 = -w / 2, y0 = -h / 2;
-      s += `<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) rotate(${rot.toFixed(0)})">` +
-        `<g class="cube" style="--jx:${((r() - 0.5) * 30).toFixed(0)}px;--jr:${((r() - 0.5) * 40).toFixed(0)}deg;--d:${(r() * 0.15).toFixed(2)}s">` +
-        // clear body with a frosted core and a faint red refraction of the backdrop
-        `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${rr}" fill="url(#ice)"/>` +
-        `<ellipse cx="${(w * 0.05).toFixed(1)}" cy="${(h * 0.08).toFixed(1)}" rx="${(w * 0.32).toFixed(1)}" ry="${(h * 0.28).toFixed(1)}" fill="url(#ice-core)"/>` +
-        `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${rr}" filter="url(#c-mist)" opacity=".18"/>` +
-        // bevelled edges: bright rim on top/left, soft inner bevel
-        `<rect x="${x0}" y="${y0}" width="${w}" height="${h}" rx="${rr}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.6"/>` +
-        `<rect x="${x0 + 6}" y="${y0 + 6}" width="${w - 12}" height="${h - 12}" rx="${rr * 0.7}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="3"/>` +
-        `<path d="M${x0 + rr} ${y0 + 2} L${-x0 - rr} ${y0 + 2} M${x0 + 2} ${y0 + rr} L${x0 + 2} ${-y0 - rr}" stroke="#fff" stroke-opacity=".95" stroke-width="2.4" stroke-linecap="round"/>` +
-        `<path d="M${(x0 + w * 0.25).toFixed(1)} ${(y0 + h * 0.3).toFixed(1)} l${(w * 0.22).toFixed(1)} ${(h * 0.18).toFixed(1)} l${(w * 0.12).toFixed(1)} ${(h * 0.3).toFixed(1)}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>` +
-        `<ellipse cx="${(-x0 - w * 0.22).toFixed(1)}" cy="${(-y0 - h * 0.2).toFixed(1)}" rx="${(w * 0.08).toFixed(1)}" ry="${(h * 0.05).toFixed(1)}" fill="#fff" fill-opacity=".8"/>` +
-        `<circle cx="${(w * 0.1).toFixed(1)}" cy="${(-h * 0.36).toFixed(1)}" r="${(1.4 + r() * 2).toFixed(1)}" fill="#fff" fill-opacity=".9"/>` +
-        `</g></g>`;
+      const w = (front ? 64 : 56) + r() * 34;
+      s += cube(x, y, w, w * (0.75 + r() * 0.35), (r() - 0.5) * 70, r);
     }
     return s;
   }
   $('[data-ice="back"]').innerHTML = iceMarkup(false);
   $('[data-ice="front"]').innerHTML = iceMarkup(true);
+
+  // Crushed-ice mound the splash-shot can lands in (higher towards the middle)
+  function pileMarkup(front) {
+    const r = rng(front ? 41 : 42);
+    // a glowing bed of crushed ice so the mound reads as one solid heap
+    let s = front
+      ? `<path d="M-60 400 L-60 210 Q120 140 300 120 Q500 60 700 120 Q880 140 1060 210 L1060 400 Z" fill="url(#pile-bed)"/>`
+      : `<path d="M-60 400 L-60 190 Q160 90 500 50 Q840 90 1060 190 L1060 400 Z" fill="url(#pile-bed)" opacity=".8"/>`;
+    const rows = front ? [[150, 30], [215, 32], [285, 30], [350, 26]] : [[70, 22], [130, 26]];
+    rows.forEach(([y0, n], ri) => {
+      for (let i = 0; i < n; i++) {
+        const x = -40 + (i + r() * 0.9) * (1080 / n), dx = (x - 500) / 540;
+        const y = y0 + dx * dx * (front ? 70 : 90) - (front ? 0 : 0) + (r() - 0.5) * 30;
+        const w = (front ? 66 : 54) + r() * 46 - ri * 4;
+        s += cube(x, y, w, w * (0.72 + r() * 0.4), (r() - 0.5) * 90, r);
+      }
+    });
+    // a sparkle of tiny crushed chips on top
+    for (let i = 0; i < (front ? 60 : 30); i++) {
+      const x = r() * 1000, dx = (x - 500) / 540, y = (front ? 130 : 55) + dx * dx * 70 + r() * 40, sz = 2 + r() * 6;
+      s += `<rect x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${sz.toFixed(1)}" height="${(sz * 0.8).toFixed(1)}" rx="1.5" fill="#fff" fill-opacity=".85" transform="rotate(${(r() * 90) | 0} ${x.toFixed(0)} ${y.toFixed(0)})"/>`;
+    }
+    return s;
+  }
+  $('[data-pile="back"]').innerHTML = pileMarkup(false);
+  $('[data-pile="front"]').innerHTML = pileMarkup(true);
 
   (function bucketDrops() {
     const r = rng(21);
@@ -121,30 +212,175 @@
     $('.bucketDrops').innerHTML = s;
   })();
 
+  /* Photographic glass of energy drink, painted once on a canvas: deep amber liquid that is darker at
+     the walls and bottom with light shining through, ice cubes partly under the surface, thousands of
+     tiny bubbles clinging to the inside, a fizzy surface line (no foam), a thick refracting base and
+     cold condensation on the outside. Coordinates match the SVG viewBox (-20 -120 400 840). */
+  function paintGlass() {
+    const Z = 2, VW = 400, VH = 840, c = document.createElement('canvas');
+    c.width = VW * Z; c.height = VH * Z;
+    const g = c.getContext('2d'), r = rng(91);
+    g.setTransform(Z, 0, 0, Z, 20 * Z, 120 * Z);
+    const TOP = 0, BOT = 700, BASE = 640, LIQ = 62;               // rim, outer bottom, inner bottom, liquid line
+    const xl = (y) => 8 + (y / 700) * 40, xr = (y) => 352 - (y / 700) * 40;   // outer walls
+    const WT = 7;                                                    // wall thickness
+    const inner = (y0, y1) => { g.beginPath(); g.moveTo(xl(y0) + WT, y0); g.lineTo(xr(y0) - WT, y0); g.lineTo(xr(y1) - WT, y1); g.lineTo(xl(y1) + WT, y1); g.closePath(); };
+    const outer = () => { g.beginPath(); g.moveTo(xl(TOP), TOP); g.lineTo(xr(TOP), TOP); g.lineTo(xr(BOT), BOT); g.lineTo(xl(BOT), BOT); g.closePath(); };
+
+    // the empty glass above the drink: barely there
+    g.save(); inner(TOP, LIQ); g.clip();
+    let gr = g.createLinearGradient(0, TOP, 0, LIQ);
+    gr.addColorStop(0, 'rgba(255,255,255,.05)'); gr.addColorStop(1, 'rgba(255,255,255,.1)');
+    g.fillStyle = gr; g.fillRect(0, TOP, 360, LIQ);
+    g.restore();
+
+    // the drink
+    g.save(); inner(LIQ, BASE); g.clip();
+    gr = g.createLinearGradient(0, LIQ, 0, BASE);
+    gr.addColorStop(0, '#f8bf48'); gr.addColorStop(0.3, '#ec961c'); gr.addColorStop(0.72, '#b4560a'); gr.addColorStop(1, '#5e2003');
+    g.fillStyle = gr; g.fillRect(0, LIQ, 360, BASE - LIQ);
+    gr = g.createLinearGradient(xl(300) + WT, 0, xr(300) - WT, 0);
+    gr.addColorStop(0, 'rgba(60,14,0,.75)'); gr.addColorStop(0.18, 'rgba(70,18,0,.08)'); gr.addColorStop(0.32, 'rgba(70,18,0,0)');
+    gr.addColorStop(0.7, 'rgba(70,18,0,0)'); gr.addColorStop(0.86, 'rgba(70,18,0,.18)'); gr.addColorStop(1, 'rgba(50,8,0,.8)');
+    g.fillStyle = gr; g.fillRect(0, LIQ, 360, BASE - LIQ);
+    g.globalCompositeOperation = 'screen';
+    gr = g.createRadialGradient(175, 400, 10, 175, 400, 230);
+    gr.addColorStop(0, 'rgba(255,222,130,.7)'); gr.addColorStop(1, 'rgba(255,214,120,0)');
+    g.fillStyle = gr; g.fillRect(0, LIQ, 360, BASE - LIQ);
+    gr = g.createRadialGradient(180, 625, 4, 180, 625, 120);
+    gr.addColorStop(0, 'rgba(255,230,150,.7)'); gr.addColorStop(1, 'rgba(255,230,150,0)');
+    g.fillStyle = gr; g.fillRect(0, 520, 360, BASE - 520);
+
+    // ice under the surface: brighter, amber-tinted, softened by the liquid
+    const cubes = [[118, 120, 150, 128, -16], [242, 150, 140, 120, 22], [180, 300, 150, 126, 6], [128, 455, 120, 100, -28]];
+    g.filter = 'blur(1.2px)';
+    cubes.forEach(([x, y, w, h, a], i) => {
+      g.save(); g.translate(x, y); g.rotate(a * Math.PI / 180);
+      g.globalAlpha = 0.75 - i * 0.12;
+      g.drawImage(ICE_C[(i * 3) % ICE_C.length], -w / 2, -h / 2, w, h);
+      g.restore();
+    });
+    g.filter = 'none';
+    g.globalCompositeOperation = 'source-over';
+
+    // bubbles: dense on the walls and the ice, sparse in the middle, denser near the top
+    const bubble = (x, y, rad) => {
+      g.strokeStyle = `rgba(110,40,0,${(0.35 + r() * 0.3).toFixed(2)})`; g.lineWidth = Math.max(0.35, rad * 0.35);
+      g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.stroke();
+      g.fillStyle = `rgba(255,248,220,${(0.55 + r() * 0.4).toFixed(2)})`;
+      g.beginPath(); g.arc(x - rad * 0.35, y - rad * 0.35, rad * 0.38, 0, Math.PI * 2); g.fill();
+    };
+    for (let i = 0; i < 2600; i++) {
+      const y = LIQ + 8 + Math.pow(r(), 1.25) * (BASE - LIQ - 14);
+      const edge = r() < 0.6, w0 = xl(y) + WT, w1 = xr(y) - WT;
+      const x = edge ? (r() < 0.5 ? w0 + Math.pow(r(), 2) * 70 : w1 - Math.pow(r(), 2) * 70) : w0 + r() * (w1 - w0);
+      bubble(x, y, 0.5 + Math.pow(r(), 3.5) * 3.2);
+    }
+    cubes.forEach(([x, y, w, h]) => {
+      for (let i = 0; i < 70; i++) bubble(x + (r() - 0.5) * w * 0.9, y + (r() - 0.5) * h * 0.9, 0.5 + Math.pow(r(), 3) * 2.2);
+    });
+    g.restore();
+
+    // a cube breaking the surface, clear above the drink
+    g.save(); inner(TOP + 2, LIQ + 1); g.clip();
+    g.translate(205, LIQ - 6); g.rotate(-0.12);
+    g.drawImage(ICE_C[5], -78, -60, 156, 128);
+    g.restore();
+
+    // fizzy surface: a thin bright meniscus with a band of tiny bubbles (no foam)
+    g.save(); inner(LIQ - 8, LIQ + 22); g.clip();
+    for (let i = 0; i < 900; i++) {
+      const x = xl(LIQ) + WT + r() * (xr(LIQ) - xl(LIQ) - WT * 2), y = LIQ - 2 + Math.pow(r(), 2) * 16;
+      g.fillStyle = `rgba(255,250,232,${(0.25 + r() * 0.6).toFixed(2)})`;
+      g.beginPath(); g.arc(x, y, 0.4 + Math.pow(r(), 3) * 1.8, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+    g.strokeStyle = 'rgba(255,246,220,.85)'; g.lineWidth = 1.6;
+    g.beginPath(); g.moveTo(xl(LIQ) + WT, LIQ); g.quadraticCurveTo(180, LIQ + 3, xr(LIQ) - WT, LIQ); g.stroke();
+
+    // thick base: the drink seen through solid glass, with caustics
+    g.save(); g.beginPath(); g.moveTo(xl(BASE), BASE); g.lineTo(xr(BASE), BASE); g.lineTo(xr(BOT), BOT); g.lineTo(xl(BOT), BOT); g.closePath(); g.clip();
+    gr = g.createLinearGradient(0, BASE, 0, BOT);
+    gr.addColorStop(0, 'rgba(214,120,30,.85)'); gr.addColorStop(0.5, 'rgba(255,205,120,.6)'); gr.addColorStop(1, 'rgba(140,60,14,.7)');
+    g.fillStyle = gr; g.fillRect(0, BASE, 360, BOT - BASE);
+    g.globalCompositeOperation = 'screen';
+    for (let i = 0; i < 9; i++) {
+      const x = 70 + r() * 220;
+      gr = g.createLinearGradient(x - 6, 0, x + 6, 0);
+      gr.addColorStop(0, 'rgba(255,240,200,0)'); gr.addColorStop(0.5, `rgba(255,240,200,${(0.2 + r() * 0.4).toFixed(2)})`); gr.addColorStop(1, 'rgba(255,240,200,0)');
+      g.fillStyle = gr; g.fillRect(x - 6, BASE, 12, BOT - BASE);
+    }
+    g.globalCompositeOperation = 'source-over';
+    g.restore();
+    g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1.2;
+    g.beginPath(); g.moveTo(xl(BASE) + 4, BASE); g.quadraticCurveTo(180, BASE + 8, xr(BASE) - 4, BASE); g.stroke();
+
+    // the glass itself: walls that catch light, dark refracting edges, rim
+    g.save(); outer(); g.clip();
+    const wall = (x0, x1, side) => {
+      gr = g.createLinearGradient(x0, 0, x1, 0);
+      if (side < 0) { gr.addColorStop(0, 'rgba(20,0,5,.55)'); gr.addColorStop(0.35, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,.05)'); }
+      else { gr.addColorStop(0, 'rgba(255,255,255,.05)'); gr.addColorStop(0.6, 'rgba(255,90,120,.45)'); gr.addColorStop(1, 'rgba(20,0,5,.6)'); }
+      return gr;
+    };
+    for (let y = 0; y < BOT; y += 4) {
+      g.fillStyle = wall(xl(y), xl(y) + WT + 2, -1); g.fillRect(xl(y), y, WT + 2, 4.5);
+      g.fillStyle = wall(xr(y) - WT - 2, xr(y), 1); g.fillRect(xr(y) - WT - 2, y, WT + 2, 4.5);
+    }
+    // long vertical highlights (studio strip lights)
+    const strip = (fx, w, a) => {
+      g.beginPath();
+      g.moveTo(xl(TOP) + (xr(TOP) - xl(TOP)) * fx, TOP + 4); g.lineTo(xl(TOP) + (xr(TOP) - xl(TOP)) * fx + w, TOP + 4);
+      g.lineTo(xl(BOT - 70) + (xr(BOT - 70) - xl(BOT - 70)) * fx + w, BOT - 70); g.lineTo(xl(BOT - 70) + (xr(BOT - 70) - xl(BOT - 70)) * fx, BOT - 70);
+      g.closePath();
+      gr = g.createLinearGradient(0, TOP, 0, BOT);
+      gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(0.5, `rgba(255,255,255,${a * 0.55})`); gr.addColorStop(1, `rgba(255,255,255,${a * 0.2})`);
+      g.fillStyle = gr; g.fill();
+    };
+    strip(0.07, 7, 0.55); strip(0.13, 2, 0.4); strip(0.88, 4, 0.22);
+    // condensation on the cold part (below the drink line)
+    for (let i = 0; i < 260; i++) {
+      const y = LIQ + 20 + r() * (BOT - LIQ - 40), x = xl(y) + r() * (xr(y) - xl(y)), rad = 0.5 + Math.pow(r(), 3) * 3.2;
+      g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.ellipse(x, y, rad, rad * 1.15, 0, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(60,10,0,.3)'; g.lineWidth = Math.max(0.3, rad * 0.25);
+      g.beginPath(); g.arc(x, y + rad * 0.2, rad, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.arc(x - rad * 0.35, y - rad * 0.4, rad * 0.3, 0, Math.PI * 2); g.fill();
+    }
+    g.restore();
+    g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 1.2; outer(); g.stroke();
+    // rim: a thin bright ellipse with a darker inner lip
+    g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2;
+    g.beginPath(); g.ellipse(180, TOP + 2, 172, 5, 0, 0, Math.PI * 2); g.stroke();
+    g.strokeStyle = 'rgba(40,10,10,.25)'; g.lineWidth = 1;
+    g.beginPath(); g.ellipse(180, TOP + 4, 166, 4, 0, 0, Math.PI); g.stroke();
+    // bottom edge catches the light
+    g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(xl(BOT), BOT); g.quadraticCurveTo(180, BOT + 10, xr(BOT), BOT); g.stroke();
+    return c.toDataURL('image/png');
+  }
+
   (function glassBits() {
     const r = rng(31);
     let b = '';
-    // fine bubbles rising in thin streams, like a freshly poured glass
-    for (let i = 0; i < 110; i++) {
-      const lane = 50 + ((i % 9) / 8) * 260 + (r() - 0.5) * 16;
-      b += `<circle class="bub" cx="${lane.toFixed(0)}" cy="${(320 + r() * 380).toFixed(0)}" r="${(0.8 + Math.pow(r(), 2) * 2.6).toFixed(1)}" fill="#fffbe8" fill-opacity=".85" style="--t:${(2 + r() * 2.5).toFixed(1)}s;--d:${(-r() * 5).toFixed(1)}s;--dx:${((r() - 0.5) * 10).toFixed(0)}px"/>`;
+    // a few bubbles still rising, small and faint over the painted glass
+    for (let i = 0; i < 60; i++) {
+      const lane = 70 + ((i % 8) / 7) * 220 + (r() - 0.5) * 14;
+      b += `<circle class="bub" cx="${lane.toFixed(0)}" cy="${(140 + r() * 490).toFixed(0)}" r="${(0.6 + Math.pow(r(), 2.5) * 1.8).toFixed(1)}" fill="none" stroke="#fff3d0" stroke-opacity=".75" stroke-width=".7" style="--t:${(2.4 + r() * 2.5).toFixed(1)}s;--d:${(-r() * 5).toFixed(1)}s;--dx:${((r() - 0.5) * 8).toFixed(0)}px"/>`;
     }
-    $('.glass .bubbles').innerHTML = b;
-    let f = '';
-    for (let i = 0; i < 90; i++) {
-      const fx = 20 + r() * 320, fy = 20 + r() * 80, fr = 1.5 + Math.pow(r(), 2) * 7;
-      f += `<circle cx="${fx.toFixed(0)}" cy="${fy.toFixed(0)}" r="${fr.toFixed(1)}" fill="#fff" fill-opacity=".35" stroke="#cdb489" stroke-opacity=".45" stroke-width=".8"/>`;
+    $('#glass').innerHTML =
+      `<image href="${paintGlass()}" x="-20" y="-120" width="400" height="840"/>` +
+      `<clipPath id="g-liquid"><polygon points="15,66 345,66 315,636 45,636"/></clipPath>` +
+      `<g clip-path="url(#g-liquid)">${b}</g>`;
+
+    // wet tabletop: flat puddles that catch the light, scattered droplets, a few ice cubes
+    let w = '';
+    for (let i = 0; i < 70; i++) {
+      const x = r() * 1000, y = 20 + Math.pow(r(), 1.5) * 240, rx = 2 + Math.pow(r(), 3) * 26, ry = rx * (0.25 + r() * 0.15);
+      w += `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}" fill="#ff8aa0" fill-opacity=".08" stroke="#fff" stroke-opacity=".35" stroke-width="1"/>` +
+        `<ellipse cx="${(x - rx * 0.3).toFixed(0)}" cy="${(y - ry * 0.3).toFixed(0)}" rx="${(rx * 0.3).toFixed(1)}" ry="${(ry * 0.25).toFixed(1)}" fill="#fff" fill-opacity=".7"/>`;
     }
-    $('.glass .foamBubbles').innerHTML = f;
-    let d = '';
-    for (let i = 0; i < 120; i++) {
-      const y = 130 + r() * 560, t = (y / 700), x = 20 + t * 38 + r() * (320 - t * 76);
-      const rad = 0.8 + Math.pow(r(), 3) * 5;
-      d += `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${rad.toFixed(1)}" ry="${(rad * 1.15).toFixed(1)}" fill="url(#c-drop)"/>` +
-        `<ellipse cx="${(x - rad * 0.35).toFixed(1)}" cy="${(y - rad * 0.4).toFixed(1)}" rx="${(rad * 0.25).toFixed(1)}" ry="${(rad * 0.18).toFixed(1)}" fill="#fff" fill-opacity=".9"/>`;
-    }
-    $('.glass .glassDrops').innerHTML = d;
-    $$('.drip').forEach((el, i) => el.style.setProperty('--d', (0.5 + i * 0.35) + 's'));
+    $('.wet').innerHTML = w;
+    $('.tableIce').innerHTML = cube(90, 150, 110, 92, -24, r) + cube(905, 170, 120, 100, 18, r) + cube(520, 230, 90, 76, 40, r);
 
     const tabs = [[120, 70, -20], [330, 120, 35], [640, 60, 160], [820, 130, -60]];
     $('.tabs').innerHTML = tabs.map(([x, y, a]) =>
@@ -182,8 +418,31 @@
     cv.width = W * DPR; cv.height = H * DPR;
     cx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
-  addEventListener('resize', layout);
+  // Out-of-focus lights behind the set, like shooting on a long lens
+  function drawBokeh() {
+    const c = $('#bokeh'), g = c.getContext('2d'), d = Math.min(devicePixelRatio || 1, 2);
+    const bw = innerWidth * 1.08, bh = innerHeight * 1.08;
+    c.width = bw * d; c.height = bh * d;
+    g.setTransform(d, 0, 0, d, 0, 0);
+    const r = rng(77), cols = ['255,96,80', '255,176,80', '255,58,96', '255,226,196', '255,130,60'];
+    const unit = Math.max(bw, bh) / 1200;
+    for (let i = 0; i < 52; i++) {
+      const x = r() * bw, y = Math.pow(r(), 1.3) * bh * 0.9, rad = (12 + Math.pow(r(), 2.2) * 95) * unit;
+      const col = cols[(r() * cols.length) | 0], a = 0.05 + r() * 0.2;
+      g.filter = `blur(${(rad * (0.04 + r() * 0.12)).toFixed(1)}px)`;
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(${col},${(a * 0.6).toFixed(3)})`);
+      gr.addColorStop(0.82, `rgba(${col},${a.toFixed(3)})`);
+      gr.addColorStop(0.94, `rgba(${col},${(a * 1.3).toFixed(3)})`);
+      gr.addColorStop(1, `rgba(${col},0)`);
+      g.fillStyle = gr;
+      g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+    }
+    g.filter = 'none';
+  }
+  addEventListener('resize', () => { layout(); drawBokeh(); });
   layout();
+  drawBokeh();
 
   /* ================================================================
      Audio: unlock, synthesized music bed and sound effects
@@ -407,6 +666,15 @@
       tone(t, 'sine', 110, 35, 0.6, 0.7, 0.005);
       noise(t, 0.5, 'lowpass', 2500, 0, 0.3, 0.003);
     },
+    splash() {
+      if (!canPlay()) return;
+      const t = AC.currentTime;
+      tone(t, 'sine', 120, 45, 0.35, 0.6, 0.003);
+      const f = noise(t, 0.9, 'bandpass', 2400, 0.7, 0.55, 0.004);
+      f.frequency.exponentialRampToValueAtTime(700, t + 0.8);
+      noise(t + 0.05, 1.1, 'highpass', 5000, 0, 0.18, 0.05);
+      for (let i = 0; i < 10; i++) tone(t + 0.15 + i * rand(0.04, 0.09), 'sine', rand(900, 2200), rand(700, 1600), 0.05, 0.05);
+    },
     thud() {
       if (!canPlay()) return;
       const t = AC.currentTime;
@@ -432,7 +700,7 @@
   };
 
   /* ================================================================
-     Liquid: drops, pour streams, swirl
+     Liquid: drops, pour streams, splash crowns, cold vapour
      ================================================================ */
 
   const L = [];
@@ -478,23 +746,59 @@
     sprite('rgba(255,224,150,.55)', 'rgba(238,124,50,.82)', 'rgba(116,30,16,.92)'),
     sprite('rgba(255,244,190,.5)', 'rgba(250,172,62,.78)', 'rgba(130,52,14,.9)'),
   ];
-  const FOAM = sprite('rgba(255,255,250,.98)', 'rgba(250,242,224,.9)', 'rgba(222,204,172,.5)', true);
+  // Clear water drop: almost invisible body, bright rim, dark refraction at the bottom, sharp specular
+  function waterSprite() {
+    const n = 64, r = n / 2, c = document.createElement('canvas');
+    c.width = c.height = n;
+    const g = c.getContext('2d');
+    const body = g.createRadialGradient(r * 0.85, r * 0.8, r * 0.1, r, r, r);
+    body.addColorStop(0, 'rgba(255,255,255,.12)');
+    body.addColorStop(0.55, 'rgba(240,246,255,.22)');
+    body.addColorStop(0.82, 'rgba(255,255,255,.8)');
+    body.addColorStop(0.93, 'rgba(70,10,20,.55)');
+    body.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = body;
+    g.beginPath(); g.arc(r, r, r * 0.98, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = n * 0.05; g.lineCap = 'round';
+    g.beginPath(); g.arc(r, r, r * 0.72, Math.PI * 0.15, Math.PI * 0.85); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.98)';
+    g.beginPath(); g.ellipse(r * 0.66, r * 0.56, r * 0.2, r * 0.12, -0.6, 0, Math.PI * 2); g.fill();
+    return c;
+  }
+  // Cold smoke: thin curling wisps, like the vapour off an ice-cold bottle
+  function wispSprite(seed) {
+    const r = rng(seed), w = 180, h = 360, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.filter = 'blur(9px)';
+    const ph = r() * 6, tw = 3 + r() * 2.5;
+    for (let i = 0; i < 90; i++) {
+      const t = i / 90, y = h * (0.94 - t * 0.88);
+      const x = w / 2 + Math.sin(t * tw + ph) * w * 0.2 * (0.25 + t) + (r() - 0.5) * 5;
+      const rad = (12 + t * 30) * (0.7 + r() * 0.6), a = 0.05 * (1 - t * 0.6);
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(255,255,255,${a.toFixed(3)})`);
+      gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr;
+      g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+    }
+    g.filter = 'none';
+    return c;
+  }
+  const WATER = waterSprite();
+  const WISPS = [wispSprite(1), wispSprite(2), wispSprite(3), wispSprite(4), wispSprite(5)];
   const MIST = mistSprite();
   let lastFrame = 0;
   let pourCans = [];          // cans currently pouring into the bucket
   let streamOn = false;       // diagonal pour close-up
-  let swirlOn = false;
-  let sprayUntil = 0, SPRAY_MS = 3800;
-  const V = [];               // swirl flecks
 
-  // kind: 'drop' (falls), 'foam' (light, fades), 'patch' (foam that floats where the pour lands), 'mist'
-  function drop(x, y, vx, vy, r, foam = false, kind) {
-    if (L.length > 1400) return;
-    kind = kind || (foam ? 'foam' : 'drop');
-    const img = kind === 'drop' ? pick(DRINK) : kind === 'mist' ? MIST : FOAM;
-    const g = kind === 'drop' ? 1 : kind === 'foam' ? 0.35 : kind === 'mist' ? 0.25 : 0.01;
-    const decay = kind === 'drop' ? 0 : kind === 'foam' ? 0.015 : kind === 'mist' ? 0.025 : 0.01;
-    L.push({ x, y, vx, vy, r, foam: kind !== 'drop', img, g, decay, life: 1 });
+  // kind: 'drop' (energy drink), 'water' (clear splash water), 'mist' (fine spray that fades)
+  function drop(x, y, vx, vy, r, kind = 'drop') {
+    if (L.length > 1800) return;
+    const img = kind === 'drop' ? pick(DRINK) : kind === 'water' ? WATER : MIST;
+    const g = kind === 'mist' ? 0.25 : 1;
+    const decay = kind === 'mist' ? 0.025 : 0;
+    L.push({ x, y, vx, vy, r, fade: kind === 'mist', img, g, decay, life: 1 });
   }
 
   function centerOf(el) {
@@ -508,21 +812,6 @@
     return { m, ux: dx / len, uy: dy / len };
   }
 
-  function emit(k, now) {
-    const G = 0.9 * S;
-    if (now < sprayUntil) {
-      const { m } = axis($('#packCan'));
-      const left = (sprayUntil - now) / SPRAY_MS;
-      const lift = Math.sqrt(2 * G * Math.max(m.y + 40, 120)) * (0.6 + 0.4 * left);
-      const sway = Math.sin(now / 170) * 0.9 + Math.sin(now / 430) * 0.35;
-      for (let i = 0; i < 11 * K * k * (0.35 + 0.65 * left); i++) {
-        drop(m.x + rand(-4, 4) * S, m.y, (sway + rand(-0.12, 0.12)) * rand(3, 6) * S * 2, -lift * rand(0.75, 1.05), rand(2, 5) * S);
-      }
-      if (Math.random() < 0.6 * K) drop(m.x, m.y, rand(-1.5, 1.5) * S, -rand(2, 6) * S, rand(2, 6) * S, true);
-      for (let i = 0; i < 3 * K * k; i++) drop(m.x + rand(-6, 6) * S, m.y, (sway + rand(-0.4, 0.4)) * rand(2, 8) * S, -lift * rand(0.3, 0.9), rand(1.5, 3.5) * S, true, 'mist');
-    }
-  }
-
   function updateDrops(k) {
     const G = 0.9 * S;
     const rimR = current && current.id === 'sBucket' ? $('#rimMark').getBoundingClientRect() : null;
@@ -533,19 +822,18 @@
       d.x += d.vx * k; d.y += d.vy * k;
       d.life -= d.decay * k;
       if (rimR && d.g > 0.5 && d.vy > 0 && d.y > rimR.top && d.x > rimR.left && d.x < rimR.right) {
-        if (!d.foam && Math.random() < 0.25) {
+        if (!d.fade && Math.random() < 0.25) {
           for (let j = 0; j < 2; j++) drop(d.x, rimR.top - 2, rand(-2, 2) * S * 2, -rand(2, 6) * S * 2, rand(1.2, 3) * S);
-          if (Math.random() < 0.3) drop(d.x, rimR.top - 4, rand(-1, 1) * S, -rand(1, 3) * S, rand(3, 8) * S, true);
         }
         L.splice(i, 1);
         continue;
       }
       if (d.y > H + 40 || d.life <= 0 || d.x < -80 || d.x > W + 80) { L.splice(i, 1); continue; }
-      if (rimR && d.foam && d.y > rimR.top + 6 && d.x > rimR.left && d.x < rimR.right) { L.splice(i, 1); continue; }
+      if (rimR && d.fade && d.y > rimR.top + 6 && d.x > rimR.left && d.x < rimR.right) { L.splice(i, 1); continue; }
       const sp = Math.hypot(d.vx, d.vy) || 0.001;
       const len = d.r * 2 * (1 + Math.min(sp / (9 * S + 0.1), 1.6)), wid = d.r * 2 * (1 - Math.min(sp / (40 * S + 0.1), 0.25));
       const c = d.vx / sp, sn = d.vy / sp;
-      cx.globalAlpha = d.foam ? Math.max(Math.min(d.life * 1.5, 1), 0) : 0.95;
+      cx.globalAlpha = d.fade ? Math.max(Math.min(d.life * 1.5, 1), 0) : d.img === WATER ? 0.95 : 0.8;
       cx.setTransform(DPR * c * len, DPR * sn * len, -DPR * sn * wid, DPR * c * wid, DPR * d.x, DPR * d.y);
       cx.drawImage(d.img, -0.5, -0.5, 1, 1);
     }
@@ -569,8 +857,9 @@
   // The stream is drawn into its own layer (opaque), then laid over the scene a little see-through.
   const sl = document.createElement('canvas'), sx = sl.getContext('2d');
   const FIZZ = new Map();
-  const CROSS = [[0, 'rgb(120,38,8)'], [0.06, 'rgb(222,112,32)'], [0.15, 'rgb(252,176,66)'], [0.27, 'rgb(255,222,150)'],
-    [0.42, 'rgb(255,242,208)'], [0.55, 'rgb(255,250,232)'], [0.7, 'rgb(255,232,176)'], [0.84, 'rgb(250,180,70)'], [0.94, 'rgb(214,98,28)'], [1, 'rgb(110,34,8)']];
+  // Clear energy drink: deep amber at the refracting edges, glowing gold through the middle
+  const CROSS = [[0, 'rgb(110,32,6)'], [0.07, 'rgb(208,96,24)'], [0.2, 'rgb(246,150,42)'], [0.36, 'rgb(255,190,80)'],
+    [0.5, 'rgb(255,214,120)'], [0.64, 'rgb(255,198,92)'], [0.8, 'rgb(248,156,46)'], [0.93, 'rgb(200,84,22)'], [1, 'rgb(100,28,6)']];
 
   function drawTube(pts, w, now, seed = 0, k = 1) {
     const n = pts.length;
@@ -644,21 +933,108 @@
     sx.setLineDash([]);
     sx.globalAlpha = 1;
 
-    cx.globalAlpha = 0.9;
+    cx.globalAlpha = 0.82;
     cx.setTransform(1, 0, 0, 1, 0, 0);
     cx.drawImage(sl, 0, 0);
     cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     cx.globalAlpha = 1;
   }
 
-  // Where a stream lands: a crown of droplets, fine mist and a floating foam patch
+  // Where a stream lands: a crown of drink and water droplets plus fine mist
   function splashAt(x, y, k, power) {
     for (let j = 0; j < 4 * K * k; j++) {
       const a = -Math.PI / 2 + rand(-1.1, 1.1), sp = rand(2, 7) * S * 2 * power;
-      drop(x + rand(-8, 8) * S, y - 2, Math.cos(a) * sp, Math.sin(a) * sp, rand(1.4, 4.5) * S);
+      drop(x + rand(-8, 8) * S, y - 2, Math.cos(a) * sp, Math.sin(a) * sp, rand(1.4, 4.5) * S, Math.random() < 0.35 ? 'water' : 'drop');
     }
-    for (let j = 0; j < 3 * K * k; j++) drop(x + rand(-12, 12) * S, y - 4, rand(-2, 2) * S, -rand(1, 5) * S, rand(1.5, 3) * S, true, 'mist');
-    if (Math.random() < 0.7 * k) drop(x + rand(-26, 26) * S, y - rand(2, 10) * S, rand(-0.6, 0.6) * S, -rand(0, 0.6) * S, rand(5, 12) * S, true, 'patch');
+    for (let j = 0; j < 3 * K * k; j++) drop(x + rand(-12, 12) * S, y - 4, rand(-2, 2) * S, -rand(1, 5) * S, rand(1.5, 3) * S, 'mist');
+  }
+
+  /* --- High-speed-photography splash: a curtain of droplets thrown up on both sides,
+         fine spray and a few heavy drops. Played in slow motion (see slowmo). --- */
+  // Real splashes are mostly fine droplets with a few big ones
+  const dsz = (min, max) => (min + Math.pow(Math.random(), 3) * (max - min)) * S * 2;
+
+  function crown(x, y, cw, big = 1, drink = 0) {
+    const n = 260 * K;
+    for (const side of [-1, 1]) {
+      for (let j = 0; j < n; j++) {
+        const t = j / n, a = -Math.PI / 2 + side * (0.3 + t * 0.95 + rand(-0.05, 0.05));
+        const sp = (15 - t * 6) * S * 2 * big * rand(0.88, 1.06);
+        drop(x + side * cw * (0.32 + t * 0.22) + rand(-4, 4) * S, y + rand(-4, 4) * S,
+          Math.cos(a) * sp, Math.sin(a) * sp, dsz(1, 5) * big, Math.random() < drink ? 'drop' : 'water');
+      }
+    }
+    for (let j = 0; j < 260 * K; j++) {
+      const a = -Math.PI / 2 + rand(-1.35, 1.35), sp = rand(4, 22) * S * 2 * big;
+      drop(x + rand(-cw, cw) * 0.5, y, Math.cos(a) * sp, Math.sin(a) * sp, dsz(0.6, 2.4), Math.random() < drink ? 'drop' : 'water');
+    }
+    for (let j = 0; j < 10 * K; j++) {
+      const a = -Math.PI / 2 + rand(-1, 1), sp = rand(6, 14) * S * 2 * big;
+      drop(x + rand(-cw, cw) * 0.4, y, Math.cos(a) * sp, Math.sin(a) * sp, rand(4, 7) * S * 2 * big, Math.random() < drink ? 'drop' : 'water');
+    }
+  }
+
+  // Drink and water flung around the can, like a product splash shot
+  function swirlAround(el) {
+    const b = el.getBoundingClientRect(), ox = b.left + b.width / 2, oy = b.top + b.height * 0.55;
+    for (let j = 0; j < 380 * K; j++) {
+      const a = rand(0, Math.PI * 2), rx = b.width * rand(0.55, 1.1), ry = b.height * rand(0.18, 0.4);
+      const x = ox + Math.cos(a) * rx, y = oy + Math.sin(a) * ry;
+      const sp = rand(5, 13) * S * 2;
+      drop(x, y, -Math.sin(a) * sp * 1.4, Math.cos(a) * sp * 0.4 - rand(6, 14) * S * 2, dsz(0.7, 5.5), Math.random() < 0.3 ? 'drop' : 'water');
+    }
+  }
+
+  // Global time scale for liquid: < 1 = slow motion
+  let slowmo = 1, slowT0 = 0, slowHold = 0, slowRamp = 0, slowMin = 1;
+  function setSlowmo(min, hold, ramp) { slowMin = min; slowT0 = performance.now(); slowHold = hold; slowRamp = ramp; }
+  function slowNow(now) {
+    const t = now - slowT0;
+    if (t < slowHold) return slowMin;
+    if (t < slowHold + slowRamp) return slowMin + (1 - slowMin) * ((t - slowHold) / slowRamp);
+    return 1;
+  }
+
+  /* --- Cold smoke curling off ice and the chilled can (Heineken / MAC style) --- */
+  const VAP = [];
+  function vapourFrom(x0, x1, y, rate, k, a = 1, scale = 1, decay = 0.0045) {
+    for (let i = 0; i < rate * K * k; i++) {
+      if (VAP.length > 90) return;
+      VAP.push({ img: pick(WISPS), x: rand(x0, x1), y, vx: rand(-0.25, 0.25) * S, vy: -rand(0.25, 0.7) * S,
+        s: rand(0.6, 1.15) * S * 2 * scale, gs: 0.0016 * S * 2 * scale, rot: rand(-0.35, 0.35), vr: rand(-0.0025, 0.0025),
+        life: 1, a: rand(0.55, 1) * a, decay });
+    }
+  }
+  function drawVapour(k) {
+    cx.globalCompositeOperation = 'screen';
+    for (let i = VAP.length - 1; i >= 0; i--) {
+      const v = VAP[i];
+      v.x += v.vx * k; v.y += v.vy * k; v.s += v.gs * k; v.rot += v.vr * k; v.life -= v.decay * k;
+      if (v.life <= 0) { VAP.splice(i, 1); continue; }
+      const w = v.img.width * v.s, h = v.img.height * v.s;
+      cx.globalAlpha = Math.sin(v.life * Math.PI) * v.a;
+      cx.setTransform(DPR * Math.cos(v.rot), DPR * Math.sin(v.rot), -DPR * Math.sin(v.rot), DPR * Math.cos(v.rot), DPR * v.x, DPR * v.y);
+      cx.drawImage(v.img, -w / 2, -h, w, h);
+    }
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    cx.globalAlpha = 1;
+    cx.globalCompositeOperation = 'source-over';
+  }
+
+  function sceneVapour(k) {
+    if (!current || document.body.classList.contains('dim')) return;
+    const id = current.id;
+    if (id === 'sBucket') {
+      const r = $('#rimMark').getBoundingClientRect();
+      vapourFrom(r.left + r.width * 0.1, r.right - r.width * 0.1, r.top + 6 * S, 0.06, k, 0.7);
+    } else if (id === 'sSplash') {
+      const b = $('#splashCan').getBoundingClientRect();
+      vapourFrom(b.left - b.width * 0.8, b.right + b.width * 0.8, b.bottom - b.height * 0.08, 0.1, k, 0.8, 1.3);
+    } else if (id === 'sPack') {
+      const { m } = axis(packCan), g = $('#glass').getBoundingClientRect();
+      vapourFrom(m.x - 24 * S, m.x + 24 * S, m.y + 4 * S, 0.03, k, 0.5, 0.4, 0.011);
+      vapourFrom(g.left + g.width * 0.25, g.right - g.width * 0.25, g.top + 4 * S, 0.02, k, 0.4, 0.4, 0.011);
+    }
   }
 
   function drawPours(now, k) {
@@ -684,40 +1060,18 @@
     }
   }
 
-  function drawSwirl(k) {
-    const el = $('.swirl'), b = el.getBoundingClientRect();
-    const ox = b.left + b.width / 2, oy = b.top + b.height / 2, R = b.width / 2 * 0.62;
-    for (let i = 0; i < 9 * K * k; i++) V.push({ a: rand(0, Math.PI * 2), r: R * rand(0.4, 1), w: rand(0.8, 2.4) });
-    cx.globalAlpha = 0.38;
-    cx.strokeStyle = '#fff1cf';
-    cx.lineCap = 'round';
-    for (const wv of [0, 1]) {
-      cx.lineWidth = (wv ? 2.6 : 1.2) * Math.max(S * 2, 0.8);
-      cx.beginPath();
-      for (let i = V.length - 1; i >= 0; i--) {
-        const f = V[i];
-        if ((f.w > 1.6) !== !!wv) continue;
-        const a0 = f.a;
-        f.a += (R / (f.r + 20)) * 0.07 * k;
-        f.r -= (f.r * 0.012 + 0.3) * k;
-        if (f.r < R * 0.14) { V.splice(i, 1); continue; }
-        cx.moveTo(ox + Math.cos(a0 - 0.08) * f.r, oy + Math.sin(a0 - 0.08) * f.r);
-        cx.arc(ox, oy, f.r, a0 - 0.08, f.a);
-      }
-      cx.stroke();
-    }
-    cx.globalAlpha = 1;
-  }
-
   function frame(now) {
     const k = lastFrame ? Math.min((now - lastFrame) / 16.7, 4) : 1;
     lastFrame = now;
+    slowmo = slowNow(now);
+    const kl = k * slowmo;
     cx.clearRect(0, 0, W, H);
-    emit(k, now);
-    if (swirlOn) drawSwirl(k);
+    sceneVapour(k);
+    drawVapour(k);
     if (streamOn) drawStream(now);
-    if (pourCans.length) drawPours(now, k);
-    updateDrops(k);
+    if (pourCans.length) drawPours(now, kl);
+    updateDrops(kl);
+    syncReflections();
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -727,7 +1081,24 @@
      ================================================================ */
 
   const canA = $('#canA'), canB = $('#canB'), packCan = $('#packCan');
-  const HOME = new Map([[canA, { x: 0, y: 0, r: -7 }], [canB, { x: 0, y: 0, r: 5 }], [packCan, { x: 0, y: 0, r: 0 }]]);
+  const splashCan = $('#splashCan');
+  const HOME = new Map([[canA, { x: 0, y: 0, r: -7 }], [canB, { x: 0, y: 0, r: 5 }], [packCan, { x: 0, y: 0, r: 0 }], [splashCan, { x: 0, y: 0, r: -3 }]]);
+
+  // Mirror images on the wet tabletop (Bloom-style). The can's reflection follows its pose every frame.
+  const reflCan = document.createElement('div');
+  reflCan.className = 'reflect rCan';
+  reflCan.innerHTML = canSVG('pack');
+  packCan.before(reflCan);
+  const reflGlass = $('#glass').cloneNode(true);
+  reflGlass.removeAttribute('id');
+  reflGlass.classList.add('reflect', 'rGlass');
+  $('#glass').before(reflGlass);
+
+  function syncReflections() {
+    if (!current || current.id !== 'sPack') return;
+    const t = getComputedStyle(packCan).transform;
+    reflCan.style.transform = 'scaleY(-1)' + (t && t !== 'none' ? ' ' + t : '');
+  }
   const tf = (p) => `translate(${p.x}px, ${p.y}px) rotate(${p.r}deg)`;
 
   function setPose(el, p) {
@@ -748,12 +1119,11 @@
     const next = $('#' + id), prev = current;
     sfx.whoosh();
     if (prev && prev !== next) {
-      prev.animate([{ opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }, { opacity: 0, filter: RM ? 'none' : 'blur(14px)', transform: 'scale(1.12)' }],
-        { duration: dur, easing: 'ease-in' }).finished.then(() => prev.classList.remove('on')).catch(() => {});
+      prev.animate([{ opacity: 1 }, { opacity: 0 }], { duration: dur, easing: 'ease-in-out' })
+        .finished.then(() => prev.classList.remove('on')).catch(() => {});
     }
     next.classList.add('on');
-    next.animate([{ opacity: 0, filter: RM ? 'none' : 'blur(14px)', transform: 'scale(.92)' }, { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }],
-      { duration: dur + 160, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    next.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, easing: 'ease-in-out' });
     current = next;
   }
 
@@ -761,24 +1131,6 @@
     if (camAnim) camAnim.cancel();
     camAnim = camera.animate([{ transform: from }, { transform: to }], { duration: RM ? 1 : ms, easing, fill: 'forwards' });
     return camAnim;
-  }
-
-  function shake(power = 14, dur = 500) {
-    if (RM) return;
-    const frames = [];
-    for (let i = 0; i < 10; i++) {
-      const f = 1 - i / 10;
-      frames.push({ translate: `${rand(-power, power) * f}px ${rand(-power, power) * f}px` });
-    }
-    frames.push({ translate: '0 0' });
-    world.animate(frames, { duration: dur, composite: 'add' });
-  }
-
-  function flash(strength = 0.8, dur = 400) {
-    const f = document.createElement('div');
-    f.style.cssText = 'position:fixed;inset:0;background:#fff;pointer-events:none;z-index:20';
-    document.body.appendChild(f);
-    f.animate([{ opacity: strength }, { opacity: 0 }], { duration: dur, easing: 'ease-out' }).finished.then(() => f.remove());
   }
 
   const t1 = $('#titles .t1'), t2 = $('#titles .t2');
@@ -822,14 +1174,15 @@
     $$('.scene').forEach((s) => { s.classList.remove('on'); s.getAnimations().forEach((a) => a.cancel()); });
     current = null;
     HOME.forEach((p, el) => setPose(el, p));
-    [canA, canB, packCan].forEach((el) => setLevel(el, 100));
+    [canA, canB, packCan, reflCan].forEach((el) => setLevel(el, 100));
     iceFront.classList.remove('jostle'); iceBack.classList.remove('jostle');
     if (camAnim) camAnim.cancel();
     camera.style.transform = '';
     clearTitles();
     show(null);
-    L.length = 0; V.length = 0;
-    pourCans = []; streamOn = false; swirlOn = false; sprayUntil = 0;
+    L.length = 0; VAP.length = 0;
+    pourCans = []; streamOn = false; slowT0 = 0; slowHold = 0; slowRamp = 0;
+    $$('.icePile').forEach((el) => el.classList.remove('jostle'));
     ['#againBtn', '#retryBtn'].forEach((b) => $(b).classList.remove('ready'));
   }
 
@@ -852,8 +1205,8 @@
     musicSet('build');
     jostle();
     await Promise.all([
-      moveTo(canA, { x: -10, y: -380, r: -4 }, 900, 'cubic-bezier(.3,0,.2,1)'),
-      moveTo(canB, { x: 10, y: -400, r: 3 }, 900, 'cubic-bezier(.3,0,.2,1)'),
+      moveTo(canA, { x: -10, y: -380, r: -4 }, 1200, 'cubic-bezier(.45,0,.25,1)'),
+      moveTo(canB, { x: 10, y: -400, r: 3 }, 1300, 'cubic-bezier(.45,0,.25,1)'),
     ]);
     for (const el of [canA, canB]) {
       const b = el.getBoundingClientRect();
@@ -864,8 +1217,8 @@
     sfx.whoosh();
     cam('scale(1.07) translateY(1%)', 'scale(1.12) translateY(4%)', 2600);
     await Promise.all([
-      moveTo(canA, { x: -50, y: -520, r: 152 }, 950),
-      moveTo(canB, { x: 60, y: -560, r: -146 }, 950),
+      moveTo(canA, { x: -50, y: -520, r: 152 }, 1100),
+      moveTo(canB, { x: 60, y: -560, r: -146 }, 1150),
     ]);
     sfx.psst();
     pourCans = [canA, canB];
@@ -892,28 +1245,37 @@
     sfx.psst();
     streamOn = true;
     sfx.glug(2600);
-    await sleep(350);
-    musicSet('drop');
-    sfx.hit();
-    title(t2);
-    shake(10, 400);
-    await sleep(2500);
+    await sleep(2800);
     streamOn = false;
 
-    // 4 · Looking down into the glass: the swirl
+    // 4 · The can slams into crushed ice: splash crown, cold vapour, title
     hideTitles();
-    cut('sSwirl');
-    swirlOn = true;
-    $('.swirl').animate([{ transform: 'scale(1.05) rotate(0)' }, { transform: 'scale(1.25) rotate(-25deg)' }], { duration: 2400, easing: 'ease-in', fill: 'forwards' });
-    sfx.fizz(2200);
-    await sleep(2300);
-    swirlOn = false; V.length = 0;
+    cut('sSplash', 400);
+    setPose(splashCan, { x: 0, y: -1500, r: -8 });
+    cam('scale(1.04)', 'scale(1.1)', 3600, 'linear');
+    await sleep(120);
+    await moveTo(splashCan, { x: 0, y: 0, r: -3 }, 560, 'cubic-bezier(.5,0,1,.5)');
+    {
+      const b = splashCan.getBoundingClientRect();
+      setSlowmo(0.22, 1500, 1500);
+      crown(b.left + b.width / 2, b.bottom - b.height * 0.14, b.width, 1.1);
+      const pile = $('.icePile.front');
+      pile.classList.remove('jostle'); void pile.getBoundingClientRect(); pile.classList.add('jostle');
+    }
+    sfx.splash(); sfx.ice();
+    musicSet('drop');
+    sfx.hit();
+    clearTitles();
+    title(t2);
+    moveTo(splashCan, { x: 0, y: 8, r: -3 }, 1600, 'cubic-bezier(.2,.7,.3,1)');
+    await sleep(2600);
     clearTitles();
 
     // 5 · Packshot + question
+    L.length = 0; VAP.length = 0;
     musicSet('build');
     cut('sPack', 600);
-    cam('scale(1.12) translateY(2%)', 'scale(1)', 2200, 'cubic-bezier(.2,.8,.2,1)');
+    cam('scale(1.06) translateY(1%)', 'scale(1)', 3000, 'cubic-bezier(.3,.6,.3,1)');
     await sleep(1000);
     resetChoices();
     show('question');
@@ -930,21 +1292,20 @@
     await sleep(350);
     show(null);
     musicSet('drop');
-    sfx.boom();
-    flash(0.9, 600);
-    shake(22, 800);
     document.body.classList.add('party');
-    cam('scale(1)', 'scale(1.08) translateY(2%)', 900, 'cubic-bezier(.2,1.4,.4,1)');
+    cam('scale(1)', 'scale(1.07) translateY(1.5%)', 4200, 'ease-in-out');
+    await moveTo(packCan, { x: 0, y: -110, r: -3 }, 1000, 'cubic-bezier(.4,0,.2,1)');
+    await moveTo(packCan, { x: 0, y: 0, r: 0 }, 360, 'cubic-bezier(.6,0,1,.6)');
+    const b = packCan.getBoundingClientRect();
+    setSlowmo(0.25, 1700, 1600);
+    crown(b.left + b.width / 2, b.bottom - b.height * 0.01, b.width, 0.85, 0.3);
+    swirlAround(packCan);
+    sfx.splash();
     sfx.psst();
-    const { m } = axis(packCan);
-    for (let i = 0; i < 160 * K; i++) {
-      drop(m.x + rand(-8, 8) * S, m.y, rand(-9, 9) * S * 2, -rand(6, 20) * S * 2, rand(2, 6) * S);
-    }
-    sprayUntil = performance.now() + SPRAY_MS;
-    sfx.fizz(SPRAY_MS);
-    await sleep(500);
+    sfx.fizz(3000);
+    await sleep(700);
     show('yes');
-    await sleep(1800);
+    await sleep(1600);
     $('#againBtn').classList.add('ready');
     $('#againBtn').focus({ preventScroll: true });
   }
@@ -955,11 +1316,11 @@
     musicSet('sad');
     sfx.powerDown();
     document.body.classList.add('dim');
+    tweenLevel(reflCan, 100, 6, 1800);
     await tweenLevel(packCan, 100, 6, 1800);
     await moveTo(packCan, [{ x: 0, y: 0, r: -6, o: 0.25 }, { x: 0, y: 0, r: 5, o: 0.5 }, { x: 70, y: -112, r: -90 }], 1500, 'cubic-bezier(.6,0,.9,.6)');
     sfx.thud();
-    shake(8, 300);
-    await moveTo(packCan, [{ x: 64, y: -128, r: -86, o: 0.4 }, { x: 68, y: -112, r: -90 }], 400, 'ease-out');
+    await moveTo(packCan, [{ x: 66, y: -120, r: -88, o: 0.4 }, { x: 68, y: -112, r: -90 }], 500, 'ease-out');
     show('no');
     const out = $('#noTitle');
     out.textContent = '';
@@ -976,8 +1337,9 @@
     show(null);
     document.body.classList.remove('dim');
     musicSet('build');
-    await moveTo(packCan, [{ x: -10, y: -40, r: -20, o: 0.6 }, { x: 0, y: 0, r: 0 }], 800, 'cubic-bezier(.3,1.4,.5,1)');
+    await moveTo(packCan, [{ x: -10, y: -40, r: -20, o: 0.6 }, { x: 0, y: 0, r: 0 }], 1000, 'cubic-bezier(.3,.7,.3,1)');
     sfx.thud();
+    tweenLevel(reflCan, 6, 100, 1100);
     await tweenLevel(packCan, 6, 100, 1100, (v) => sfx.blip(300 + v * 6, 0.05));
     resetChoices();
     show('question');
