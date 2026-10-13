@@ -437,35 +437,49 @@
 
   const L = [];
 
-  // Pre-rendered glossy droplets: amber body, dark rim, sharp specular, caustic glow
+  // Pre-rendered droplets: see-through amber body, dark refractive rim, bright lower crescent, sharp specular
   function sprite(core, edge, rim, foam = false) {
     const n = 64, r = n / 2, c = document.createElement('canvas');
     c.width = c.height = n;
     const g = c.getContext('2d');
-    const body = g.createRadialGradient(r * 0.8, r * 0.75, r * 0.05, r, r, r);
+    const body = g.createRadialGradient(r * 0.82, r * 0.78, r * 0.05, r, r, r);
     body.addColorStop(0, core);
-    body.addColorStop(0.68, edge);
-    body.addColorStop(0.9, rim);
+    body.addColorStop(0.62, edge);
+    body.addColorStop(0.88, rim);
     body.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = body;
     g.beginPath(); g.arc(r, r, r * 0.98, 0, Math.PI * 2); g.fill();
     if (!foam) {
-      const ca = g.createRadialGradient(r * 1.12, r * 1.42, 0, r * 1.12, r * 1.42, r * 0.55);
-      ca.addColorStop(0, 'rgba(255,246,205,.85)');
-      ca.addColorStop(1, 'rgba(255,246,205,0)');
+      g.strokeStyle = 'rgba(255,240,200,.75)';
+      g.lineWidth = n * 0.06;
+      g.lineCap = 'round';
+      g.beginPath(); g.arc(r, r, r * 0.74, Math.PI * 0.2, Math.PI * 0.8); g.stroke();
+      const ca = g.createRadialGradient(r * 1.1, r * 1.38, 0, r * 1.1, r * 1.38, r * 0.5);
+      ca.addColorStop(0, 'rgba(255,250,215,.7)');
+      ca.addColorStop(1, 'rgba(255,250,215,0)');
       g.fillStyle = ca;
       g.beginPath(); g.arc(r, r, r * 0.9, 0, Math.PI * 2); g.fill();
     }
-    g.fillStyle = 'rgba(255,255,255,.95)';
-    g.beginPath(); g.ellipse(r * 0.66, r * 0.58, r * 0.22, r * 0.13, -0.6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.97)';
+    g.beginPath(); g.ellipse(r * 0.66, r * 0.56, r * 0.2, r * 0.12, -0.6, 0, Math.PI * 2); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.6)';
+    g.beginPath(); g.arc(r * 1.32, r * 1.18, r * 0.06, 0, Math.PI * 2); g.fill();
+    return c;
+  }
+  function mistSprite() {
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gr.addColorStop(0, 'rgba(255,236,190,.9)'); gr.addColorStop(0.5, 'rgba(255,190,110,.45)'); gr.addColorStop(1, 'rgba(255,170,90,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 32, 32);
     return c;
   }
   const DRINK = [
-    sprite('rgba(255,222,130,.96)', 'rgba(246,150,44,.92)', 'rgba(150,50,14,.9)'),
-    sprite('rgba(255,206,110,.96)', 'rgba(238,118,52,.92)', 'rgba(140,34,24,.9)'),
-    sprite('rgba(255,232,160,.96)', 'rgba(250,170,60,.9)', 'rgba(160,70,20,.85)'),
+    sprite('rgba(255,236,170,.55)', 'rgba(246,152,48,.8)', 'rgba(120,38,10,.92)'),
+    sprite('rgba(255,224,150,.55)', 'rgba(238,124,50,.82)', 'rgba(116,30,16,.92)'),
+    sprite('rgba(255,244,190,.5)', 'rgba(250,172,62,.78)', 'rgba(130,52,14,.9)'),
   ];
-  const FOAM = sprite('rgba(255,255,250,.98)', 'rgba(250,240,220,.85)', 'rgba(220,200,170,.4)', true);
+  const FOAM = sprite('rgba(255,255,250,.98)', 'rgba(250,242,224,.9)', 'rgba(222,204,172,.5)', true);
+  const MIST = mistSprite();
   let lastFrame = 0;
   let pourCans = [];          // cans currently pouring into the bucket
   let streamOn = false;       // diagonal pour close-up
@@ -473,9 +487,14 @@
   let sprayUntil = 0, SPRAY_MS = 3800;
   const V = [];               // swirl flecks
 
-  function drop(x, y, vx, vy, r, foam = false) {
-    if (L.length > 1200) return;
-    L.push({ x, y, vx, vy, r, foam, img: foam ? FOAM : pick(DRINK), life: 1 });
+  // kind: 'drop' (falls), 'foam' (light, fades), 'patch' (foam that floats where the pour lands), 'mist'
+  function drop(x, y, vx, vy, r, foam = false, kind) {
+    if (L.length > 1400) return;
+    kind = kind || (foam ? 'foam' : 'drop');
+    const img = kind === 'drop' ? pick(DRINK) : kind === 'mist' ? MIST : FOAM;
+    const g = kind === 'drop' ? 1 : kind === 'foam' ? 0.35 : kind === 'mist' ? 0.25 : 0.01;
+    const decay = kind === 'drop' ? 0 : kind === 'foam' ? 0.015 : kind === 'mist' ? 0.025 : 0.01;
+    L.push({ x, y, vx, vy, r, foam: kind !== 'drop', img, g, decay, life: 1 });
   }
 
   function centerOf(el) {
@@ -499,7 +518,8 @@
       for (let i = 0; i < 11 * K * k * (0.35 + 0.65 * left); i++) {
         drop(m.x + rand(-4, 4) * S, m.y, (sway + rand(-0.12, 0.12)) * rand(3, 6) * S * 2, -lift * rand(0.75, 1.05), rand(2, 5) * S);
       }
-      if (Math.random() < 0.5 * K) drop(m.x, m.y, rand(-1.5, 1.5) * S, -rand(2, 6) * S, rand(2, 6) * S, true);
+      if (Math.random() < 0.6 * K) drop(m.x, m.y, rand(-1.5, 1.5) * S, -rand(2, 6) * S, rand(2, 6) * S, true);
+      for (let i = 0; i < 3 * K * k; i++) drop(m.x + rand(-6, 6) * S, m.y, (sway + rand(-0.4, 0.4)) * rand(2, 8) * S, -lift * rand(0.3, 0.9), rand(1.5, 3.5) * S, true, 'mist');
     }
   }
 
@@ -508,10 +528,11 @@
     const rimR = current && current.id === 'sBucket' ? $('#rimMark').getBoundingClientRect() : null;
     for (let i = L.length - 1; i >= 0; i--) {
       const d = L[i];
-      d.vy += (d.foam ? 0.35 : 1) * G * k;
+      d.vy += d.g * G * k;
+      if (d.g < 0.05) { d.vx *= 0.95; d.vy *= 0.95; }
       d.x += d.vx * k; d.y += d.vy * k;
-      if (d.foam) d.life -= 0.015 * k;
-      if (rimR && d.vy > 0 && d.y > rimR.top && d.x > rimR.left && d.x < rimR.right) {
+      d.life -= d.decay * k;
+      if (rimR && d.g > 0.5 && d.vy > 0 && d.y > rimR.top && d.x > rimR.left && d.x < rimR.right) {
         if (!d.foam && Math.random() < 0.25) {
           for (let j = 0; j < 2; j++) drop(d.x, rimR.top - 2, rand(-2, 2) * S * 2, -rand(2, 6) * S * 2, rand(1.2, 3) * S);
           if (Math.random() < 0.3) drop(d.x, rimR.top - 4, rand(-1, 1) * S, -rand(1, 3) * S, rand(3, 8) * S, true);
@@ -520,10 +541,11 @@
         continue;
       }
       if (d.y > H + 40 || d.life <= 0 || d.x < -80 || d.x > W + 80) { L.splice(i, 1); continue; }
+      if (rimR && d.foam && d.y > rimR.top + 6 && d.x > rimR.left && d.x < rimR.right) { L.splice(i, 1); continue; }
       const sp = Math.hypot(d.vx, d.vy) || 0.001;
-      const len = d.r * 2 * (1 + Math.min(sp / (9 * S + 0.1), 1.4)), wid = d.r * 2;
+      const len = d.r * 2 * (1 + Math.min(sp / (9 * S + 0.1), 1.6)), wid = d.r * 2 * (1 - Math.min(sp / (40 * S + 0.1), 0.25));
       const c = d.vx / sp, sn = d.vy / sp;
-      cx.globalAlpha = d.foam ? Math.max(d.life, 0) : 1;
+      cx.globalAlpha = d.foam ? Math.max(Math.min(d.life * 1.5, 1), 0) : 0.95;
       cx.setTransform(DPR * c * len, DPR * sn * len, -DPR * sn * wid, DPR * c * wid, DPR * d.x, DPR * d.y);
       cx.drawImage(d.img, -0.5, -0.5, 1, 1);
     }
@@ -534,7 +556,7 @@
   // A pour stream as a glossy tube: overlapping droplet sprites along a ballistic path
   function streamPath(m, ux, uy, v0, stopY, now, seed) {
     const g = 0.9 * S, pts = [];
-    for (let t = 0; t < 90; t += 1) {
+    for (let t = 0; t < 90; t += 0.5) {
       const amp = Math.min(t, 22) * 0.45 * S;
       const wob = Math.sin(t * 0.22 - now * 0.011 + seed) * amp + Math.sin(t * 0.7 - now * 0.026 + seed) * 2 * S;
       const x = m.x + ux * v0 * t - uy * wob, y = m.y + uy * v0 * t + 0.5 * g * t * t + ux * wob;
@@ -544,42 +566,99 @@
     return pts;
   }
 
-  // Layered strokes give the stream a smooth cross-section: dark amber edge → golden core → glossy highlight
-  const TUBE = [[1, '#8a2a10', 0.9], [0.88, '#d9661f', 0.95], [0.72, '#f39433', 1], [0.52, '#ffbf55', 1], [0.32, '#ffe08e', 0.95], [0.14, '#fff6d8', 0.9]];
+  // The stream is drawn into its own layer (opaque), then laid over the scene a little see-through.
+  const sl = document.createElement('canvas'), sx = sl.getContext('2d');
+  const FIZZ = new Map();
+  const CROSS = [[0, 'rgb(120,38,8)'], [0.06, 'rgb(222,112,32)'], [0.15, 'rgb(252,176,66)'], [0.27, 'rgb(255,222,150)'],
+    [0.42, 'rgb(255,242,208)'], [0.55, 'rgb(255,250,232)'], [0.7, 'rgb(255,232,176)'], [0.84, 'rgb(250,180,70)'], [0.94, 'rgb(214,98,28)'], [1, 'rgb(110,34,8)']];
 
-  function drawTube(pts, w, now) {
-    if (pts.length < 2) return;
-    const trace = (ox = 0, oy = 0) => {
-      cx.beginPath();
-      cx.moveTo(pts[0][0] + ox, pts[0][1] + oy);
-      for (let i = 1; i < pts.length; i++) cx.lineTo(pts[i][0] + ox, pts[i][1] + oy);
-    };
-    cx.lineCap = 'round';
-    cx.lineJoin = 'round';
-    for (const [f, col, a] of TUBE) {
-      trace(-w * (1 - f) * 0.12, -w * (1 - f) * 0.1);
-      cx.globalAlpha = a;
-      cx.strokeStyle = col;
-      cx.lineWidth = w * f;
-      cx.stroke();
+  function drawTube(pts, w, now, seed = 0, k = 1) {
+    const n = pts.length;
+    if (n < 2) return;
+    if (sl.width !== cv.width || sl.height !== cv.height) { sl.width = cv.width; sl.height = cv.height; }
+    sx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    sx.clearRect(0, 0, W, H);
+
+    // edges: wobbling thickness that travels down the stream
+    const Lp = [], Rp = [], Nn = [], Ww = [];
+    for (let i = 0; i < n; i++) {
+      const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, n - 1)];
+      let tx = b[0] - a[0], ty = b[1] - a[1];
+      const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+      const nx = -ty, ny = tx;
+      const t = i * 0.5, neck = Math.min(1, 0.74 + t * 0.06);
+      const ww = w * neck * (1 + t * 0.004) * (0.9 + 0.07 * Math.sin(t * 0.45 - now * 0.012 + seed) + 0.04 * Math.sin(t * 1.1 - now * 0.02 + seed * 3));
+      Nn.push([nx, ny]); Ww.push(ww);
+      Lp.push([pts[i][0] + nx * ww / 2, pts[i][1] + ny * ww / 2]);
+      Rp.push([pts[i][0] - nx * ww / 2, pts[i][1] - ny * ww / 2]);
     }
-    // moving ripples and a sharp specular line sell the motion
-    trace(-w * 0.2, -w * 0.14);
-    cx.globalAlpha = 0.85;
-    cx.strokeStyle = '#ffffff';
-    cx.lineWidth = Math.max(w * 0.07, 1);
-    cx.setLineDash([w * 0.9, w * 0.35]);
-    cx.lineDashOffset = -now * 0.9 * S;
-    cx.stroke();
-    trace(w * 0.18, w * 0.1);
-    cx.globalAlpha = 0.35;
-    cx.strokeStyle = '#fff2c8';
-    cx.lineWidth = Math.max(w * 0.05, 1);
-    cx.setLineDash([w * 0.3, w * 0.6]);
-    cx.lineDashOffset = -now * 1.3 * S;
-    cx.stroke();
-    cx.setLineDash([]);
+
+    // body: each slice gets a gradient across the stream (dark refracting edges, bright core)
+    for (let i = 0; i < n - 1; i++) {
+      const j = Math.min(i + 1, n - 1);
+      const g = sx.createLinearGradient(Lp[i][0], Lp[i][1], Rp[i][0], Rp[i][1]);
+      for (const [o, c] of CROSS) g.addColorStop(o, c);
+      sx.fillStyle = g;
+      sx.beginPath();
+      sx.moveTo(Lp[i][0], Lp[i][1]); sx.lineTo(Lp[j][0], Lp[j][1]);
+      sx.lineTo(Rp[j][0], Rp[j][1]); sx.lineTo(Rp[i][0], Rp[i][1]);
+      sx.closePath();
+      sx.fill();
+      sx.strokeStyle = g; sx.lineWidth = 1; sx.stroke();
+    }
+
+    // fizz: little bubbles carried down inside the stream
+    let fz = FIZZ.get(seed);
+    if (!fz) { fz = []; for (let i = 0; i < 70; i++) fz.push({ u: Math.random(), o: rand(-0.36, 0.36), r: rand(0.6, 2.2), v: rand(0.006, 0.014) }); FIZZ.set(seed, fz); }
+    sx.lineWidth = Math.max(0.8, w * 0.012);
+    sx.strokeStyle = 'rgba(255,248,220,.75)';
+    sx.fillStyle = 'rgba(255,255,255,.9)';
+    for (const f of fz) {
+      f.u += f.v * k; if (f.u > 1) { f.u -= 1; f.o = rand(-0.36, 0.36); }
+      const fi = f.u * (n - 1), i0 = fi | 0, t = fi - i0, i1 = Math.min(i0 + 1, n - 1);
+      const px = pts[i0][0] + (pts[i1][0] - pts[i0][0]) * t, py = pts[i0][1] + (pts[i1][1] - pts[i0][1]) * t;
+      const ww = Ww[i0], rr = f.r * Math.max(w / 40, 0.8);
+      const bx = px + Nn[i0][0] * f.o * ww, by = py + Nn[i0][1] * f.o * ww;
+      sx.beginPath(); sx.arc(bx, by, rr, 0, Math.PI * 2); sx.stroke();
+      sx.beginPath(); sx.arc(bx - rr * 0.35, by - rr * 0.35, rr * 0.3, 0, Math.PI * 2); sx.fill();
+    }
+
+    // highlights: a broad soft sheen, a sharp broken specular, a faint second reflection
+    const line = (off, width, color, alpha, dash, speed) => {
+      sx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const x = pts[i][0] + Nn[i][0] * Ww[i] * off, y = pts[i][1] + Nn[i][1] * Ww[i] * off;
+        i ? sx.lineTo(x, y) : sx.moveTo(x, y);
+      }
+      sx.globalAlpha = alpha; sx.strokeStyle = color; sx.lineWidth = width;
+      sx.lineCap = 'round'; sx.lineJoin = 'round';
+      sx.setLineDash(dash || []); sx.lineDashOffset = -now * (speed || 0) * S;
+      sx.stroke();
+    };
+    line(0.12, w * 0.3, '#fffaf0', 0.18);
+    line(0.3, Math.max(w * 0.055, 1.2), '#ffffff', 0.85, [w * 5, w * 0.25, w * 2.2, w * 0.18, w * 3.4, w * 0.4], 1.1);
+    line(0.34, Math.max(w * 0.02, 0.8), '#ffffff', 0.95, [w * 0.08, w * 0.9, w * 0.05, w * 1.6], 1.6);
+    line(-0.28, Math.max(w * 0.03, 0.8), '#fff0c8', 0.35, [w * 3, w * 0.6], 1.4);
+    line(0.47, 1.2, '#5a1604', 0.45);
+    line(-0.47, 1.2, '#5a1604', 0.45);
+    sx.setLineDash([]);
+    sx.globalAlpha = 1;
+
+    cx.globalAlpha = 0.9;
+    cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.drawImage(sl, 0, 0);
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     cx.globalAlpha = 1;
+  }
+
+  // Where a stream lands: a crown of droplets, fine mist and a floating foam patch
+  function splashAt(x, y, k, power) {
+    for (let j = 0; j < 4 * K * k; j++) {
+      const a = -Math.PI / 2 + rand(-1.1, 1.1), sp = rand(2, 7) * S * 2 * power;
+      drop(x + rand(-8, 8) * S, y - 2, Math.cos(a) * sp, Math.sin(a) * sp, rand(1.4, 4.5) * S);
+    }
+    for (let j = 0; j < 3 * K * k; j++) drop(x + rand(-12, 12) * S, y - 4, rand(-2, 2) * S, -rand(1, 5) * S, rand(1.5, 3) * S, true, 'mist');
+    if (Math.random() < 0.7 * k) drop(x + rand(-26, 26) * S, y - rand(2, 10) * S, rand(-0.6, 0.6) * S, -rand(0, 0.6) * S, rand(5, 12) * S, true, 'patch');
   }
 
   function drawPours(now, k) {
@@ -587,10 +666,9 @@
     pourCans.forEach((canEl, i) => {
       const { m, ux, uy } = axis(canEl);
       const pts = streamPath(m, ux, uy, 3.2 * S, rim.top, now, i * 2.1);
-      drawTube(pts, 30 * S, now);
+      drawTube(pts, 30 * S, now, i * 2.1, k);
       const end = pts[pts.length - 1];
-      for (let j = 0; j < 3 * K * k; j++) drop(end[0] + rand(-10, 10) * S, rim.top - 4, rand(-3, 3) * S * 2, -rand(3, 9) * S * 2, rand(2, 5.5) * S);
-      if (Math.random() < 0.5 * k) drop(end[0] + rand(-14, 14) * S, rim.top - 6, rand(-1, 1) * S, -rand(1, 4) * S, rand(4, 10) * S, true);
+      splashAt(end[0], rim.top, k, 1);
     });
   }
 
@@ -598,10 +676,11 @@
     const { m, ux, uy } = axis($('#sPour .pourCan'));
     const pts = streamPath(m, ux, uy, 17 * S, H + 80, now, 0);
     const w = 104 * S;
-    drawTube(pts, w, now);
-    for (let i = 0; i < 3 * K; i++) {
-      const p = pts[(Math.random() * (pts.length - 1)) | 0];
-      drop(p[0] + rand(-w, w) * 0.4, p[1], ux * 17 * S * rand(0.6, 1.1), uy * 10 * S + rand(-2, 2) * S, rand(3, 8) * S);
+    drawTube(pts, w, now, 7);
+    // a few drops peel off the edges of the stream
+    for (let i = 0; i < 2 * K; i++) {
+      const p = pts[(rand(0.2, 1) * (pts.length - 1)) | 0];
+      drop(p[0] + rand(-w, w) * 0.45, p[1], ux * 17 * S * rand(0.6, 1.05), uy * 10 * S + rand(-2, 2) * S, rand(2, 6) * S);
     }
   }
 
