@@ -921,8 +921,8 @@
   function streamPath(m, ux, uy, v0, stopY, now, seed) {
     const g = 0.9 * S, pts = [];
     for (let t = 0; t < 90; t += 0.5) {
-      const amp = Math.min(t, 22) * 0.45 * S;
-      const wob = Math.sin(t * 0.22 - now * 0.011 + seed) * amp + Math.sin(t * 0.7 - now * 0.026 + seed) * 2 * S;
+      const amp = Math.min(t, 22) * 0.1 * S;
+      const wob = Math.sin(t * 0.18 - now * 0.008 + seed) * amp + Math.sin(t * 0.6 - now * 0.02 + seed) * 0.5 * S;
       const x = m.x + ux * v0 * t - uy * wob, y = m.y + uy * v0 * t + 0.5 * g * t * t + ux * wob;
       pts.push([x, y]);
       if (y > stopY || y > H + 60 || x < -80 || x > W + 80) break;
@@ -930,90 +930,111 @@
     return pts;
   }
 
-  // The stream is drawn into its own layer (opaque), then laid over the scene a little see-through.
+  /* The stream is a flowing texture, not drawn lines. A long "photo" of a pour is painted once:
+     amber body that is dark where the edges refract, a soft golden core, long uneven streaks of light
+     and shade, a broken specular highlight and fizz bubbles. It is mapped segment by segment along
+     the stream's path and scrolled at the speed of the liquid, so everything in it flows downstream. */
   const sl = document.createElement('canvas'), sx = sl.getContext('2d');
-  const FIZZ = new Map();
-  // Clear energy drink: deep amber at the refracting edges, glowing gold through the middle
-  const CROSS = [[0, 'rgb(110,32,6)'], [0.07, 'rgb(208,96,24)'], [0.2, 'rgb(246,150,42)'], [0.36, 'rgb(255,190,80)'],
-    [0.5, 'rgb(255,214,120)'], [0.64, 'rgb(255,198,92)'], [0.8, 'rgb(248,156,46)'], [0.93, 'rgb(200,84,22)'], [1, 'rgb(100,28,6)']];
+  const TU = 1024, TV = 128;
+  const STREAM_TEX = (function streamTexture() {
+    const r = rng(73), c = document.createElement('canvas');
+    c.width = TU * 2; c.height = TV;
+    const g = c.getContext('2d');
+    const t = document.createElement('canvas'); t.width = TU; t.height = TV;
+    const q = t.getContext('2d');
+    let gr = q.createLinearGradient(0, 0, 0, TV);
+    [[0, 'rgb(84,20,2)'], [0.06, 'rgb(170,70,14)'], [0.18, 'rgb(230,128,34)'], [0.34, 'rgb(250,168,58)'],
+     [0.5, 'rgb(255,192,86)'], [0.66, 'rgb(250,170,62)'], [0.82, 'rgb(226,120,30)'], [0.94, 'rgb(160,60,12)'], [1, 'rgb(76,18,2)']]
+      .forEach(([o, col]) => gr.addColorStop(o, col));
+    q.fillStyle = gr; q.fillRect(0, 0, TU, TV);
+    // everything below is drawn twice (x and x - TU) so the texture tiles seamlessly along the flow
+    const both = (fn) => { fn(0); fn(-TU); fn(TU); };
+    const streak = (x, y, len, h, col, blur) => both((o) => {
+      q.filter = `blur(${blur}px)`; q.fillStyle = col;
+      q.beginPath(); q.ellipse(x + o, y, len / 2, h / 2, 0, 0, Math.PI * 2); q.fill();
+    });
+    // long streaks of light and shade, like the twisting surface of a real pour
+    for (let i = 0; i < 140; i++) {
+      const light = r() < 0.6, y = TV * (0.1 + r() * 0.8);
+      streak(r() * TU, y, 80 + r() * 420, 1 + r() * 6,
+        light ? `rgba(255,236,190,${(0.08 + r() * 0.2).toFixed(2)})` : `rgba(110,34,0,${(0.05 + r() * 0.13).toFixed(2)})`, 1.5 + r() * 3);
+    }
+    // broad soft sheen on the lit side and a faint bounce on the far side
+    streak(TU / 2, TV * 0.3, TU * 3, TV * 0.22, 'rgba(255,246,220,.22)', 10);
+    streak(TU / 2, TV * 0.5, TU * 3, TV * 0.3, 'rgba(255,214,120,.25)', 12);
+    streak(TU / 2, TV * 0.76, TU * 3, TV * 0.08, 'rgba(255,230,180,.1)', 6);
+    // the specular highlight: bright, sharp, broken up where the surface twists
+    for (let x = 0; x < TU;) {
+      const len = 30 + r() * 220, y = TV * (0.235 + (r() - 0.5) * 0.04);
+      streak(x + len / 2, y, len, 3 + r() * 3, `rgba(255,255,255,${(0.75 + r() * 0.25).toFixed(2)})`, 0.7);
+      streak(x + len / 2, y + 3, len * 0.8, 6, 'rgba(255,250,235,.18)', 3);
+      x += len + 4 + r() * 50;
+    }
+    for (let x = 0; x < TU;) {
+      const len = 20 + r() * 120;
+      streak(x + len / 2, TV * 0.8, len, 1.4, `rgba(255,240,210,${(0.2 + r() * 0.3).toFixed(2)})`, 0.8);
+      x += len + 30 + r() * 140;
+    }
+    q.filter = 'none';
+    // fizz carried in the drink
+    for (let i = 0; i < 340; i++) {
+      const x = r() * TU, y = TV * (0.14 + r() * 0.72), rad = 0.5 + Math.pow(r(), 3) * 2.4;
+      both((o) => {
+        q.strokeStyle = 'rgba(110,40,0,.45)'; q.lineWidth = 0.5;
+        q.beginPath(); q.arc(x + o, y, rad, 0, Math.PI * 2); q.stroke();
+        q.fillStyle = 'rgba(255,248,222,.85)';
+        q.beginPath(); q.arc(x + o - rad * 0.3, y - rad * 0.3, rad * 0.45, 0, Math.PI * 2); q.fill();
+      });
+    }
+    g.drawImage(t, 0, 0); g.drawImage(t, TU, 0);
+    return c;
+  })();
 
-  function drawTube(pts, w, now, seed = 0, k = 1) {
+  function drawTube(pts, w, now, seed = 0, k = 1, flow = 1) {
     const n = pts.length;
     if (n < 2) return;
     if (sl.width !== cv.width || sl.height !== cv.height) { sl.width = cv.width; sl.height = cv.height; }
-    sx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    sx.clearRect(0, 0, W, H);
+    sx.setTransform(1, 0, 0, 1, 0, 0);
+    sx.clearRect(0, 0, sl.width, sl.height);
 
-    // edges: wobbling thickness that travels down the stream
-    const Lp = [], Rp = [], Nn = [], Ww = [];
+    // edges: thickness swells and thins slowly as it travels down
+    const Lp = [], Rp = [];
     for (let i = 0; i < n; i++) {
       const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, n - 1)];
       let tx = b[0] - a[0], ty = b[1] - a[1];
       const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const nx = -ty, ny = tx;
       const t = i * 0.5, neck = Math.min(1, 0.74 + t * 0.06);
-      const ww = w * neck * (1 + t * 0.004) * (0.9 + 0.07 * Math.sin(t * 0.45 - now * 0.012 + seed) + 0.04 * Math.sin(t * 1.1 - now * 0.02 + seed * 3));
-      Nn.push([nx, ny]); Ww.push(ww);
-      Lp.push([pts[i][0] + nx * ww / 2, pts[i][1] + ny * ww / 2]);
-      Rp.push([pts[i][0] - nx * ww / 2, pts[i][1] - ny * ww / 2]);
+      const ww = w * neck * (1 + t * 0.004) * (0.93 + 0.05 * Math.sin(t * 0.45 - now * 0.012 + seed) + 0.025 * Math.sin(t * 1.3 - now * 0.021 + seed * 3));
+      Lp.push([pts[i][0] - ty * ww / 2, pts[i][1] + tx * ww / 2]);
+      Rp.push([pts[i][0] + ty * ww / 2, pts[i][1] - tx * ww / 2]);
     }
 
-    // body: each slice gets a gradient across the stream (dark refracting edges, bright core)
+    // map the texture onto the stream, one quad per segment, scrolling with the flow
+    const pxPerTex = w / TV;                           // screen px per texture px
+    let u = ((seed * 977 - now * flow * S / pxPerTex) % TU + TU) % TU;   // start offset; features flow downstream
     for (let i = 0; i < n - 1; i++) {
-      const j = Math.min(i + 1, n - 1);
-      const g = sx.createLinearGradient(Lp[i][0], Lp[i][1], Rp[i][0], Rp[i][1]);
-      for (const [o, c] of CROSS) g.addColorStop(o, c);
-      sx.fillStyle = g;
-      sx.beginPath();
-      sx.moveTo(Lp[i][0], Lp[i][1]); sx.lineTo(Lp[j][0], Lp[j][1]);
-      sx.lineTo(Rp[j][0], Rp[j][1]); sx.lineTo(Rp[i][0], Rp[i][1]);
-      sx.closePath();
-      sx.fill();
-      sx.strokeStyle = g; sx.lineWidth = 1; sx.stroke();
+      const p0 = pts[i], p1 = pts[i + 1];
+      const segLen = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]);
+      if (segLen < 0.01) continue;
+      const du = segLen / pxPerTex;
+      const ax = (Lp[i + 1][0] + Rp[i + 1][0]) / 2 - (Lp[i][0] + Rp[i][0]) / 2;
+      const ay = (Lp[i + 1][1] + Rp[i + 1][1]) / 2 - (Lp[i][1] + Rp[i][1]) / 2;
+      const bx = Rp[i][0] - Lp[i][0], by = Rp[i][1] - Lp[i][1];
+      sx.setTransform(DPR * ax, DPR * ay, DPR * bx, DPR * by, DPR * Lp[i][0], DPR * Lp[i][1]);
+      // each slice runs on a little past its end with the continuing texture, so the next slice
+      // covers the anti-aliased seam instead of leaving a hairline gap
+      sx.drawImage(STREAM_TEX, u, 0, du * 1.6, TV, 0, 0, 1.6, 1);
+      u += du; if (u >= TU) u -= TU;
     }
+    sx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // fizz: little bubbles carried down inside the stream
-    let fz = FIZZ.get(seed);
-    if (!fz) { fz = []; for (let i = 0; i < 70; i++) fz.push({ u: Math.random(), o: rand(-0.36, 0.36), r: rand(0.6, 2.2), v: rand(0.006, 0.014) }); FIZZ.set(seed, fz); }
-    sx.lineWidth = Math.max(0.8, w * 0.012);
-    sx.strokeStyle = 'rgba(255,248,220,.75)';
-    sx.fillStyle = 'rgba(255,255,255,.9)';
-    for (const f of fz) {
-      f.u += f.v * k; if (f.u > 1) { f.u -= 1; f.o = rand(-0.36, 0.36); }
-      const fi = f.u * (n - 1), i0 = fi | 0, t = fi - i0, i1 = Math.min(i0 + 1, n - 1);
-      const px = pts[i0][0] + (pts[i1][0] - pts[i0][0]) * t, py = pts[i0][1] + (pts[i1][1] - pts[i0][1]) * t;
-      const ww = Ww[i0], rr = f.r * Math.max(w / 40, 0.8);
-      const bx = px + Nn[i0][0] * f.o * ww, by = py + Nn[i0][1] * f.o * ww;
-      sx.beginPath(); sx.arc(bx, by, rr, 0, Math.PI * 2); sx.stroke();
-      sx.beginPath(); sx.arc(bx - rr * 0.35, by - rr * 0.35, rr * 0.3, 0, Math.PI * 2); sx.fill();
-    }
-
-    // highlights: a broad soft sheen, a sharp broken specular, a faint second reflection
-    const line = (off, width, color, alpha, dash, speed) => {
-      sx.beginPath();
-      for (let i = 0; i < n; i++) {
-        const x = pts[i][0] + Nn[i][0] * Ww[i] * off, y = pts[i][1] + Nn[i][1] * Ww[i] * off;
-        i ? sx.lineTo(x, y) : sx.moveTo(x, y);
-      }
-      sx.globalAlpha = alpha; sx.strokeStyle = color; sx.lineWidth = width;
-      sx.lineCap = 'round'; sx.lineJoin = 'round';
-      sx.setLineDash(dash || []); sx.lineDashOffset = -now * (speed || 0) * S;
-      sx.stroke();
-    };
-    line(0.12, w * 0.3, '#fffaf0', 0.18);
-    line(0.3, Math.max(w * 0.055, 1.2), '#ffffff', 0.85, [w * 5, w * 0.25, w * 2.2, w * 0.18, w * 3.4, w * 0.4], 1.1);
-    line(0.34, Math.max(w * 0.02, 0.8), '#ffffff', 0.95, [w * 0.08, w * 0.9, w * 0.05, w * 1.6], 1.6);
-    line(-0.28, Math.max(w * 0.03, 0.8), '#fff0c8', 0.35, [w * 3, w * 0.6], 1.4);
-    line(0.47, 1.2, '#5a1604', 0.45);
-    line(-0.47, 1.2, '#5a1604', 0.45);
-    sx.setLineDash([]);
-    sx.globalAlpha = 1;
-
-    cx.globalAlpha = 0.82;
+    // composite a touch see-through, softened like a lens would
+    cx.save();
     cx.setTransform(1, 0, 0, 1, 0, 0);
+    cx.globalAlpha = 0.9;
+    cx.filter = `blur(${Math.max(0.4, w * 0.006).toFixed(2)}px)`;
     cx.drawImage(sl, 0, 0);
-    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    cx.globalAlpha = 1;
+    cx.restore();
   }
 
   // Where a stream lands: a crown of drink and water droplets plus fine mist
@@ -1118,7 +1139,7 @@
     pourCans.forEach((canEl, i) => {
       const { m, ux, uy } = axis(canEl);
       const pts = streamPath(m, ux, uy, 3.2 * S, rim.top, now, i * 2.1);
-      drawTube(pts, 30 * S, now, i * 2.1, k);
+      drawTube(pts, 30 * S, now, i * 2.1, k, 0.45);
       const end = pts[pts.length - 1];
       splashAt(end[0], rim.top, k, 1);
     });
@@ -1128,7 +1149,7 @@
     const { m, ux, uy } = axis($('#sPour .pourCan'));
     const pts = streamPath(m, ux, uy, 17 * S, H + 80, now, 0);
     const w = 104 * S;
-    drawTube(pts, w, now, 7);
+    drawTube(pts, w, now, 7, 1, 1);
     // a few drops peel off the edges of the stream
     for (let i = 0; i < 2 * K; i++) {
       const p = pts[(rand(0.2, 1) * (pts.length - 1)) | 0];
