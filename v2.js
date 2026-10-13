@@ -936,55 +936,63 @@
      the stream's path and scrolled at the speed of the liquid, so everything in it flows downstream. */
   const sl = document.createElement('canvas'), sx = sl.getContext('2d');
   const TU = 1024, TV = 128;
+  // A real pour (see the reference photos) is a thin, see-through ribbon: bright refracting edges,
+  // a clearer middle and twisting threads of light. The texture is opaque and lit like a light
+  // source; it is laid over the scene with 'screen', so the set shows through the thin middle.
   const STREAM_TEX = (function streamTexture() {
     const r = rng(73), c = document.createElement('canvas');
     c.width = TU * 2; c.height = TV;
     const g = c.getContext('2d');
     const t = document.createElement('canvas'); t.width = TU; t.height = TV;
     const q = t.getContext('2d');
+    const TAU = Math.PI * 2;
     let gr = q.createLinearGradient(0, 0, 0, TV);
-    [[0, 'rgb(84,20,2)'], [0.06, 'rgb(170,70,14)'], [0.18, 'rgb(230,128,34)'], [0.34, 'rgb(250,168,58)'],
-     [0.5, 'rgb(255,192,86)'], [0.66, 'rgb(250,170,62)'], [0.82, 'rgb(226,120,30)'], [0.94, 'rgb(160,60,12)'], [1, 'rgb(76,18,2)']]
+    [[0, 'rgb(0,0,0)'], [0.03, 'rgb(236,150,46)'], [0.09, 'rgb(200,112,26)'], [0.25, 'rgb(150,76,14)'],
+     [0.5, 'rgb(126,62,10)'], [0.75, 'rgb(146,72,12)'], [0.91, 'rgb(196,106,24)'], [0.97, 'rgb(232,146,44)'], [1, 'rgb(0,0,0)']]
       .forEach(([o, col]) => gr.addColorStop(o, col));
     q.fillStyle = gr; q.fillRect(0, 0, TU, TV);
-    // everything below is drawn twice (x and x - TU) so the texture tiles seamlessly along the flow
     const both = (fn) => { fn(0); fn(-TU); fn(TU); };
-    const streak = (x, y, len, h, col, blur) => both((o) => {
-      q.filter = `blur(${blur}px)`; q.fillStyle = col;
-      q.beginPath(); q.ellipse(x + o, y, len / 2, h / 2, 0, 0, Math.PI * 2); q.fill();
-    });
-    // long streaks of light and shade, like the twisting surface of a real pour
-    for (let i = 0; i < 140; i++) {
-      const light = r() < 0.6, y = TV * (0.1 + r() * 0.8);
-      streak(r() * TU, y, 80 + r() * 420, 1 + r() * 6,
-        light ? `rgba(255,236,190,${(0.08 + r() * 0.2).toFixed(2)})` : `rgba(110,34,0,${(0.05 + r() * 0.13).toFixed(2)})`, 1.5 + r() * 3);
+    // smooth tileable noise along u
+    const noise = (() => { const N = 64, v = Array.from({ length: N }, () => r()); return (x) => { const f = ((x / TU) * N % N + N) % N, i = f | 0, k = f - i, s2 = k * k * (3 - 2 * k); return v[i] * (1 - s2) + v[(i + 1) % N] * s2; }; })();
+    // threads of light that drift across the ribbon and fade in and out (the liquid twisting)
+    for (let i = 0; i < 9; i++) {
+      const f1 = 1 + ((r() * 3) | 0), f2 = 3 + ((r() * 6) | 0), ph = r() * TAU, ph2 = r() * TAU;
+      const mid = 0.3 + r() * 0.4, amp = 0.08 + r() * 0.12, w0 = 1 + r() * 3, a0 = 0.25 + r() * 0.45, blur = 0.8 + r() * 2;
+      const off = r() * TU;
+      for (let x = 0; x < TU; x += 6) {
+        const yA = TV * (mid + amp * Math.sin(TAU * f1 * x / TU + ph) + amp * 0.4 * Math.sin(TAU * f2 * x / TU + ph2));
+        const yB = TV * (mid + amp * Math.sin(TAU * f1 * (x + 6) / TU + ph) + amp * 0.4 * Math.sin(TAU * f2 * (x + 6) / TU + ph2));
+        const a = a0 * Math.max(0, noise(x + off) * 1.6 - 0.5);
+        if (a < 0.02) continue;
+        q.filter = `blur(${blur}px)`;
+        q.strokeStyle = `rgba(255,232,170,${a.toFixed(3)})`; q.lineWidth = w0; q.lineCap = 'round';
+        q.beginPath(); q.moveTo(x, yA); q.lineTo(x + 6, yB); q.stroke();
+      }
     }
-    // broad soft sheen on the lit side and a faint bounce on the far side
-    streak(TU / 2, TV * 0.3, TU * 3, TV * 0.22, 'rgba(255,246,220,.22)', 10);
-    streak(TU / 2, TV * 0.5, TU * 3, TV * 0.3, 'rgba(255,214,120,.25)', 12);
-    streak(TU / 2, TV * 0.76, TU * 3, TV * 0.08, 'rgba(255,230,180,.1)', 6);
-    // the specular highlight: bright, sharp, broken up where the surface twists
-    for (let x = 0; x < TU;) {
-      const len = 30 + r() * 220, y = TV * (0.235 + (r() - 0.5) * 0.04);
-      streak(x + len / 2, y, len, 3 + r() * 3, `rgba(255,255,255,${(0.75 + r() * 0.25).toFixed(2)})`, 0.7);
-      streak(x + len / 2, y + 3, len * 0.8, 6, 'rgba(255,250,235,.18)', 3);
-      x += len + 4 + r() * 50;
+    // bright refracting edges, unevenly lit along the length
+    for (const y of [0.045, 0.955]) {
+      for (let x = 0; x < TU;) {
+        const len = 40 + r() * 260, a = (0.5 + r() * 0.5).toFixed(2);
+        both((o) => {
+          q.filter = 'blur(.8px)'; q.fillStyle = `rgba(255,236,190,${a})`;
+          q.beginPath(); q.ellipse(x + len / 2 + o, TV * y, len / 2, 2.4, 0, 0, TAU); q.fill();
+        });
+        x += len + r() * 30;
+      }
     }
+    // specular glints on the lit side
     for (let x = 0; x < TU;) {
-      const len = 20 + r() * 120;
-      streak(x + len / 2, TV * 0.8, len, 1.4, `rgba(255,240,210,${(0.2 + r() * 0.3).toFixed(2)})`, 0.8);
-      x += len + 30 + r() * 140;
+      const len = 16 + r() * 110, y = TV * (0.18 + (r() - 0.5) * 0.06);
+      both((o) => {
+        q.filter = 'blur(.5px)'; q.fillStyle = `rgba(255,255,248,${(0.6 + r() * 0.4).toFixed(2)})`;
+        q.beginPath(); q.ellipse(x + len / 2 + o, y, len / 2, 2.4, 0, 0, TAU); q.fill();
+      });
+      x += len + 30 + r() * 150;
     }
     q.filter = 'none';
-    // fizz carried in the drink
-    for (let i = 0; i < 340; i++) {
-      const x = r() * TU, y = TV * (0.14 + r() * 0.72), rad = 0.5 + Math.pow(r(), 3) * 2.4;
-      both((o) => {
-        q.strokeStyle = 'rgba(110,40,0,.45)'; q.lineWidth = 0.5;
-        q.beginPath(); q.arc(x + o, y, rad, 0, Math.PI * 2); q.stroke();
-        q.fillStyle = 'rgba(255,248,222,.85)';
-        q.beginPath(); q.arc(x + o - rad * 0.3, y - rad * 0.3, rad * 0.45, 0, Math.PI * 2); q.fill();
-      });
+    for (let i = 0; i < 140; i++) {
+      const x = r() * TU, y = TV * (0.15 + r() * 0.7), rad = 0.6 + Math.pow(r(), 3) * 2;
+      both((o) => { q.strokeStyle = 'rgba(255,236,190,.55)'; q.lineWidth = 0.6; q.beginPath(); q.arc(x + o, y, rad, 0, TAU); q.stroke(); });
     }
     g.drawImage(t, 0, 0); g.drawImage(t, TU, 0);
     return c;
@@ -1003,8 +1011,8 @@
       const a = pts[Math.max(i - 1, 0)], b = pts[Math.min(i + 1, n - 1)];
       let tx = b[0] - a[0], ty = b[1] - a[1];
       const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const t = i * 0.5, neck = Math.min(1, 0.74 + t * 0.06);
-      const ww = w * neck * (1 + t * 0.004) * (0.93 + 0.05 * Math.sin(t * 0.45 - now * 0.012 + seed) + 0.025 * Math.sin(t * 1.3 - now * 0.021 + seed * 3));
+      const t = i * 0.5, neck = Math.min(1, 0.8 + t * 0.08), thin = 1 / Math.sqrt(1 + t * 0.09);
+      const ww = w * neck * thin * (0.9 + 0.08 * Math.sin(t * 0.5 - now * 0.012 + seed) + 0.04 * Math.sin(t * 1.4 - now * 0.022 + seed * 3));
       Lp.push([pts[i][0] - ty * ww / 2, pts[i][1] + tx * ww / 2]);
       Rp.push([pts[i][0] + ty * ww / 2, pts[i][1] - tx * ww / 2]);
     }
@@ -1031,8 +1039,15 @@
     // composite a touch see-through, softened like a lens would
     cx.save();
     cx.setTransform(1, 0, 0, 1, 0, 0);
-    cx.globalAlpha = 0.9;
-    cx.filter = `blur(${Math.max(0.4, w * 0.006).toFixed(2)}px)`;
+    cx.filter = `blur(${Math.max(0.35, w * 0.004).toFixed(2)}px)`;
+    cx.globalCompositeOperation = 'multiply';           // the liquid tints what is behind it amber
+    cx.globalAlpha = 0.4;
+    cx.drawImage(sl, 0, 0);
+    cx.globalCompositeOperation = 'screen';              // and lets light through
+    cx.globalAlpha = 1;
+    cx.drawImage(sl, 0, 0);
+    cx.globalAlpha = 0.3;
+    cx.filter = `blur(${Math.max(2, w * 0.06).toFixed(1)}px)`;
     cx.drawImage(sl, 0, 0);
     cx.restore();
   }
@@ -1139,7 +1154,7 @@
     pourCans.forEach((canEl, i) => {
       const { m, ux, uy } = axis(canEl);
       const pts = streamPath(m, ux, uy, 3.2 * S, rim.top, now, i * 2.1);
-      drawTube(pts, 30 * S, now, i * 2.1, k, 0.45);
+      drawTube(pts, 26 * S, now, i * 2.1, k, 0.45);
       const end = pts[pts.length - 1];
       splashAt(end[0], rim.top, k, 1);
     });
@@ -1148,7 +1163,7 @@
   function drawStream(now) {
     const { m, ux, uy } = axis($('#sPour .pourCan'));
     const pts = streamPath(m, ux, uy, 17 * S, H + 80, now, 0);
-    const w = 104 * S;
+    const w = 78 * S;
     drawTube(pts, w, now, 7, 1, 1);
     // a few drops peel off the edges of the stream
     for (let i = 0; i < 2 * K; i++) {
