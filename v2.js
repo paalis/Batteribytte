@@ -87,67 +87,139 @@
   // frosted surface, refracting edges) and reused everywhere through <symbol>/<use>.
   const ICE_N = 8, ICE_C = [];
   (function iceSymbols() {
-    const IW = 240, IH = 200;
+    const IW = 260, IH = 240;
     let out = '';
     for (let n = 0; n < ICE_N; n++) {
       const r = rng(500 + n), c = document.createElement('canvas');
       c.width = IW; c.height = IH;
       const g = c.getContext('2d');
-      const pts = [];
-      for (let i = 0; i < 28; i++) {
-        const a = (i / 28) * Math.PI * 2, ca = Math.cos(a), sa = Math.sin(a);
-        const j = 1 + (r() - 0.5) * 0.07;
-        pts.push([IW / 2 + Math.sign(ca) * Math.pow(Math.abs(ca), 0.4) * (IW / 2 - 10) * j,
-                  IH / 2 + Math.sign(sa) * Math.pow(Math.abs(sa), 0.4) * (IH / 2 - 10) * j]);
-      }
-      const shape = () => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); };
+      const J = (v) => v + (r() - 0.5) * 10;                        // a melted, uneven edge
+
+      // A cube seen from slightly above: front, top and side face (mirrored on odd variants)
+      const side = n % 2 ? -1 : 1, dx = (26 + r() * 22) * side, dy = -(28 + r() * 18);
+      const fw = 150 + r() * 30, fh = 130 + r() * 30;
+      const x0 = IW / 2 - fw / 2 - dx / 2, y0 = IH / 2 - fh / 2 - dy / 2;
+      const FTL = [J(x0), J(y0)], FTR = [J(x0 + fw), J(y0)], FBR = [J(x0 + fw), J(y0 + fh)], FBL = [J(x0), J(y0 + fh)];
+      const BTL = [J(x0 + dx), J(y0 + dy)], BTR = [J(x0 + fw + dx), J(y0 + dy)], BBR = [J(x0 + fw + dx), J(y0 + fh + dy)], BBL = [J(x0 + dx), J(y0 + fh + dy)];
+      const sil = side > 0 ? [FTL, BTL, BTR, BBR, FBR, FBL] : [BTL, BTR, FTR, FBR, FBL, BBL];
+      const top = [FTL, BTL, BTR, FTR], front = [FTL, FTR, FBR, FBL];
+      const sideF = side > 0 ? [FTR, BTR, BBR, FBR] : [FTL, BTL, BBL, FBL];
+
+      // closed path with rounded, melted corners
+      const poly = (pts, rad) => {
+        g.beginPath();
+        for (let i = 0; i < pts.length; i++) {
+          const p0 = pts[(i + pts.length - 1) % pts.length], p1 = pts[i], p2 = pts[(i + 1) % pts.length];
+          const a = [p1[0] + (p0[0] - p1[0]) * 0.5, p1[1] + (p0[1] - p1[1]) * 0.5];
+          const l0 = Math.hypot(p0[0] - p1[0], p0[1] - p1[1]), l2 = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+          const k0 = Math.min(rad / l0, 0.45), k2 = Math.min(rad / l2, 0.45);
+          const s0 = [p1[0] + (p0[0] - p1[0]) * k0, p1[1] + (p0[1] - p1[1]) * k0], s2 = [p1[0] + (p2[0] - p1[0]) * k2, p1[1] + (p2[1] - p1[1]) * k2];
+          if (i === 0) g.moveTo(a[0], a[1]);
+          g.lineTo(s0[0], s0[1]);
+          g.quadraticCurveTo(p1[0], p1[1], s2[0], s2[1]);
+        }
+        g.closePath();
+      };
+      const R = 22 + r() * 14;
+
       g.save();
-      shape(); g.clip();
-      const base = g.createLinearGradient(0, 0, IW, IH);
-      base.addColorStop(0, 'rgba(255,255,255,.42)');
-      base.addColorStop(0.4, 'rgba(255,220,228,.12)');
-      base.addColorStop(0.78, 'rgba(255,80,110,.26)');
-      base.addColorStop(1, 'rgba(255,240,245,.35)');
-      g.fillStyle = base; g.fillRect(0, 0, IW, IH);
-      // cloudy frozen core
-      g.filter = 'blur(16px)';
-      g.fillStyle = 'rgba(255,255,255,.5)';
-      g.beginPath(); g.ellipse(IW * (0.45 + r() * 0.1), IH * (0.48 + r() * 0.08), IW * 0.2, IH * 0.17, r() * 3, 0, Math.PI * 2); g.fill();
-      // internal fractures
-      g.filter = 'blur(.8px)';
-      for (let i = 0; i < 7; i++) {
-        const x0 = IW * (0.25 + r() * 0.5), y0 = IH * (0.25 + r() * 0.5), a = r() * Math.PI, l = 20 + r() * 70;
-        g.strokeStyle = `rgba(255,255,255,${(0.25 + r() * 0.45).toFixed(2)})`;
-        g.lineWidth = 0.6 + r() * 1.8;
-        g.beginPath(); g.moveTo(x0, y0);
-        g.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l);
-        g.lineTo(x0 + Math.cos(a + 0.6) * l * 1.3, y0 + Math.sin(a + 0.6) * l * 1.3);
+      poly(sil, R); g.clip();
+
+      // faces: lit from above, the far side picks up the red set
+      poly(top, R * 0.7);
+      let gr = g.createLinearGradient(BTL[0], BTL[1], FTR[0], FTR[1]);
+      gr.addColorStop(0, 'rgba(255,255,255,.38)'); gr.addColorStop(1, 'rgba(255,240,244,.18)');
+      g.fillStyle = gr; g.fill();
+      poly(front, R * 0.7);
+      gr = g.createLinearGradient(0, FTL[1], 0, FBL[1]);
+      gr.addColorStop(0, 'rgba(255,250,252,.16)'); gr.addColorStop(0.6, 'rgba(255,200,212,.08)'); gr.addColorStop(1, 'rgba(255,120,145,.2)');
+      g.fillStyle = gr; g.fill();
+      poly(sideF, R * 0.7);
+      gr = g.createLinearGradient(sideF[0][0], 0, sideF[1][0], 0);
+      gr.addColorStop(0, 'rgba(255,90,120,.18)'); gr.addColorStop(1, 'rgba(70,0,20,.28)');
+      g.fillStyle = gr; g.fill();
+
+      // what you see through ice: the set behind, broken up into soft light and dark patches
+      g.filter = 'blur(7px)';
+      for (let i = 0; i < 26; i++) {
+        const light = r() < 0.55;
+        g.fillStyle = light ? `rgba(255,255,255,${(0.08 + r() * 0.22).toFixed(2)})` : `rgba(60,0,16,${(0.08 + r() * 0.22).toFixed(2)})`;
+        g.beginPath();
+        g.ellipse(x0 + r() * (fw + Math.abs(dx)), y0 + dy + r() * (fh - dy), 6 + r() * 26, 4 + r() * 16, r() * 3, 0, Math.PI * 2);
+        g.fill();
+      }
+      // cloudy core with feathered air trails, like freezer ice
+      const cx0 = x0 + fw * (0.42 + r() * 0.16) + dx * 0.3, cy0 = y0 + fh * (0.45 + r() * 0.12) + dy * 0.3;
+      g.filter = 'blur(12px)';
+      g.fillStyle = `rgba(255,255,255,${(0.35 + r() * 0.25).toFixed(2)})`;
+      g.beginPath(); g.ellipse(cx0, cy0, fw * (0.14 + r() * 0.08), fh * (0.12 + r() * 0.08), r() * 3, 0, Math.PI * 2); g.fill();
+      // air trails run mostly one way (the direction the water froze), soft and uneven
+      g.filter = 'blur(2.6px)';
+      const dir = -Math.PI / 2 + (r() - 0.5) * 0.9;
+      for (let i = 0; i < 26; i++) {
+        const a = dir + (r() - 0.5) * 0.7 + (r() < 0.5 ? Math.PI : 0), l0 = r() * 10, l1 = l0 + 8 + r() * 30;
+        const ox = (r() - 0.5) * fw * 0.18, oy = (r() - 0.5) * fh * 0.14;
+        g.strokeStyle = `rgba(255,255,255,${(0.05 + r() * 0.14).toFixed(2)})`;
+        g.lineWidth = 1 + r() * 3;
+        g.beginPath();
+        g.moveTo(cx0 + ox + Math.cos(a) * l0, cy0 + oy + Math.sin(a) * l0);
+        g.quadraticCurveTo(cx0 + ox + Math.cos(a + 0.2) * l1 * 0.6, cy0 + oy + Math.sin(a + 0.2) * l1 * 0.6, cx0 + ox + Math.cos(a) * l1, cy0 + oy + Math.sin(a) * l1);
         g.stroke();
       }
       g.filter = 'none';
-      // trapped air bubbles and a frosted surface
-      for (let i = 0; i < 40; i++) {
-        g.fillStyle = `rgba(255,255,255,${(0.3 + r() * 0.5).toFixed(2)})`;
-        g.beginPath(); g.arc(IW * (0.3 + r() * 0.4), IH * (0.3 + r() * 0.4), 0.6 + r() * 1.8, 0, Math.PI * 2); g.fill();
+      for (let i = 0; i < 9; i++) {
+        const a = r() * Math.PI * 2, d = r() * fw * 0.3, rad = 0.5 + Math.pow(r(), 2) * 1.6;
+        const bx = cx0 + Math.cos(a) * d, by = cy0 + Math.sin(a) * d * 0.8;
+        g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 0.6;
+        g.beginPath(); g.arc(bx, by, rad, 0, Math.PI * 2); g.stroke();
       }
-      for (let i = 0; i < 900; i++) {
-        g.fillStyle = `rgba(255,255,255,${(0.04 + r() * 0.12).toFixed(2)})`;
-        g.fillRect(r() * IW, r() * IH, 1 + r(), 1 + r());
-      }
-      // refracting edges: soft inner glow, dark lower-right rim, crisp outline
+
+      // edges: soft refracting bevels that brighten and fade along their length (no outline)
+      const bevel = (p, q, w, a0, a1, color = '255,255,255') => {
+        gr = g.createLinearGradient(p[0], p[1], q[0], q[1]);
+        gr.addColorStop(0, `rgba(${color},${a0})`); gr.addColorStop(0.5, `rgba(${color},${Math.max(a0, a1) * (0.7 + r() * 0.5)})`); gr.addColorStop(1, `rgba(${color},${a1})`);
+        g.strokeStyle = gr; g.lineWidth = w; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q[0], q[1]); g.stroke();
+      };
+      g.filter = 'blur(3.5px)';
+      bevel(FTL, FTR, 9, 0.75, 0.35); bevel(FTL, BTL, 8, 0.6, 0.25); bevel(BTL, BTR, 7, 0.2, 0.45);
+      bevel(FTL, FBL, 7, 0.45, 0.1); bevel(FTR, FBR, 6, 0.35, 0.15);
+      g.filter = 'blur(1.6px)';
+      bevel([FTL[0] + 8, FTL[1] + 10], [FTR[0] - 8, FTR[1] + 10], 2.5, 0.05, 0.35, '70,0,20');
+      bevel([FBL[0] + 6, FBL[1] - 8], [FBR[0] - 6, FBR[1] - 8], 4, 0.4, 0.15, '70,0,20');
+      bevel(FTR, FBR, 2.5, 0.1, 0.35, '70,0,20');
+      // a darker rim where the outer surface turns away from the light
       g.filter = 'blur(6px)';
-      g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 14; shape(); g.stroke();
-      g.filter = 'blur(3px)';
-      g.translate(6, 7); g.strokeStyle = 'rgba(80,0,22,.38)'; g.lineWidth = 7; shape(); g.stroke(); g.translate(-6, -7);
+      g.strokeStyle = 'rgba(60,0,16,.22)'; g.lineWidth = 14; poly(sil, R); g.stroke();
+      // total internal reflection: darker bands just inside the front face edges
+      g.filter = 'blur(5px)';
+      g.strokeStyle = 'rgba(50,0,14,.2)'; g.lineWidth = 10;
+      g.beginPath(); g.moveTo(FBL[0] + 14, FTL[1] + 22); g.lineTo(FBL[0] + 14, FBL[1] - 16); g.lineTo(FBR[0] - 18, FBR[1] - 14); g.stroke();
       g.filter = 'none';
-      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; shape(); g.stroke();
-      // specular glints
-      g.globalCompositeOperation = 'lighter';
-      g.fillStyle = 'rgba(255,255,255,.9)';
-      g.beginPath(); g.ellipse(IW * 0.27, IH * 0.2, IW * 0.09, IH * 0.035, -0.5, 0, Math.PI * 2); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.6)';
-      g.beginPath(); g.ellipse(IW * 0.74, IH * 0.78, IW * 0.05, IH * 0.02, -0.5, 0, Math.PI * 2); g.fill();
+
+      // fine frost on the top face
+      g.save(); poly(top, R * 0.7); g.clip();
+      for (let i = 0; i < 700; i++) {
+        g.fillStyle = `rgba(255,255,255,${(0.04 + r() * 0.12).toFixed(2)})`;
+        g.fillRect(x0 + r() * (fw + Math.abs(dx)) - Math.max(0, -dx), y0 + dy + r() * -dy, 1 + r(), 1 + r());
+      }
       g.restore();
+
+      // speculars: one sharp, irregular glint on the top edge and a thin wet streak
+      g.globalCompositeOperation = 'lighter';
+      const hx = FTL[0] + (FTR[0] - FTL[0]) * (0.18 + r() * 0.2), hy = FTL[1] + (FTR[1] - FTL[1]) * 0.3 + 3;
+      g.filter = 'blur(.6px)';
+      g.fillStyle = 'rgba(255,255,255,.95)';
+      g.beginPath(); g.moveTo(hx - 16, hy + 2); g.quadraticCurveTo(hx, hy - 5, hx + 22, hy); g.quadraticCurveTo(hx + 4, hy + 4, hx - 16, hy + 2); g.fill();
+      // a soft wet sheen down the lit edge
+      g.filter = 'blur(4px)';
+      gr = g.createLinearGradient(0, FTL[1], 0, FBL[1]);
+      gr.addColorStop(0, 'rgba(255,255,255,.35)'); gr.addColorStop(0.5, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.strokeStyle = gr; g.lineWidth = 6;
+      g.beginPath(); g.moveTo(FTL[0] + 16, FTL[1] + 14); g.lineTo(FBL[0] + 16, FBL[1] - 24); g.stroke();
+      g.filter = 'none';
+      g.restore();
+
       ICE_C.push(c);
       out += `<symbol id="iceS${n}" viewBox="0 0 ${IW} ${IH}" preserveAspectRatio="none"><image href="${c.toDataURL('image/png')}" width="${IW}" height="${IH}"/></symbol>`;
     }
@@ -256,8 +328,12 @@
     g.filter = 'blur(1.2px)';
     cubes.forEach(([x, y, w, h, a], i) => {
       g.save(); g.translate(x, y); g.rotate(a * Math.PI / 180);
-      g.globalAlpha = 0.75 - i * 0.12;
+      // ice in a drink reads brighter than the liquid around it: draw it twice, once lightening
+      g.globalAlpha = 1 - i * 0.15;
       g.drawImage(ICE_C[(i * 3) % ICE_C.length], -w / 2, -h / 2, w, h);
+      g.globalCompositeOperation = 'soft-light';
+      g.drawImage(ICE_C[(i * 3) % ICE_C.length], -w / 2, -h / 2, w, h);
+      g.globalCompositeOperation = 'screen';
       g.restore();
     });
     g.filter = 'none';
