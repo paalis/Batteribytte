@@ -93,6 +93,18 @@
       <stop offset=".85" stop-color="#fff" stop-opacity=".08"/>
       <stop offset="1" stop-color="#fff" stop-opacity=".5"/>
     </linearGradient>
+    <linearGradient id="ice-solid" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".92"/>
+      <stop offset=".35" stop-color="#e9f1f8" stop-opacity=".55"/>
+      <stop offset=".65" stop-color="#ffc2cc" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity=".85"/>
+    </linearGradient>
+    <linearGradient id="pile-bed" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe6ec" stop-opacity=".45"/>
+      <stop offset=".3" stop-color="#c25a70" stop-opacity=".55"/>
+      <stop offset=".7" stop-color="#5a0d1e" stop-opacity=".8"/>
+      <stop offset="1" stop-color="#22030a" stop-opacity=".9"/>
+    </linearGradient>
     <radialGradient id="ice-core" cx=".5" cy=".5" r=".5">
       <stop offset="0" stop-color="#fff" stop-opacity=".35"/>
       <stop offset="1" stop-color="#fff" stop-opacity="0"/>
@@ -139,6 +151,7 @@
 </svg>
 
 <div id="backdrop"><div class="spot"></div></div>
+<canvas id="bokeh" aria-hidden="true"></canvas>
 
 <div id="world">
   <div id="camera">
@@ -181,45 +194,31 @@
       <div class="pourCan" data-can="pour"></div>
     </section>
 
-    <!-- 4 · Top-down swirl in the glass -->
-    <section class="scene" id="sSwirl" aria-hidden="true">
-      <div class="swirl">
-        <svg class="foamTex" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <filter id="foamNoise" x="0" y="0" width="1" height="1">
-            <feTurbulence type="fractalNoise" baseFrequency=".07" numOctaves="4" seed="4"/>
-            <feColorMatrix type="matrix" values="0 0 0 0 .96  0 0 0 0 .88  0 0 0 0 .7  0 0 0 2.6 -1.05"/>
-          </filter>
-          <rect width="100" height="100" filter="url(#foamNoise)"/>
-        </svg>
-        <div class="streaks"></div><div class="foamEye"></div>
-      </div>
+    <!-- 4 · The can slams into crushed ice: splash crown + cold vapour -->
+    <section class="scene" id="sSplash" aria-hidden="true">
+      <svg class="icePile back" viewBox="0 0 1000 400" data-pile="back"></svg>
+      <div class="can splashCan" id="splashCan" data-can="splash"></div>
+      <svg class="icePile front" viewBox="0 0 1000 400" data-pile="front"></svg>
     </section>
 
     <!-- 5 · Packshot on the table -->
     <section class="scene" id="sPack" aria-hidden="true">
       <div class="table"></div>
+      <div class="packGlow" aria-hidden="true"></div>
+      <svg class="wet" viewBox="0 0 1000 300" aria-hidden="true"></svg>
       <div class="lyingCan" data-can="side"></div>
       <div class="shadow s1"></div>
       <div class="shadow s2"></div>
       <svg class="glass" viewBox="-20 -120 400 840" id="glass">
         <g clip-path="url(#g-clip)">
-          <rect x="0" y="96" width="360" height="610" fill="url(#g-drink)"/>
-          <rect x="0" y="96" width="360" height="610" fill="url(#g-depth)"/>
+          <rect x="0" y="40" width="360" height="666" fill="url(#g-drink)"/>
+          <rect x="0" y="40" width="360" height="666" fill="url(#g-depth)"/>
           <ellipse cx="190" cy="430" rx="110" ry="230" fill="url(#g-glow)"/>
+          <g class="glassIce"></g>
           <g class="bubbles"></g>
+          <ellipse cx="180" cy="41" rx="176" ry="7" fill="#fff6d8" fill-opacity=".55"/>
           <rect x="0" y="640" width="360" height="66" fill="url(#g-base)"/>
           <g class="glassDrops"></g>
-        </g>
-        <g class="foam" id="foam">
-          <path d="M10 104 L350 104 L350 60 Q340 18 300 26 Q280 -6 236 12 Q210 -14 172 8 Q140 -12 110 12 Q70 -8 46 24 Q8 22 10 60 Z" fill="url(#g-foam)"/>
-          <rect x="10" y="78" width="340" height="26" fill="url(#g-foamShade)"/>
-          <g class="foamBubbles"></g>
-          <g class="drips">
-            <path class="drip" d="M14 70 q-14 60 -6 120 q4 18 10 0 q4 -60 8 -110 Z" fill="url(#g-foam)"/>
-            <path class="drip" d="M346 70 q14 70 6 150 q-4 18 -10 0 q-4 -70 -8 -140 Z" fill="url(#g-foam)"/>
-            <path class="drip" d="M120 100 q-6 50 -2 90 q4 12 8 0 q2 -40 4 -86 Z" fill="url(#g-foam)"/>
-            <path class="drip" d="M262 100 q6 40 2 70 q-4 12 -8 0 q-2 -30 -4 -66 Z" fill="url(#g-foam)"/>
-          </g>
         </g>
         <polygon points="8,0 352,0 312,700 48,700" fill="url(#g-shine)"/>
         <path d="M14 4 L52 694" stroke="#fff" stroke-opacity=".5" stroke-width="5" stroke-linecap="round"/>
@@ -230,13 +229,13 @@
       </svg>
       <div class="can packCan" id="packCan" data-can="pack"></div>
       <svg class="tabs" viewBox="0 0 1000 200" aria-hidden="true"></svg>
+      <svg class="tableIce" viewBox="0 0 1000 300" aria-hidden="true"></svg>
     </section>
 
   </div>
 </div>
 
 <canvas id="fx" aria-hidden="true"></canvas>
-<div id="flare" aria-hidden="true"></div>
 <div id="vignette" aria-hidden="true"></div>
 <div id="grain" aria-hidden="true"></div>
 

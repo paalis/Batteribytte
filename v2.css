@@ -90,12 +90,12 @@ body.party #backdrop { filter: brightness(1.15) saturate(1.15); }
 .sideCan.right { left: 870px; top: 1040px; width: 280px; height: 560px; transform: rotate(-5deg); }
 
 .ice .cube { transform-box: fill-box; transform-origin: center; }
-.ice.jostle .cube { animation: jostle .5s cubic-bezier(.3, 1.6, .5, 1) both; animation-delay: var(--d); }
+.ice.jostle .cube { animation: jostle .7s cubic-bezier(.2, .7, .3, 1) both; animation-delay: var(--d); }
 
 @keyframes jostle {
   0%   { transform: translate(0, 0) rotate(0); }
-  40%  { transform: translate(var(--jx), -18px) rotate(var(--jr)); }
-  100% { transform: translate(calc(var(--jx) * .4), 0) rotate(calc(var(--jr) * .5)); }
+  45%  { transform: translate(calc(var(--jx) * .4), -8px) rotate(calc(var(--jr) * .4)); }
+  100% { transform: translate(calc(var(--jx) * .25), 0) rotate(calc(var(--jr) * .25)); }
 }
 
 /* Macro scene */
@@ -118,63 +118,21 @@ body.party #backdrop { filter: brightness(1.15) saturate(1.15); }
   transform: rotate(125deg);
 }
 
-/* Swirl scene (looking down into the glass) */
+/* Splash scene: can slams into crushed ice */
 
-#sSwirl { background: #0a0503; box-shadow: 0 0 0 6000px #0a0503; }
-
-.swirl {
-  left: 20px;
-  top: 320px;
-  width: 960px;
-  height: 960px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 48% 52%, #e9d6a8 0 8%, #c9a467 18%, #8a5a22 32%, #4a2a0c 48%, #1e0f04 62%, #0d0602 68%, rgba(255, 225, 180, .4) 69.4%, #160a03 70.5%, #040201 100%);
-  box-shadow: inset 0 0 120px rgba(0, 0, 0, .8);
-  overflow: hidden;
+.splashCan { left: 330px; top: 300px; width: 340px; height: 680px; }
+.icePile {
+  left: -100px;
+  width: 1200px;
+  height: 480px;
+  overflow: visible;
+  /* soft edges so the mound melts into the backdrop instead of ending in a box */
+  mask-image: radial-gradient(ellipse 48% 62% at 50% 34%, #000 62%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 48% 62% at 50% 34%, #000 62%, transparent 100%);
 }
-
-.swirl .streaks {
-  position: absolute;
-  inset: 8%;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, rgba(255, 240, 205, .12) 0 2deg, transparent 2deg 13deg, rgba(255, 225, 170, .08) 13deg 16deg, transparent 16deg 29deg);
-  filter: blur(3px);
-  mask-image: radial-gradient(circle, transparent 0 10%, #000 22%, #000 58%, transparent 72%);
-  -webkit-mask-image: radial-gradient(circle, transparent 0 10%, #000 22%, #000 58%, transparent 72%);
-  animation: spin 1.6s linear infinite;
-}
-
-.swirl .foamTex {
-  position: absolute;
-  inset: 4%;
-  width: 92%;
-  height: 92%;
-  border-radius: 50%;
-  mask-image: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, .55) 46%, transparent 62%);
-  -webkit-mask-image: radial-gradient(circle, #000 0 30%, rgba(0, 0, 0, .55) 46%, transparent 62%);
-  animation: spin 2.2s linear infinite;
-  filter: blur(.6px);
-}
-
-.swirl .foamEye {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 34%;
-  height: 34%;
-  border-radius: 46% 54% 50% 50%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle at 42% 40%, rgba(255, 250, 235, .9), rgba(236, 214, 165, .6) 50%, rgba(200, 150, 80, 0) 72%);
-  animation: spin 2.4s linear infinite reverse;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-.swirl .foamEye { animation-name: spinC; }
-@keyframes spinC {
-  from { transform: translate(-50%, -50%) rotate(0); }
-  to   { transform: translate(-50%, -50%) rotate(-360deg); }
-}
+.icePile.back { top: 760px; }
+.icePile.front { top: 840px; }
+.icePile.jostle .cube { animation: jostle .9s cubic-bezier(.2, .7, .3, 1) both; animation-delay: var(--d); }
 
 /* Packshot */
 
@@ -183,8 +141,11 @@ body.party #backdrop { filter: brightness(1.15) saturate(1.15); }
   width: 7000px;
   top: 1240px;
   height: 900px;
-  background: linear-gradient(180deg, #2a2c31 0%, #17181b 18%, #0b0b0d 60%, #050506 100%);
-  box-shadow: 0 -2px 0 rgba(255, 255, 255, .06), 0 -40px 80px rgba(120, 0, 20, .35);
+  /* wet, glossy surface that mirrors the red backdrop */
+  background:
+    radial-gradient(ellipse 22% 10% at 50% 2%, rgba(255, 60, 90, .35), transparent 70%),
+    linear-gradient(180deg, #4a1a24 0%, #1d1013 7%, #0e0a0c 30%, #070506 100%);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, .12), 0 -40px 80px rgba(120, 0, 20, .35);
 }
 
 .lyingCan {
@@ -207,25 +168,33 @@ body.dim .shadow.s1 { transform: translateX(-70px) scaleX(1.9); }
 @keyframes bubUp {
   from { transform: translate(0, 0); opacity: 0; }
   10%  { opacity: .9; }
-  to   { transform: translate(var(--dx), -560px); opacity: .9; }
+  to   { transform: translate(var(--dx), -480px); opacity: .9; }
 }
 
 body.dim .glass .bub { animation-play-state: paused; opacity: .25; }
-
-#foam { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 2.5s ease; }
-body.dim #foam { transform: scaleY(.45); }
-body.party #foam { animation: foamUp 1.6s cubic-bezier(.3, 1.3, .5, 1) forwards; }
-
-@keyframes foamUp {
-  to { transform: translateY(-40px) scale(1.06, 1.5); }
-}
-
-.drip { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); }
-body.party .drip { animation: drip 2.6s ease-in forwards; animation-delay: var(--d, .6s); }
-
-@keyframes drip { to { transform: scaleY(1); } }
+body.party .glass .bub { animation-duration: calc(var(--t) * .45); }
+.glass { transition: filter 2.5s ease; }
+body.dim .glass { filter: saturate(.55) brightness(.75); }
 
 #packCan { left: 190px; top: 690px; width: 300px; height: 600px; transform-origin: 50% 100%; }
+
+.wet { left: 0; top: 1250px; width: 1000px; height: 300px; overflow: visible; }
+.tableIce { left: 0; top: 1180px; width: 1000px; height: 300px; overflow: visible; }
+
+.reflect { pointer-events: none; opacity: .32; filter: blur(1.5px); transition: opacity 1.5s ease;
+  mask-image: linear-gradient(to bottom, transparent 55%, #000 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 55%, #000 100%); }
+.reflect.rCan { left: 190px; top: 690px; width: 300px; height: 600px; transform-origin: 50% 100%; }
+.reflect.rGlass { left: 540px; top: 568px; width: 340px; height: 714px; transform-origin: 50% calc(100% - 17px); transform: scaleY(-1); }
+body.dim .reflect { opacity: .12; }
+
+/* warm light that blooms behind the can on "Ja" */
+.packGlow {
+  left: -40px; top: 420px; width: 760px; height: 1000px; pointer-events: none;
+  background: radial-gradient(ellipse 45% 50% at 50% 50%, rgba(255, 196, 120, .55), rgba(255, 120, 80, .18) 45%, transparent 70%);
+  opacity: 0; transition: opacity 1.6s ease;
+}
+body.party .packGlow { opacity: 1; }
 
 .tabs { left: 0; top: 1310px; width: 1000px; height: 200px; overflow: visible; filter: blur(1.5px); }
 
@@ -273,29 +242,25 @@ body.dim .run { animation-duration: 3.5s; }
   100% { transform: translate(1%, 3%); }
 }
 
-#flare {
+/* Out-of-focus background lights, like a long lens (Heineken-style bokeh) */
+#bokeh {
   position: fixed;
-  left: 50%;
-  top: 30%;
-  width: 140vmax;
-  height: 140vmax;
+  left: -4%;
+  top: -4%;
+  width: 108%;
+  height: 108%;
   pointer-events: none;
-  z-index: 4;
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  background:
-    radial-gradient(circle, rgba(255, 245, 220, .9) 0 2%, rgba(255, 190, 90, .45) 6%, transparent 22%),
-    repeating-conic-gradient(from 0deg, rgba(255, 200, 120, .16) 0 4deg, transparent 4deg 14deg);
-  mask-image: radial-gradient(circle, #000 0 10%, transparent 45%);
-  -webkit-mask-image: radial-gradient(circle, #000 0 10%, transparent 45%);
-  transition: opacity 1s ease;
+  mix-blend-mode: screen;
+  opacity: .85;
+  animation: bokehDrift 22s ease-in-out infinite alternate;
+  transition: opacity 2.5s ease, filter 2.5s ease;
 }
+body.dim #bokeh { opacity: .12; }
+body.party #bokeh { opacity: 1; filter: brightness(1.35); }
 
-body.party #flare { opacity: 1; animation: flareSpin 24s linear infinite; }
-
-@keyframes flareSpin {
-  from { transform: translate(-50%, -50%) rotate(0); }
-  to   { transform: translate(-50%, -50%) rotate(360deg); }
+@keyframes bokehDrift {
+  from { transform: translate(-1.5%, .5%) scale(1); }
+  to   { transform: translate(1.5%, -1%) scale(1.04); }
 }
 
 /* Cinematic titles */
@@ -333,12 +298,17 @@ body.party #flare { opacity: 1; animation: flareSpin 24s linear infinite; }
 }
 
 #titles .t1.in { animation: wipe 1.1s cubic-bezier(.2, .8, .2, 1) forwards; }
-#titles .t2.in { animation: slam .8s cubic-bezier(.2, 1.3, .3, 1) forwards; }
+#titles .t2.in { animation: rise 1.5s cubic-bezier(.2, .7, .2, 1) forwards; }
 #titles .out { animation: fadeOut .5s ease forwards !important; }
 
 @keyframes wipe {
   from { opacity: 1; clip-path: inset(0 100% 0 0); letter-spacing: .9em; }
   to   { opacity: 1; clip-path: inset(0 0 0 0); letter-spacing: .5em; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(26px); filter: blur(6px); }
+  to   { opacity: 1; transform: none; filter: none; }
 }
 
 @keyframes slam {
@@ -393,7 +363,7 @@ body.party #flare { opacity: 1; animation: flareSpin 24s linear infinite; }
 }
 
 #yes h2 { color: #fff; text-shadow: 0 0 40px rgba(255, 190, 90, .9), 0 4px 30px rgba(0, 0, 0, .4); }
-#yes.show h2 { animation: slam .8s cubic-bezier(.2, 1.3, .3, 1) both; }
+#yes.show h2 { animation: rise 1.5s cubic-bezier(.2, .7, .2, 1) both; }
 #yes p { color: #fff; }
 
 .choices {
@@ -522,5 +492,5 @@ body.party #flare { opacity: 1; animation: flareSpin 24s linear infinite; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #backdrop .spot, #grain, #startBtn, .swirl .streaks, .swirl .foamEye, .swirl .foamTex, body.party #flare { animation: none; }
+  #backdrop .spot, #grain, #startBtn, #bokeh { animation: none; }
 }
