@@ -1,0 +1,9 @@
+[submodule "vendor/huashu-motion"]
+	path = vendor/huashu-motion
+	url = https://github.com/alchaincyf/huashu-motion.git
+[submodule "vendor/reanimate"]
+	path = vendor/reanimate
+	url = https://github.com/NiazMorshed2007/reanimate.git
+[submodule "vendor/video-director"]
+	path = vendor/video-director
+	url = https://github.com/win4r/video-director.git
