@@ -1,0 +1,5 @@
+# Agent tooling is for development only and must not be published with the site
+vendor/
+.agents/
+.claude/
+skills-lock.json

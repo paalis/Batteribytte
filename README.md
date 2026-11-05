@@ -18,3 +18,12 @@ En filmatisk versjon inspirert av en produktreklame: crimson studiobakgrunn, isb
 boksene løftes og tømmes, makro av etiketten med kondens, diagonal skjenkenærbilde, virvel i glasset og
 pakkebilde på bordet – der «Er du klar?» stilles. Ja gir skum som renner over og sprut fra boksen; Nei slukker lyset
 og velter boksen. Egen synth-musikk og lydeffekter (Web Audio).
+
+## Agent-verktøy
+
+- `huashu-motion` ligger som git-submodul i `vendor/huashu-motion`, låst til v0.3.1
+  (`52467f99c602b76ba86d511d37acdfe93fa1e16e`). Skillen er lenket inn fra `.claude/skills/` og `.agents/skills/`,
+  og `bin/om` kjører den klonede `cli/om.js` (ikke siste versjon fra npm).
+  Etter kloning: `git submodule update --init`. Oppdatering skjer bevisst: sjekk ny versjon, så
+  `git -C vendor/huashu-motion checkout <tag>` og commit.
+- `vendor/`, `.agents/` og `.claude/` publiseres ikke til Vercel (`.vercelignore`).

@@ -1,0 +1,3 @@
+[submodule "vendor/huashu-motion"]
+	path = vendor/huashu-motion
+	url = https://github.com/alchaincyf/huashu-motion.git
