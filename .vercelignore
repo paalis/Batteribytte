@@ -3,3 +3,5 @@ vendor/
 .agents/
 .claude/
 skills-lock.json
+film-src/
+film-src-v/

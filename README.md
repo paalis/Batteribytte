@@ -1,23 +1,15 @@
 # Batteribytte ⚡
 
-## Versjon 1 (`/v1`)
+En liten side for kolleger og venner: en kort produktfilm i svart studio (tre Battery Fresh-bokser, lys som
+sveiper over, makro av etiketten, kald røyk), og så spørsmålet «Er du klar?» med Ja / Nei.
+Ja lader batteriet på boksen og tenner den; Nei slukker lyset. Lyd lages i nettleseren (Web Audio)
+og starter ved første trykk.
 
-En animert nettside: en Battery Fresh-inspirert boks (gull → rosa, med pluss- og likhetstegn som batterimåler) lades opp med lyn og gnister, og teksten
-«Det er tid for batteribytte!» smeller inn. Til slutt kommer spørsmålet «Er du klar?»
-med avkrysning for **Ja** og **Nei**:
-
-- **Ja** – boksen overlades til 200 %, eksploderer i lyn, sjokkbølger og konfetti, fliken spretter og energidrikken spruter ut av boksen, regner ned over skjermen, spruter på «linsen» og samler seg i en dam: «FULLT LADET!»
-- **Nei** – strømmen flimrer, batteriet tappes til 3 %, fargene forsvinner og boksen sovner på siden: «Lavt batteri…» (med «Prøv igjen»).
-
-Ren HTML/CSS/JS uten byggesteg. Forsiden (`index.html`) er reklamefilmen; den første versjonen ligger i `v1/`.
-Lyd er syntetisert med Web Audio. Siden åpner med en «Start»-knapp, slik at nettleseren (også iPhone) tillater lyd fra første sekund; lyden kan slås av øverst til høyre.
-
-## Forsiden – reklamefilm
-
-En filmatisk versjon inspirert av en produktreklame: crimson studiobakgrunn, isbøtte med dugg-dekkede bokser,
-boksene løftes og tømmes, makro av etiketten med kondens, diagonal skjenkenærbilde, virvel i glasset og
-pakkebilde på bordet – der «Er du klar?» stilles. Ja gir skum som renner over og sprut fra boksen; Nei slukker lyset
-og velter boksen. Egen synth-musikk og lydeffekter (Web Audio).
+- `index.html`, `style.css`, `app.js` — hele siden, uten byggesteg eller avhengigheter.
+- `assets/battery-fresh.webp` (produktfoto), `assets/og.jpg` (delingsbilde), `favicon.svg`,
+  `fonts/` (Bebas Neue, SIL OFL, se `fonts/OFL.txt`).
+- `v1/` — første versjon av siden.
+- Respekterer «redusert bevegelse» (hopper rett til spørsmålet) og fungerer med tastatur og skjermleser.
 
 ## Agent-verktøy
 
