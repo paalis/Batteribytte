@@ -12,7 +12,9 @@
   // the tall film on portrait screens, the wide one elsewhere (chosen once; both tell the same story)
   const tall = matchMedia('(max-aspect-ratio: 1/1)').matches;
   film.poster = tall ? film.dataset.posterTall : film.dataset.posterWide;
-  film.src = tall ? film.dataset.tall : film.dataset.wide;
+  // H.264 MP4 where it plays (Safari, Chrome, Edge), otherwise the WebM (VP9)
+  const mp4 = film.canPlayType('video/mp4; codecs="avc1.640028, mp4a.40.2"') !== '';
+  film.src = (tall ? film.dataset.tall : film.dataset.wide) + (mp4 ? '.mp4' : '.webm');
 
   // ---------- play one segment, stop on its last frame ----------
   let stopAt = null, onDone = null, watching = 0;
@@ -98,6 +100,10 @@
     else if (stopAt != null) film.play().catch(() => {});
   });
 
-  if (film.readyState >= 2) intro();
-  else film.addEventListener('loadeddata', intro, { once: true });
+  // if the film can't load or play at all, the poster stays and the question is asked anyway
+  let started = false;
+  const start = () => { if (!started) { started = true; intro(); } };
+  film.addEventListener('error', () => { started = true; rest(PACK); ask(false); }, { once: true });
+  if (film.readyState >= 2) start();
+  else film.addEventListener('loadeddata', start, { once: true });
 })();

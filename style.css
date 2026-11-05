@@ -117,6 +117,8 @@ button { font: inherit; color: inherit; }
   text-shadow: 0 6px 40px rgba(0, 0, 0, .6);
 }
 
+.nw { white-space: nowrap; }
+
 .panel { margin-top: clamp(16px, 3.4svh, 32px); }
 
 .panel h2 {
@@ -194,7 +196,8 @@ button { font: inherit; color: inherit; }
     text-align: left;
   }
   .stage[data-state="intro"] .copy { translate: 0 calc(-50% + 12px); }
-  .title { font-size: clamp(3rem, 6.4vw, 6.4rem); }
+  .title { font-size: clamp(3rem, 5.4vw, 5.4rem); }
+  .title { hyphens: none; }
   .choices { justify-content: flex-start; }
 }
 

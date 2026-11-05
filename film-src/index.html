@@ -33,6 +33,7 @@
 </head>
 <body>
 <div id="film" data-composition-id="film" data-width="1920" data-height="1080" data-fps="30">
+  <audio id="om-sound" src="assets/sound.wav" data-start="0" data-duration="13" data-track-index="8" data-volume="1"></audio>
   <canvas id="gl" data-om-id="scene"></canvas>
   <div class="type" data-om-id="type">
     <span class="l1" data-om-id="line1" data-var-text="line1">DET ER TID FOR</span>
@@ -202,6 +203,8 @@
 
   // ---------- the timeline: every value below is tweened, the frame is drawn from them ----------
   const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+  // score: dark and cinematic like the reference, on the 120 bpm grid; the full band arrives on the reveal
+  OM.music({ product: 'ai', variant: 0, bpm: 120, drop: 'fog' });
   const L = { fill: 0, key: 2.0, rim: 2.5, sweepX: -7, sweepI: 0, back: 0, glow: 0, fog: 0.5, breath: 0, level: 6, red: 1, smokeRise: 0, studio: 1 };
   const cam = OM.space(stage.camera, { fov: P ? 34 : 26 });
   const far = P ? 1.85 : 1;                    // portrait needs more distance for the same width
