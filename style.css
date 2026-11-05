@@ -1,32 +1,26 @@
-/* Batteribytte — black studio, one coloured product. Mobile first. */
+/* Batteribytte — the film is the page. Black studio, one heavy typeface, the can is the only colour. */
 
 @font-face {
-  font-family: "Bebas Neue";
-  src: url("fonts/bebas-neue-latin-400.woff2") format("woff2");
-  font-weight: 400;
+  font-family: "Archivo Black";
+  src: url("fonts/ArchivoBlack-400.woff") format("woff");
   font-display: swap;
 }
 
 :root {
-  --ink: #f4f3f1;
-  --muted: #a7a7ae;
-  --black: #050506;
+  --ground: #07070a;
+  --ink: #f6f4f0;
+  --muted: #b9b9c0;
   --gold: #f4a64a;
-  --cold: 214, 226, 255;             /* studio light, as an rgb triplet */
-  --display: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
   --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-
-  /* the hero can: as tall as fits, keeping all three cans inside the width */
-  --can-h: min(50svh, 74vw, 600px);
-  --can-w: calc(var(--can-h) * 0.382);
+  --gutter: max(16px, env(safe-area-inset-left));
 }
 
 * { box-sizing: border-box; }
-
 html, body { margin: 0; height: 100%; }
 
 body {
-  background: var(--black);
+  background: var(--ground);
   color: var(--ink);
   font: 400 1rem/1.5 var(--body);
   overflow: hidden;
@@ -34,22 +28,36 @@ body {
 }
 
 button { font: inherit; color: inherit; }
-
 :focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
-  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  clip-path: inset(50%); white-space: nowrap;
 }
 
-/* ---------- top bar ---------- */
+/* ---------- the film fills the screen ---------- */
 
-.topbar {
-  position: fixed;
-  z-index: 20;
+.stage { position: relative; height: 100svh; overflow: hidden; }
+
+.film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--ground);
+}
+
+/* ---------- interface over the film ---------- */
+
+.ui { position: absolute; inset: 0; pointer-events: none; }
+.ui > *, .copy > * { pointer-events: auto; }
+
+.bar {
+  position: absolute;
   top: max(12px, env(safe-area-inset-top));
-  left: 16px;
-  right: 16px;
+  left: var(--gutter);
+  right: var(--gutter);
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -58,226 +66,87 @@ button { font: inherit; color: inherit; }
 
 .chip {
   pointer-events: auto;
-  border: 1px solid rgba(255, 255, 255, .28);
-  background: rgba(10, 10, 12, .55);
+  min-height: 44px;
+  padding: .5em 1.1em;
+  border: 1px solid rgba(255, 255, 255, .3);
   border-radius: 999px;
-  padding: .5em 1.05em;
+  background: rgba(7, 7, 10, .55);
   font-size: .875rem;
   font-weight: 600;
-  min-height: 44px;
   cursor: pointer;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   transition: background .2s ease, border-color .2s ease;
 }
 
-.chip:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .5); }
-.chip.big { font-size: 1rem; padding: .6em 1.6em; }
+.chip:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .55); }
+.chip.big { font-size: 1rem; padding: .65em 1.7em; }
 #skip { margin-left: auto; }
 
-/* ---------- stage ---------- */
-
-.stage {
-  position: relative;
-  height: 100svh;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.set { position: absolute; inset: 0; transition: opacity .35s ease; }
-.stage[data-shot="black"] .set { opacity: 0; }
-
-/* a soft key light from above, cooler at the edges */
-.set::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(60% 45% at 50% 62%, rgba(var(--cold), .12), transparent 70%),
-    radial-gradient(120% 70% at 50% 100%, #121216 0%, var(--black) 60%);
-}
-
-.camera {
-  position: absolute;
-  left: 50%;
-  bottom: 9svh;
-  width: calc(var(--can-w) * 3.4);
-  height: calc(var(--can-h) * 1.02);
-  translate: -50% 0;
-  transform-origin: 50% 60%;
-  will-change: transform;
-}
-
-.cans {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: calc(var(--can-w) * .14);
-}
-
-.can {
-  position: relative;
-  width: var(--can-w);
-  height: var(--can-h);
-  flex: none;
-}
-
-.can img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  /* rim light from the studio, and the can mirrored in the wet floor */
-  filter: drop-shadow(-2px 0 5px rgba(var(--cold), .28)) drop-shadow(3px 0 7px rgba(var(--cold), .18));
-  -webkit-box-reflect: below 1px linear-gradient(transparent 62%, rgba(0, 0, 0, .32));
-}
-
-.can.side { height: calc(var(--can-h) * .9); width: calc(var(--can-w) * .9); }
-.can.side img { filter: brightness(.72) drop-shadow(-2px 0 5px rgba(var(--cold), .22)); }
-
-/* a light sweeping across each can, masked to the can's own shape */
-.can::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, .55) 49%, rgba(255, 255, 255, .1) 54%, transparent 62%) no-repeat;
-  background-size: 300% 100%;
-  background-position: 120% 0;
-  -webkit-mask: url("assets/battery-fresh.webp") center / 100% 100% no-repeat;
-  mask: url("assets/battery-fresh.webp") center / 100% 100% no-repeat;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-.stage.sweeping .can::after { animation: sweep 1.4s cubic-bezier(.45, 0, .3, 1) both; }
-.stage.sweeping .can.side:first-child::after { animation-delay: .08s; }
-.stage.sweeping .can.side:last-child::after { animation-delay: .16s; }
-
-@keyframes sweep { from { background-position: 120% 0; } to { background-position: -20% 0; } }
-
-/* condensation drawn over the photo, masked to the can */
-.drops {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  -webkit-mask: url("assets/battery-fresh.webp") center / 100% 100% no-repeat;
-  mask: url("assets/battery-fresh.webp") center / 100% 100% no-repeat;
-}
-
-.meter { position: absolute; inset: 0; width: 100%; height: 100%; }
-.stage.low .meter .red { animation: blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-
-/* backlight that "switches on" the hero can (Ja) */
-.glint {
-  position: absolute;
-  left: 50%;
-  top: 48%;
-  width: 260%;
-  height: 120%;
-  translate: -50% -50%;
-  z-index: -1;
-  background: radial-gradient(closest-side, rgba(255, 214, 150, .55), rgba(255, 170, 80, .18) 55%, transparent);
-  opacity: 0;
-  transition: opacity .6s ease;
-  pointer-events: none;
-}
-
-.stage.charged .glint { opacity: 1; }
-.stage.charged .can.hero img { filter: brightness(1.12) drop-shadow(0 0 18px rgba(255, 200, 120, .55)); }
-.stage.dark .set { filter: brightness(.32) saturate(.5); transition: filter 1.4s ease; }
-.stage.dark .can.hero img { filter: brightness(.85); }
-
-.floor {
-  position: absolute;
-  left: -60vw;
-  right: -60vw;
-  top: 100%;
-  height: 40svh;
-  background: linear-gradient(180deg, rgba(var(--cold), .07), transparent 30%);
-  border-top: 1px solid rgba(var(--cold), .12);
-}
-
-.smoke {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-.vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 90% at 50% 55%, transparent 55%, rgba(0, 0, 0, .7));
-  pointer-events: none;
-}
-
-/* ---------- copy ---------- */
-
+/* the copy sits in the empty part of the packshot: the top on phones, the left on wide screens */
 .copy {
   position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: calc(max(12px, env(safe-area-inset-top)) + 64px) 16px 0;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: calc(max(12px, env(safe-area-inset-top)) + 64px);
   text-align: center;
   pointer-events: none;
+  transition: opacity .5s ease, translate .5s ease;
 }
 
-.copy > * { pointer-events: auto; }
+.stage[data-state="intro"] .copy { opacity: 0; translate: 0 12px; visibility: hidden; }
 
 .kicker {
   margin: 0;
-  font-size: clamp(.8rem, 3.4vw, 1.05rem);
-  font-weight: 600;
-  letter-spacing: .42em;
+  font-family: var(--display);
+  font-size: clamp(.85rem, 3.6vw, 1.2rem);
+  letter-spacing: .3em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 .title {
-  margin: 0;
+  margin: .1em 0 0;
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(3.4rem, 17vw, 6.5rem);
-  line-height: .9;
-  letter-spacing: .01em;
+  font-size: clamp(2.6rem, 13.5vw, 5.6rem);
+  line-height: .92;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  hyphens: manual;
+  text-shadow: 0 6px 40px rgba(0, 0, 0, .6);
 }
 
-.panel { margin-top: clamp(14px, 3svh, 28px); }
+.panel { margin-top: clamp(16px, 3.4svh, 32px); }
 
 .panel h2 {
   margin: 0;
   font-family: var(--display);
   font-weight: 400;
-  font-size: clamp(2.2rem, 11vw, 3.6rem);
+  font-size: clamp(1.7rem, 8vw, 2.8rem);
   line-height: 1;
+  text-transform: uppercase;
 }
 
-.panel p { margin: .35rem 0 1rem; color: #d8d8dc; }
+.panel p { margin: .5rem 0 1.1rem; color: #e2e2e6; }
 
-.choices { display: flex; gap: 12px; justify-content: center; margin-top: 14px; }
+.choices { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
 
 .choice {
   display: inline-flex;
   align-items: center;
-  gap: .6rem;
-  min-width: 128px;
-  min-height: 52px;
   justify-content: center;
-  padding: .55rem 1.4rem;
-  border: 1.5px solid rgba(255, 255, 255, .8);
+  gap: .6rem;
+  min-width: 132px;
+  min-height: 54px;
+  padding: .5rem 1.4rem;
+  border: 2px solid rgba(255, 255, 255, .85);
   border-radius: 999px;
-  background: rgba(10, 10, 12, .5);
+  background: rgba(7, 7, 10, .5);
   font-family: var(--display);
-  font-size: 1.75rem;
-  letter-spacing: .06em;
-  line-height: 1;
+  font-size: 1.5rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
   cursor: pointer;
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -287,25 +156,17 @@ button { font: inherit; color: inherit; }
 .choice:hover { background: rgba(255, 255, 255, .1); }
 .choice.yes { border-color: var(--gold); }
 
-.box {
-  width: .8em;
-  height: .8em;
-  border: 2px solid currentColor;
-  border-radius: 4px;
-  position: relative;
-}
-
+.box { position: relative; width: .8em; height: .8em; border: 2px solid currentColor; border-radius: 4px; }
 .choice.yes .box { color: var(--gold); }
-
 .choice[aria-pressed="true"] .box { background: currentColor; }
 .choice[aria-pressed="true"] .box::after {
   content: "";
   position: absolute;
   left: 30%;
-  top: 8%;
+  top: 6%;
   width: 30%;
-  height: 58%;
-  border: solid var(--black);
+  height: 60%;
+  border: solid var(--ground);
   border-width: 0 3px 3px 0;
   rotate: 45deg;
 }
@@ -313,42 +174,30 @@ button { font: inherit; color: inherit; }
 .choices.locked .choice { pointer-events: none; }
 .choices.locked .choice[aria-pressed="false"] { opacity: .3; }
 
-/* ---------- film shots ---------- */
-
-/* during the film the copy is a big title over the picture, not the packshot layout */
-.stage.filming .copy { justify-content: center; padding-top: 0; }
-.stage.filming .kicker, .stage.filming .title { opacity: 0; }
-.stage.filming .kicker.on, .stage.filming .title.on { opacity: 1; }
-.stage.filming .title { font-size: clamp(3.6rem, 18.5vw, 12rem); text-shadow: 0 6px 40px rgba(0, 0, 0, .6); }
-.stage.filming .kicker { color: var(--ink); text-shadow: 0 2px 16px rgba(0, 0, 0, .8); }
-
-.in { animation: rise .7s cubic-bezier(.2, .7, .2, 1) both; }
-@keyframes rise { from { opacity: 0; translate: 0 14px; filter: blur(6px); } to { opacity: 1; translate: 0 0; filter: none; } }
-
-/* ---------- footer ---------- */
-
-.foot {
-  position: fixed;
-  z-index: 20;
-  left: 16px;
+.v1 {
+  position: absolute;
+  left: var(--gutter);
   bottom: max(10px, env(safe-area-inset-bottom));
   font-size: .8rem;
+  color: var(--muted);
 }
 
-.foot a { color: var(--muted); }
+/* ---------- wide screens: the cans stand right, the copy left ---------- */
 
-/* ---------- wider screens: copy on the left, cans on the right ---------- */
-
-@media (min-aspect-ratio: 5/4) and (min-width: 760px) {
-  :root { --can-h: min(62svh, 34vw, 640px); }
-  .camera { left: 66%; bottom: 13svh; }
-  .copy { align-items: flex-start; justify-content: center; padding: 0 0 0 7vw; text-align: left; width: 50%; }
+@media (min-aspect-ratio: 4/3) {
+  .copy {
+    top: 50%;
+    right: auto;
+    left: 6vw;
+    width: min(44vw, 640px);
+    translate: 0 -50%;
+    text-align: left;
+  }
+  .stage[data-state="intro"] .copy { translate: 0 calc(-50% + 12px); }
+  .title { font-size: clamp(3rem, 6.4vw, 6.4rem); }
   .choices { justify-content: flex-start; }
-  .title { font-size: clamp(4rem, 8vw, 8rem); }
-  .stage.filming .copy { width: 100%; align-items: center; text-align: center; padding: 0; }
-  .stage.filming .camera { left: 50%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage.sweeping .can::after, .in, .stage.low .meter .red { animation: none; }
+  .copy, .chip, .choice { transition: none; }
 }

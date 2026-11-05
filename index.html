@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Det er tid for batteribytte!</title>
 <meta name="description" content="Det er tid for batteribytte! Er du klar?">
-<meta name="theme-color" content="#050506">
+<meta name="theme-color" content="#07070a">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Det er tid for batteribytte!">
@@ -13,76 +13,56 @@
 <meta property="og:image" content="https://batteribytte.vercel.app/assets/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Tre Battery Fresh-bokser på et svart, blankt bord, med teksten Det er tid for batteribytte! Er du klar?">
+<meta property="og:image:alt" content="Tre Battery Fresh-bokser i et svart studio, den midterste lyser opp">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preload" href="fonts/bebas-neue-latin-400.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/battery-fresh.webp" as="image" type="image/webp">
+<link rel="preload" href="fonts/ArchivoBlack-400.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="topbar">
-  <button id="sound" class="chip" type="button" aria-pressed="true">Lyd: på</button>
-  <button id="skip" class="chip" type="button" hidden>Hopp over</button>
-</header>
+<main class="stage" id="stage" data-state="intro">
+  <!-- The film (rendered in film-src/ with huashu-motion). Decorative: everything it says is also on the page. -->
+  <video class="film" id="film" muted playsinline preload="auto" aria-hidden="true"
+         poster="assets/poster-wide.jpg"
+         data-wide="assets/film-wide.mp4" data-tall="assets/film-tall.mp4"
+         data-poster-wide="assets/poster-wide.jpg" data-poster-tall="assets/poster-tall.jpg"></video>
 
-<main id="stage" class="stage" data-shot="pack">
+  <div class="ui">
+    <header class="bar">
+      <button class="chip" id="sound" type="button" aria-pressed="false">Slå på lyd</button>
+      <button class="chip" id="skip" type="button" hidden>Hopp over</button>
+    </header>
 
-  <!-- The set: black studio, three cans on a glossy floor. Decorative, so hidden from screen readers. -->
-  <div class="set" aria-hidden="true">
-    <div class="sweep"></div>
-    <canvas id="smoke" class="smoke"></canvas>
-    <div class="camera">
-      <div class="cans">
-        <div class="can side"><img src="assets/battery-fresh.webp" alt="" width="564" height="1476" decoding="async"></div>
-        <div class="can hero" id="hero">
-          <img src="assets/battery-fresh.webp" alt="" width="564" height="1476">
-          <svg class="drops" viewBox="23.6 0 152.8 400" preserveAspectRatio="none"></svg>
-          <svg class="meter" viewBox="0 0 1 1" preserveAspectRatio="none">
-            <rect class="cover" x="0.1702" y="0.424" width="0" height="0.053" fill="#cf8a4c"/>
-            <rect class="cover" x="0.1702" y="0.4918" width="0" height="0.034" fill="#cc7d4a"/>
-            <rect class="red" x="0.1702" y="0.424" width="0" height="0.053" fill="#ff2d55"/>
-            <rect class="red" x="0.1702" y="0.4918" width="0" height="0.034" fill="#ff2d55"/>
-          </svg>
-          <div class="glint"></div>
+    <div class="copy">
+      <p class="kicker">Det er tid for</p>
+      <h1 class="title">Batteri&shy;bytte!</h1>
+
+      <section class="panel" id="ask" aria-labelledby="ask-h">
+        <h2 id="ask-h">Er du klar?</h2>
+        <div class="choices" role="group" aria-labelledby="ask-h">
+          <button class="choice yes" type="button" data-answer="ja"><span class="box" aria-hidden="true"></span>Ja</button>
+          <button class="choice no" type="button" data-answer="nei"><span class="box" aria-hidden="true"></span>Nei</button>
         </div>
-        <div class="can side"><img src="assets/battery-fresh.webp" alt="" width="564" height="1476" decoding="async"></div>
-      </div>
-      <div class="floor"></div>
+      </section>
+
+      <section class="panel" id="yes" aria-labelledby="yes-h" hidden>
+        <h2 id="yes-h">Fullt ladet!</h2>
+        <p>Batteriet er byttet. Skål!</p>
+        <button class="chip big" id="again" type="button">Se igjen</button>
+      </section>
+
+      <section class="panel" id="no" aria-labelledby="no-h" hidden>
+        <h2 id="no-h">Lavt batteri…</h2>
+        <p>Helt greit. Vi venter til du er klar.</p>
+        <button class="chip big" id="retry" type="button">Prøv igjen</button>
+      </section>
     </div>
-    <div class="vignette"></div>
+
+    <p class="sr-only" id="status" aria-live="polite"></p>
+    <a class="v1" href="v1/">Første versjon</a>
   </div>
-
-  <div class="copy">
-    <p class="kicker" id="kicker">Det er tid for</p>
-    <h1 class="title" id="title">Batteribytte!</h1>
-
-    <section class="panel ask" id="ask" aria-labelledby="ask-h">
-      <h2 id="ask-h">Er du klar?</h2>
-      <div class="choices" role="group" aria-labelledby="ask-h">
-        <button class="choice yes" type="button" data-answer="ja"><span class="box" aria-hidden="true"></span>Ja</button>
-        <button class="choice no" type="button" data-answer="nei"><span class="box" aria-hidden="true"></span>Nei</button>
-      </div>
-    </section>
-
-    <section class="panel result" id="yes" aria-labelledby="yes-h" hidden>
-      <h2 id="yes-h">Fullt ladet!</h2>
-      <p>Batteriet er byttet. Skål!</p>
-      <button class="chip big" type="button" id="again">Se igjen</button>
-    </section>
-
-    <section class="panel result" id="no" aria-labelledby="no-h" hidden>
-      <h2 id="no-h">Lavt batteri…</h2>
-      <p>Helt greit. Vi venter til du er klar.</p>
-      <button class="chip big" type="button" id="retry">Prøv igjen</button>
-    </section>
-  </div>
-
-  <p class="sr-only" aria-live="polite" id="status"></p>
 </main>
-
-<footer class="foot"><a href="v1/">Første versjon</a></footer>
 
 <script src="app.js" defer></script>
 </body>
