@@ -26,4 +26,9 @@ og velter boksen. Egen synth-musikk og lydeffekter (Web Audio).
   og `bin/om` kjører den klonede `cli/om.js` (ikke siste versjon fra npm).
   Etter kloning: `git submodule update --init`. Oppdatering skjer bevisst: sjekk ny versjon, så
   `git -C vendor/huashu-motion checkout <tag>` og commit.
+- `reanimate` ligger i `vendor/reanimate`, låst til `3f7a55a2986a84ca2173e86ee9127eefe31d046d`
+  (main 31.10.2026). Første kjøring av `scripts/setup.sh` installerer Playwright, Chromium og ffmpeg (~250 MB).
+- `video-director` ligger i `vendor/video-director`, låst til `4747e5c153509ef7f8f7fd1a0aad6acfda36280d`
+  (main 29.10.2026). QA-skriptene trenger ffmpeg og Python med numpy og Pillow.
+- Alle tre er sikkerhetssjekket på disse versjonene. Ikke oppdater uten å sjekke den nye versjonen først.
 - `vendor/`, `.agents/` og `.claude/` publiseres ikke til Vercel (`.vercelignore`).
