@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/brag-slim/SKILL.md",
       "computedHash": "134f4ed365690db924b6c565520ea8b1ddecb3e6e3072409158259b9ee691f2f"
+    },
+    "remotion-video-toolkit": {
+      "source": "shreefentsar/remotion-video-toolkit",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "1da6eea4f9c67133cb8b8944197e6e22781bf9b2723acca7a05914f60ea476e9"
     }
   }
 }
