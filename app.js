@@ -10,6 +10,7 @@
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // the tall film on portrait screens, the wide one elsewhere (chosen once; both tell the same story)
+  stage.dataset.state = 'intro';      // the page shows the question by default (no JS); the film comes first
   const tall = matchMedia('(max-aspect-ratio: 1/1)').matches;
   film.poster = tall ? film.dataset.posterTall : film.dataset.posterWide;
   // H.264 MP4 where it plays (Safari, Chrome, Edge), otherwise the WebM (VP9)

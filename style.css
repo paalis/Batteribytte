@@ -204,3 +204,15 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .copy, .chip, .choice { transition: none; }
 }
+
+/* short landscape screens (phones on their side): size the type by height so it never runs into the bar */
+@media (min-aspect-ratio: 4/3) and (max-height: 560px) {
+  .kicker { font-size: .75rem; }
+  .title { font-size: clamp(1.9rem, 10svh, 3rem); }
+  .panel { margin-top: 10px; }
+  .panel h2 { font-size: clamp(1.3rem, 7svh, 1.9rem); }
+  .panel p { margin: .3rem 0 .6rem; font-size: .9rem; }
+  .choices { margin-top: 10px; }
+  .choice { min-height: 46px; min-width: 112px; font-size: 1.2rem; }
+  .copy { top: calc(50% + 14px); }
+}

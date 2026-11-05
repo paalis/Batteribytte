@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<main class="stage" id="stage" data-state="intro">
+<main class="stage" id="stage" data-state="ask">
   <!-- The film (rendered in film-src/ with huashu-motion). Decorative: everything it says is also on the page. -->
   <video class="film" id="film" muted playsinline preload="auto" aria-hidden="true"
          poster="assets/poster-wide.jpg"
@@ -36,7 +36,7 @@
 
     <div class="copy">
       <p class="kicker">Det er tid for</p>
-      <h1 class="title"><span class="nw">Batteri</span><wbr><span class="nw">bytte!</span></h1>
+      <h1 class="title" aria-label="Batteribytte!"><span class="nw">Batteri</span><wbr><span class="nw">bytte!</span></h1>
 
       <section class="panel" id="ask" aria-labelledby="ask-h">
         <h2 id="ask-h">Er du klar?</h2>
