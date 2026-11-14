@@ -7,6 +7,12 @@
       "skillPath": "skills/brag-slim/SKILL.md",
       "computedHash": "bea62ba788630257487fc9cb8dc0014a0791dfdaabe9d173b799d72437c2daff"
     },
+    "find-animation-opportunities": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-animation-opportunities/SKILL.md",
+      "computedHash": "9ec1c8c622b2c3caf9bda1712440e25dd4f9bc6da1207db4fa80b784aa319186"
+    },
     "remotion-video-toolkit": {
       "source": "shreefentsar/remotion-video-toolkit",
       "sourceType": "github",
