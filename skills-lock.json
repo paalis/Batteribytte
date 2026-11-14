@@ -1,17 +1,23 @@
 {
-  "version": 1,
+  "version": 2,
   "skills": {
     "brag-slim": {
       "source": "latent-spaces/brag",
       "sourceType": "github",
       "skillPath": "skills/brag-slim/SKILL.md",
-      "computedHash": "134f4ed365690db924b6c565520ea8b1ddecb3e6e3072409158259b9ee691f2f"
+      "computedHash": "bea62ba788630257487fc9cb8dc0014a0791dfdaabe9d173b799d72437c2daff"
     },
     "remotion-video-toolkit": {
       "source": "shreefentsar/remotion-video-toolkit",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "1da6eea4f9c67133cb8b8944197e6e22781bf9b2723acca7a05914f60ea476e9"
+      "computedHash": "939452cf9e9e68793c89b8948f6ec23ad99afd1f6dc25646c545043857831779"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "ff6863fc7c1be035b294703b2e7c90b2197548985ca4cb98f58740a7e84dc0cc"
     }
   }
 }
