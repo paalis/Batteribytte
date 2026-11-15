@@ -22,5 +22,7 @@ og starter ved første trykk.
   (main 31.10.2026). Første kjøring av `scripts/setup.sh` installerer Playwright, Chromium og ffmpeg (~250 MB).
 - `video-director` ligger i `vendor/video-director`, låst til `4747e5c153509ef7f8f7fd1a0aad6acfda36280d`
   (main 29.10.2026). QA-skriptene trenger ffmpeg og Python med numpy og Pillow.
-- Alle tre er sikkerhetssjekket på disse versjonene. Ikke oppdater uten å sjekke den nye versjonen først.
+- `interaction-design` (Rastian/interaction-design-skills) ligger i `vendor/interaction-design-skills`, låst til
+  `a3f092f9bd183eef8c25ec5ea7f0bb97505b94d3` (31.08.2026). Bare markdown (prinsipper, tilstander, flyter, responstid); ingen kode.
+- Alle er sikkerhetssjekket på disse versjonene. Ikke oppdater uten å sjekke den nye versjonen først.
 - `vendor/`, `.agents/` og `.claude/` publiseres ikke til Vercel (`.vercelignore`).

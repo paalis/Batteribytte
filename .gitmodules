@@ -7,3 +7,6 @@
 [submodule "vendor/video-director"]
 	path = vendor/video-director
 	url = https://github.com/win4r/video-director.git
+[submodule "vendor/interaction-design-skills"]
+	path = vendor/interaction-design-skills
+	url = https://github.com/Rastian/interaction-design-skills.git
