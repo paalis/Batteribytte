@@ -29,6 +29,10 @@
   let holding = false, auto = false, pressAt = 0, drainFrom = 0;
 
   function setState(s) { state = s; stage.dataset.state = s; }
+  // the 3D studio (scene3d.js) reads the state from here and hears the moments; while it runs, the photo
+  // version's own can and particles stand down
+  const GL = () => document.documentElement.classList.contains('gl');
+  const emit = (type) => dispatchEvent(new CustomEvent('bb', { detail: type }));
   let lastAria = -1;
   function setLevel(v) {
     level = clamp(v, 0, 100);
@@ -54,7 +58,7 @@
   // ---------- «Ja»: hold to charge, or tap and it charges itself ----------
   function startCharge(isAuto) {
     if (state !== 'ask' && state !== 'charging') return;
-    if (state === 'ask') { say('Lader.'); buzz(10); }
+    if (state === 'ask') { say('Lader.'); buzz(10); emit('charge'); }
     setState('charging');
     choices.classList.add('locked');
     holding = !isAuto; auto = !!isAuto;
@@ -88,8 +92,9 @@
     sound.charge(false);
     sound.pop();
     buzz([25, 40, 35]);
+    emit('pop');
     const r = canBody.getBoundingClientRect();
-    if (!RM) {
+    if (!RM && !GL()) {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.08;
       flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', (r.top + r.height / 2) + 'px');
       replay(flash); replay(ring);
@@ -114,6 +119,7 @@
     pressAt = performance.now();
     buzz([8, 60, 8]);
     sound.down();
+    emit('no');
     kick();
   }
   function landNo() {
@@ -132,6 +138,7 @@
     setLevel(START);
     show('ask');
     say('Er du klar? Velg ja eller nei.');
+    emit('ask');
     ja.focus({ preventScroll: true });
   }
 
@@ -152,7 +159,7 @@
   can.addEventListener('pointermove', (e) => { if (!FINE && e.buttons) aim(e.clientX, e.clientY); }, { passive: true });
   can.addEventListener('pointerup', () => { if (!FINE) { tilt.tx = tilt.ty = 0; kick(); } });
   can.addEventListener('click', () => {
-    if (state === 'charging' || state === 'draining') return;
+    if (GL() || state === 'charging' || state === 'draining') return;
     sound.fizz();
     if (RM) return;
     const r = canBody.getBoundingClientRect();
@@ -233,7 +240,7 @@
   let raf = 0, last = 0, emberAcc = 0;
   function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
     let busy = false;
 
     if (state === 'charging') {
@@ -241,7 +248,7 @@
       setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
-      if (!RM && (holding || auto)) {
+      if (!RM && !GL() && (holding || auto)) {
         emberAcc += (30 + 170 * c) * dt;
         const r = canBody.getBoundingClientRect();
         while (emberAcc >= 1) { emberAcc--; ember(r, c); }
@@ -394,6 +401,13 @@
     sound.suspend(document.hidden);
     if (document.hidden && holding) release(false);
   });
+
+  window.BB = {
+    get state() { return state; },
+    get level() { return level; },
+    get pumping() { return state === 'charging' && (holding || auto); },
+    fizz() { sound.fizz(); },
+  };
 
   // ---------- the headline arrives letter by letter, once ----------
   if (!RM) {

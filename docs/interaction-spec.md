@@ -10,6 +10,24 @@ Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-
 
 Filmversjonen ligger på `/film/` til sammenligning.
 
+## 3D-studioet (scene3d.js)
+
+Mellom trykkene er siden et ekte 3D-studio i sanntid (Three.js, samme studio som filmen i `film-src/`):
+boksen er dreid etter fotoets egen silhuett, fotoet er etiketten (baksiden i boksens egne farger), med kondens,
+metallisk lokk og kant, blankt gulv med speiling, lav røyk og bloom. Logoens to stolper er batterimåleren.
+
+| Steg | Kamera (video-director) | Hva skjer |
+|---|---|---|
+| Åpning | Makro på kondensen, et lys glir over, trekker ut til helten | Overskriften kommer tegn for tegn |
+| Venter | Står nesten stille (rolig drift, følger pekeren) | Dra for å snu boksen, trykk for å la den bruse |
+| Lader | Kjører inn lavt og rundt boksen | Gnister trekkes opp i spiral, lyset blir varmt, boksen dirrer |
+| Pop | Push + flash: klipp til lav heltevinkel | Blits, sjokkring på gulvet, gnister og dråper, flippen åpnes |
+| Fullt ladet | Langsom bane rundt boksen | Etterglød |
+| Nei | Kran opp og bort | Studiolyset slukkes, boksen velter |
+
+Uten WebGL, eller hvis noe feiler, blir fotoversjonen stående. Bildefrekvensen overvåkes: på trege telefoner
+senkes pikseltetthet og så bloom.
+
 ## Flyt
 
 ```
