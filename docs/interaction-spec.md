@@ -1,48 +1,58 @@
 # Batteribytte — interaksjonsspesifikasjon
 
-Mål: et morsomt varsel til kolleger om at det er tid for å kjøpe energidrikk. Siden skal føles levende,
-men alt som skjer på skjermen skal ha en ekte årsak (filmen, et trykk, en lading) — ingen pynt uten mening.
-Grunnlag: skillen `interaction-design` (Norman, Tognazzini, Nielsens responstider).
+Mål: et morsomt varsel til kolleger om at det er tid for å kjøpe energidrikk. Siden er en ladestasjon du
+bruker selv, ikke en film du ser på. Alt som beveger seg har en årsak: ditt trykk, pekeren din, eller
+batterinivået.
 
-## Revisjon av forrige versjon
+Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-ux-pro-max` (stil «Dark Mode
+(OLED)»: dypt svart, sparsom glød, synlig fokus, redusert bevegelse; tegnvis inngang på kort overskrift) og
+`find-animation-opportunities` (porten frekvens → formål → fart → funksjon, felles kurver).
 
-| Funn | Prinsipp | Konsekvens | Tiltak |
-|---|---|---|---|
-| Ingenting skjer mens filmen laster (3–4 MB) | Visibility, Latency (>1 s) | På tregt nett: stillbilde uten forklaring | Lasteindikator etter 400 ms med prosent; etter 8 s rett til spørsmålet med forklaring |
-| 9 s intro uten fremdrift | Attention limit (1–10 s) | Brukeren vet ikke hvor lenge det varer | Tynn fremdriftslinje + «Hopp over» |
-| Svarklippet (2 s) uten tekst | Feedback | Etter trykket forsvinner alt i 2 s | Live batterimåler i UI som følger boksens måler i filmen |
-| Resultatet kommer først når klippet er ferdig | Feedback timing | Teksten kommer etter at «smellet» har skjedd | Resultatet lander på smellet (Ja 10,3 s) / når lyset er borte (Nei) |
-| Lydknappen bytter mellom handling («Slå på lyd») og tilstand («Lyd: på») | Consistency | Uklart hva et trykk gjør | Fast navn «Lyd», tilstand vist med ikon og `aria-pressed` |
-| Ingen neste handling etter «Ja» | Anticipation | Sidens formål (varsle kolleger) stopper opp | «Varsle kollegaene»: delingsark, ellers kopier lenke med bekreftelse |
-| Paneler bytter uten overgang | Motion = kommunikasjon | Tekst «hopper» inn | 250 ms ease-out inn, ingen ventetid før man kan trykke |
-| Ingen trykktilstand | Component states (active) | Svakere følelse av at trykket ble tatt imot | `:active` 100 ms skala på knapper |
-| Filmfeil faller stille tilbake | Error recovery | Brukeren skjønner ikke hvorfor det ikke spiller | Kort beskjed: hva, hvorfor, hva nå |
-| Kun mus/touch | Efficiency of the user | — | Tastatur: J = Ja, N = Nei, Esc = hopp over, M = lyd |
+Filmversjonen ligger på `/film/` til sammenligning.
 
 ## Flyt
 
 ```
-Åpne siden → [laster] ──(>8 s / feil)──→ Spørsmål (med beskjed)
-     ↓ klar
-Intro 0–9 s (fremdrift, Hopp over/Esc) ──→ Spørsmål «Er du klar?»
-                                             ├─ Ja (J)  → lading 9–11 s, måler 6→100 % → «Fullt ladet!»  → Varsle kollegaene · Se igjen
-                                             └─ Nei (N) → tapping 11–13 s, måler 6→0 %  → «Lavt batteri…» → Prøv igjen (→ Spørsmål)
+Åpne siden (batteri 6 %, blinker rødt)
+   └─ «Er du klar?»
+        ├─ Ja: hold inne → lader 6→100 % på 1,5 s (gnister fra gulvet, glød, risting, summing)
+        │      slipp for tidlig → nivået synker tilbake, «Hold inne til 100 %»
+        │      trykk kort / Enter / J → lader av seg selv
+        │      100 % → pop (blits, ring, gnister og dråper, boksen hopper) → «Fullt ladet!»
+        │                → Varsle kollegaene (deling / kopier lenke) · Lad igjen
+        └─ Nei / N → tømmes til 0 % på 1,1 s, lyset går, boksen synker sammen → «Lavt batteri…» → Prøv igjen
+Boksen: følger pekeren (vipper), bruser når du trykker på den.
 ```
 
 ## Tilstander
 
-| Element | Standard | Hover | Fokus | Trykket | Låst | Lasting/fremdrift |
+| Element | Standard | Hover (kun mus) | Fokus | Trykket | Låst | Fremdrift |
 |---|---|---|---|---|---|---|
-| Ja / Nei | Pille, avkrysningsboks | Lysere bakgrunn | 3 px hvit ring | Skala .96, hake tegnes | Valgt: hake; annen: 30 % | Måler i panelet |
-| Lyd | Ikon + «Lyd», av | Lysere | Ring | Skala .96 | — | — |
-| Hopp over | Synlig under intro | Lysere | Ring | Skala .96 | Skjult utenfor intro | Fremdriftslinje |
-| Varsle kollegaene | Gull pille | Lysere | Ring | Skala .96 | — | «Lenke kopiert» i 2,5 s |
+| Ja | Gull pille | Lysere gull | 3 px hvit ring | Skala .97, glød | Under lading | Lys fyll sveiper over knappen |
+| Nei | Hvit kant | Lys bakgrunn | Ring | Skala .97 | 30 % under lading | — |
+| Lyd | Ikon + «Lyd», av | Lysere | Ring | Skala .97 | — | — |
+| Batteri (HUD) | Rødt under 20 %, blinker | — | — | — | — | Fyll og prosent følger nivået |
 
-## Bevegelse
+## Bevegelse (kurver: `--ease-out` 0.23,1,0.32,1 · `--ease-expo` 0.16,1,0.3,1)
 
-| Hva | Varighet | Kurve | Redusert bevegelse |
-|---|---|---|---|
-| Trykk på knapp | 100 ms | ease-out | ingen skala |
-| Panel inn | 250 ms | ease-out | vises direkte |
-| Fremdriftslinje | følger filmen | lineær | skjult (ingen film) |
-| Batterimåler | følger filmens kurve | samme som filmen | hopper til sluttverdi |
+| Hva | Formål | Frekvens | Varighet | Redusert bevegelse |
+|---|---|---|---|---|
+| Trykk på knapp | Tilbakemelding | Hver gang | 160 ms ease-out | ingen skala |
+| Lading (fyll, glød, risting, gnister) | Tydelig tilstand | Én gang per besøk | Følger nivået | bare fyll og tall |
+| Pop ved 100 % | Glede | Én gang per besøk | 550–750 ms | hopper rett til resultat |
+| Nei: lys ut, boksen synker | Tydelig tilstand | Én gang per besøk | 1,1 s ease-in | bare dimming |
+| Overskrift tegn for tegn | Glede | Ved åpning | 600 ms, 18 ms forsinkelse per tegn | vises direkte |
+| Panel inn | Unngå brå endring | Per steg | 250 ms ease-out | vises direkte |
+| Toast ut | Romlig sammenheng | Av og til | 150 ms ease-in, samme vei som inn | toning |
+| Boksen vipper etter pekeren | Direkte manipulasjon | Kontinuerlig | Fjær | av |
+
+Forkastet: animasjon på lydknappen (hyppig, tastatur), sprett i resultatteksten (popen eier feiringen),
+pulserende «Hopp over» (finnes ikke lenger).
+
+## Tilgjengelighet
+
+- Hold-for-å-lade har alltid et alternativ: kort trykk, Enter eller J lader av seg selv (WCAG 2.5.1/2.5.7).
+- Mellomrom kan holdes på fokusert «Ja».
+- Batteriet er `role="meter"` med verdi i tiere. Start og resultat leses opp i en `aria-live`-region.
+- Fokus flyttes til neste handling etter hvert resultat.
+- Uten JavaScript vises spørsmålet og bildet av boksen.

@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Det er tid for batteribytte!</title>
 <meta name="description" content="Det er tid for batteribytte! Er du klar?">
-<meta name="theme-color" content="#07070a">
+<meta name="theme-color" content="#050506">
+<meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Det er tid for batteribytte!">
@@ -18,74 +19,78 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/ArchivoBlack-400.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="style.css">
-<noscript><style>
-  /* without JS: the packshot as a still, no film controls, no sound button */
-  .film, #sound { display: none; }
-  .stage { background: #07070a url(assets/poster-tall.jpg) center / cover no-repeat; }
-  @media (min-aspect-ratio: 1/1) { .stage { background-image: url(assets/poster-wide.jpg); } }
-</style></noscript>
+<noscript><style>.hint, #sound { display: none; }</style></noscript>
 </head>
 <body>
 
+<!-- Batteribytte: an interactive charging station. The can is a real photo; the light, sparks and sound are made
+     live in the browser. Interaction spec: docs/interaction-spec.md -->
 <main class="stage" id="stage" data-state="ask">
-  <!-- The film (rendered in film-src/ with huashu-motion). Decorative: everything it says is also on the page. -->
-  <video class="film" id="film" muted playsinline preload="auto" aria-hidden="true"
-         poster="assets/poster-wide.jpg"
-         data-wide="assets/film-wide" data-tall="assets/film-tall"
-         data-poster-wide="assets/poster-wide.jpg" data-poster-tall="assets/poster-tall.jpg"></video>
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
 
-  <div class="ui">
-    <header class="bar">
-      <button class="chip" id="sound" type="button" aria-pressed="false" aria-keyshortcuts="M" title="Slå på lyd (M)">
-        <svg class="ico on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
-        <svg class="ico off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
-        Lyd</button>
-      <button class="chip" id="skip" type="button" hidden aria-keyshortcuts="Escape" title="Hopp over (Esc)">Hopp over</button>
-    </header>
-
-    <div class="copy">
-      <p class="kicker">Det er tid for</p>
-      <h1 class="title" aria-label="Batteribytte!"><span class="nw">Batteri</span><wbr><span class="nw">bytte!</span></h1>
-
-      <section class="panel" id="ask" aria-labelledby="ask-h">
-        <h2 id="ask-h">Er du klar?</h2>
-        <div class="choices" role="group" aria-labelledby="ask-h">
-          <button class="choice yes" type="button" data-answer="ja" aria-keyshortcuts="J" title="Ja (J)"><span class="box" aria-hidden="true"></span>Ja</button>
-          <button class="choice no" type="button" data-answer="nei" aria-keyshortcuts="N" title="Nei (N)"><span class="box" aria-hidden="true"></span>Nei</button>
-        </div>
-      </section>
-
-      <!-- the can's battery meter, mirrored while the answer plays (visual only; the result is announced) -->
-      <div class="meter" id="meter" aria-hidden="true" hidden>
-        <span class="meter-label" id="meter-label">Lader</span>
-        <span class="meter-bar"><span class="meter-fill" id="meter-fill"></span></span>
-        <span class="meter-pct" id="meter-pct">6 %</span>
-      </div>
-
-      <section class="panel" id="yes" aria-labelledby="yes-h" hidden>
-        <h2 id="yes-h">Fullt ladet!</h2>
-        <p>Batteriet er byttet. Skål!</p>
-        <div class="actions">
-          <button class="chip big primary" id="share" type="button">Varsle kollegaene</button>
-          <button class="chip big" id="again" type="button">Se igjen</button>
-        </div>
-      </section>
-
-      <section class="panel" id="no" aria-labelledby="no-h" hidden>
-        <h2 id="no-h">Lavt batteri…</h2>
-        <p>Helt greit. Vi venter til du er klar.</p>
-        <button class="chip big" id="retry" type="button">Prøv igjen</button>
-      </section>
-
-      <p class="note" id="note" role="status" hidden></p>
+  <header class="bar">
+    <button class="chip" id="sound" type="button" aria-pressed="false" aria-keyshortcuts="M" title="Slå på lyd (M)">
+      <svg class="ico on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <svg class="ico off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
+      Lyd</button>
+    <div class="hud low" id="hud" role="meter" aria-label="Batterinivå" aria-valuemin="0" aria-valuemax="100" aria-valuenow="6" aria-valuetext="6 prosent">
+      <span class="hud-bat" aria-hidden="true"><span class="hud-fill" id="hud-fill"></span></span>
+      <span class="hud-pct" id="hud-pct" aria-hidden="true">6 %</span>
     </div>
+  </header>
 
-    <div class="loader" id="loader" hidden><span class="spin" aria-hidden="true"></span>Laster filmen <span id="loader-pct">0 %</span></div>
-    <div class="progress" aria-hidden="true"><span id="progress"></span></div>
-    <p class="toast" id="toast" role="status" hidden></p>
-    <p class="sr-only" id="status" aria-live="polite"></p>
-    <a class="v1" href="v1/">Første versjon</a>
+  <div class="scene" id="scene">
+    <div class="spot" aria-hidden="true"></div>
+    <div class="ring" id="ring" aria-hidden="true"></div>
+    <div class="can" id="can">
+      <div class="can-bob">
+        <div class="can-body" id="can-body">
+          <img class="can-img" src="assets/battery-fresh.webp" width="564" height="1476" alt="En boks Battery Fresh energidrikk" fetchpriority="high">
+          <span class="can-glow" aria-hidden="true"></span>
+          <span class="can-sheen" aria-hidden="true"></span>
+        </div>
+        <img class="can-reflect" src="assets/battery-fresh.webp" width="564" height="1476" alt="" aria-hidden="true">
+      </div>
+    </div>
+    <div class="floor" aria-hidden="true"></div>
   </div>
+  <div class="dim" aria-hidden="true"></div>
+  <div class="flash" id="flash" aria-hidden="true"></div>
+
+  <div class="copy">
+    <p class="kicker">Det er tid for</p>
+    <h1 class="title" id="title" aria-label="Batteribytte!"><span class="nw">Batteri</span><wbr><span class="nw">bytte!</span></h1>
+  </div>
+
+  <div class="controls">
+    <section class="panel" id="ask" aria-labelledby="ask-h">
+      <h2 id="ask-h">Er du klar?</h2>
+      <div class="choices" role="group" aria-labelledby="ask-h">
+        <button class="choice yes" id="ja" type="button" aria-keyshortcuts="J" aria-describedby="hint" title="Ja (J)"><span class="charge" id="charge" aria-hidden="true"></span><span class="lbl">Ja</span></button>
+        <button class="choice no" id="nei" type="button" aria-keyshortcuts="N" title="Nei (N)"><span class="lbl">Nei</span></button>
+      </div>
+      <p class="hint" id="hint">Trykk – eller hold <b>Ja</b> inne og lad selv</p>
+    </section>
+
+    <section class="panel" id="yes" aria-labelledby="yes-h" hidden>
+      <h2 id="yes-h">Fullt ladet!</h2>
+      <p>Batteriet er byttet. Skål!</p>
+      <div class="actions">
+        <button class="chip big primary" id="share" type="button">Varsle kollegaene</button>
+        <button class="chip big" id="again" type="button">Lad igjen</button>
+      </div>
+    </section>
+
+    <section class="panel" id="no" aria-labelledby="no-h" hidden>
+      <h2 id="no-h">Lavt batteri…</h2>
+      <p>Helt greit. Vi venter til du er klar.</p>
+      <button class="chip big" id="retry" type="button">Prøv igjen</button>
+    </section>
+  </div>
+
+  <p class="toast" id="toast" role="status" hidden></p>
+  <p class="sr-only" id="status" aria-live="polite"></p>
+  <nav class="more" aria-label="Andre versjoner"><a href="film/">Filmversjonen</a><a href="v1/">Første versjon</a></nav>
 </main>
 
 <script src="app.js" defer></script>

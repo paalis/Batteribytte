@@ -1,0 +1,328 @@
+/* Batteribytte — the film is the page. Black studio, one heavy typeface, the can is the only colour. */
+
+@font-face {
+  font-family: "Archivo Black";
+  src: url("../fonts/ArchivoBlack-400.woff") format("woff");
+  font-display: swap;
+}
+
+:root {
+  --ground: #07070a;
+  --ink: #f6f4f0;
+  --muted: #b9b9c0;
+  --gold: #f4a64a;
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --gutter: max(16px, env(safe-area-inset-left));
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 1rem/1.5 var(--body);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---------- the film fills the screen ---------- */
+
+.stage { position: relative; height: 100svh; overflow: hidden; }
+
+.film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--ground);
+}
+
+/* ---------- interface over the film ---------- */
+
+.ui { position: absolute; inset: 0; pointer-events: none; }
+.ui > *, .copy > * { pointer-events: auto; }
+
+.bar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.chip {
+  pointer-events: auto;
+  min-height: 44px;
+  padding: .5em 1.1em;
+  border: 1px solid rgba(255, 255, 255, .3);
+  border-radius: 999px;
+  background: rgba(7, 7, 10, .55);
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: .45em;
+  transition: background .15s ease-out, border-color .15s ease-out, transform .1s ease-out;
+}
+
+.chip:active, .choice:active { transform: scale(.96); }
+.chip.primary { background: var(--gold); border-color: var(--gold); color: #140b02; }
+.chip.primary:hover { background: #ffbe6e; border-color: #ffbe6e; }
+
+/* sound: one control; the icon shows the state, the name never changes */
+.ico { width: 1.15em; height: 1.15em; fill: currentColor; }
+.ico .w { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+#sound .on, #sound[aria-pressed="true"] .off { display: none; }
+#sound[aria-pressed="true"] .on { display: inline; }
+#sound[aria-pressed="true"] { border-color: rgba(255, 255, 255, .7); }
+
+.chip:hover { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .55); }
+.chip.big { font-size: 1rem; padding: .65em 1.7em; }
+#skip { margin-left: auto; }
+
+/* the copy sits in the empty part of the packshot: the top on phones, the left on wide screens */
+.copy {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: calc(max(12px, env(safe-area-inset-top)) + 64px);
+  text-align: center;
+  pointer-events: none;
+  transition: opacity .5s ease, translate .5s ease;
+}
+
+.stage[data-state="intro"] .copy { opacity: 0; translate: 0 12px; visibility: hidden; }
+
+.kicker {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(.85rem, 3.6vw, 1.2rem);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.title {
+  margin: .1em 0 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 13.5vw, 5.6rem);
+  line-height: .92;
+  letter-spacing: -.01em;
+  text-transform: uppercase;
+  hyphens: manual;
+  text-shadow: 0 6px 40px rgba(0, 0, 0, .6);
+}
+
+.nw { white-space: nowrap; }
+
+.panel { margin-top: clamp(16px, 3.4svh, 32px); }
+
+.panel h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 8vw, 2.8rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.panel p { margin: .5rem 0 1.1rem; color: #e2e2e6; }
+
+.choices { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  min-width: 132px;
+  min-height: 54px;
+  padding: .5rem 1.4rem;
+  border: 2px solid rgba(255, 255, 255, .85);
+  border-radius: 999px;
+  background: rgba(7, 7, 10, .5);
+  font-family: var(--display);
+  font-size: 1.5rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition: background .15s ease-out, transform .1s ease-out, opacity .25s ease-out;
+}
+
+.choice:hover { background: rgba(255, 255, 255, .1); }
+.choice.yes { border-color: var(--gold); }
+
+.box { position: relative; width: .8em; height: .8em; border: 2px solid currentColor; border-radius: 4px; }
+.choice.yes .box { color: var(--gold); }
+.choice[aria-pressed="true"] .box { background: currentColor; }
+.choice[aria-pressed="true"] .box::after {
+  content: "";
+  position: absolute;
+  left: 30%;
+  top: 6%;
+  width: 30%;
+  height: 60%;
+  border: solid var(--ground);
+  border-width: 0 3px 3px 0;
+  rotate: 45deg;
+}
+
+.choices.locked .choice { pointer-events: none; }
+.choices.locked .choice[aria-pressed="false"] { opacity: .3; }
+
+/* ---------- feedback ---------- */
+
+/* panels and the meter come in quickly and never hold the user back */
+.enter { animation: enter .25s ease-out both; }
+@keyframes enter { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* the can's battery meter, mirrored in the page while an answer plays */
+.meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: clamp(16px, 3.4svh, 32px);
+  padding: .55rem 1rem;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 999px;
+  background: rgba(7, 7, 10, .55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.meter-label { font-family: var(--display); text-transform: uppercase; letter-spacing: .06em; }
+.meter-bar {
+  position: relative;
+  width: 120px;
+  height: 18px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  padding: 2px;
+}
+.meter-bar::after { content: ""; position: absolute; right: -6px; top: 4px; width: 3px; height: 6px; background: var(--ink); border-radius: 0 2px 2px 0; }
+.meter-fill { display: block; height: 100%; background: var(--gold); transform-origin: 0 50%; transform: scaleX(.06); }
+.meter.low .meter-fill { background: #ff4d6a; }
+.meter-pct { min-width: 3.4em; text-align: right; }
+
+.note {
+  margin: 1rem 0 0;
+  font-size: .9rem;
+  color: var(--muted);
+}
+
+/* intro progress: a thin line along the bottom, like a story */
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, .12);
+  opacity: 0;
+  transition: opacity .25s ease-out;
+}
+.progress span { display: block; height: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(0); }
+.stage[data-state="intro"] .progress { opacity: 1; }
+
+.loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .6rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(7, 7, 10, .6);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.spin { width: 16px; height: 16px; border: 2px solid rgba(255, 255, 255, .3); border-top-color: var(--ink); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { rotate: 360deg; } }
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(10px, env(safe-area-inset-bottom)) + 36px);
+  translate: -50% 0;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: .6rem 1rem;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #0b0b0e;
+  font-weight: 600;
+  text-align: center;
+  animation: enter .25s ease-out both;
+}
+
+.v1 {
+  position: absolute;
+  left: var(--gutter);
+  bottom: max(10px, env(safe-area-inset-bottom));
+  font-size: .8rem;
+  color: var(--muted);
+}
+
+/* ---------- wide screens: the cans stand right, the copy left ---------- */
+
+@media (min-aspect-ratio: 4/3) {
+  .copy {
+    top: 50%;
+    right: auto;
+    left: 6vw;
+    width: min(44vw, 640px);
+    translate: 0 -50%;
+    text-align: left;
+  }
+  .stage[data-state="intro"] .copy { translate: 0 calc(-50% + 12px); }
+  .title { font-size: clamp(3rem, 5.4vw, 5.4rem); }
+  .title { hyphens: none; }
+  .choices, .actions { justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy, .chip, .choice { transition: none; }
+  .chip:active, .choice:active { transform: none; }
+  .enter, .toast { animation: none; }
+  .spin { animation-duration: 3s; }
+}
+
+/* short landscape screens (phones on their side): size the type by height so it never runs into the bar */
+@media (min-aspect-ratio: 4/3) and (max-height: 560px) {
+  .kicker { font-size: .75rem; }
+  .title { font-size: clamp(1.9rem, 10svh, 3rem); }
+  .panel { margin-top: 10px; }
+  .panel h2 { font-size: clamp(1.3rem, 7svh, 1.9rem); }
+  .panel p { margin: .3rem 0 .6rem; font-size: .9rem; }
+  .choices { margin-top: 10px; }
+  .choice { min-height: 46px; min-width: 112px; font-size: 1.2rem; }
+  .copy { top: calc(50% + 14px); }
+}
