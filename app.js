@@ -90,19 +90,12 @@
     setLevel(100);
     ja.classList.remove('holding');
     sound.charge(false);
-    // with the film, the slam, the flash and the spray land on the frame where the tab lifts
+    // with the film, the slam lands on the frame where the tab lifts; the film itself is the spectacle (no 2D sparks)
     const J = window.JOURNEY && JOURNEY.active ? JOURNEY : null;
     setTimeout(() => { sound.pop(); buzz([25, 40, 35]); }, J ? J.HIT_DELAY : 0);
     emit('pop');
     const r = canBody.getBoundingClientRect();
-    if (J && !RM) {
-      setTimeout(() => {
-        const [cx, cy, w] = J.popXY();
-        flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', cy + 'px');
-        replay(flash);
-        burst(cx, cy, w);
-      }, J.HIT_DELAY);
-    } else if (!RM && !GL()) {
+    if (!J && !RM && !GL()) {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.08;
       flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', (r.top + r.height / 2) + 'px');
       replay(flash); replay(ring);
@@ -110,12 +103,14 @@
       spring.vs += 2.2;              // the can jumps
       shake = 0.35;
     }
-    setTimeout(() => {
+    const done = () => {
       show('yes');
       hint.innerHTML = HINT;
       say('Fullt ladet! Batteriet er byttet. Skål!');
       $('#share').focus({ preventScroll: true });
-    }, RM ? 0 : J ? J.YES_DELAY : 320);
+    };
+    // the film plays to its last frame before «Fullt ladet!» comes in; otherwise as before
+    if (J && J.onEnd) J.onEnd(done); else setTimeout(done, RM ? 0 : 320);
   }
 
   // ---------- «Nei»: drain to 0, lights out ----------

@@ -5,7 +5,8 @@
 //
 // What the film holds (verified frame by frame): 0–2.5 s macro of the lid and a drop · 2.5–5.9 s through the drop,
 // ice, pink bubbles · 5.9–9 s more bubbles, the surface breaks at ~8 s · 9–12.5 s teal fog and lightning ·
-// 12.5–15.4 s the fog thins and the can appears · 16.65 s the tab lifts · 16.9 s spray, foam runs down · 20.6 s hero.
+// 12.5–15.4 s the fog thins and the can appears · 16.65 s the tab lifts · 16.9 s spray, foam runs down · 20.6 s hero,
+// then «Fullt ladet!» comes in over the last frame.
 (() => {
   const BB = window.BB;
   const video = document.getElementById('journey');
@@ -14,9 +15,20 @@
   const J = window.JOURNEY = { active: false };
 
   const T_POP = 16.5;            // the last frame before the tab moves: the charge ends here (easy to adjust)
-  const T_HIT = 16.85;           // the spray: the page's flash and droplets land here
-  const T_YES = 18.4;            // about 1.5 s into the foam: «Fullt ladet!» comes in
-  const POP_AT = [0.52, 0.36];   // the top of the can in the pop frame, as fractions of the 720×1280 frame
+  const T_HIT = 16.85;           // the spray: the slam (sound and vibration) lands here
+  // after the pop the film runs to its last frame; if it stalls for data or gets paused on the way, it picks up again
+  let playing = false;
+  const keepGoing = () => { if (playing && J.active && !video.ended && BB.state === 'yes') { const p = video.play(); if (p) p.catch(() => {}); } };
+  video.addEventListener('pause', () => setTimeout(keepGoing, 120));
+  video.addEventListener('stalled', keepGoing);
+  function onEnd(fn) {
+    let fired = false;
+    const once = () => { if (fired) return; fired = true; playing = false; clearTimeout(guard); fn(); };
+    video.addEventListener('ended', once, { once: true });
+    // never leave the page without its buttons: give up waiting a while after the film should have ended
+    const guard = setTimeout(once, ((video.duration || 20.6) - T_POP) * 1000 + 6000);
+  }
+
   const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 
   // ---------- load: after the first paint, when the browser is idle; the small file where it makes sense ----------
@@ -62,6 +74,7 @@
     J.active = false;
     if (window.BB3D) BB3D.resume();
     root.classList.remove('journey-on');
+    playing = false;
     video.pause();
     setTimeout(() => { if (!J.active) { video.currentTime = 0; shown = 0; vel = 0; } }, 220);
   }
@@ -104,6 +117,7 @@
       video.addEventListener('canplay', late, { once: true });
     } else if (t === 'pop' && J.active) {
       video.currentTime = T_POP;
+      playing = true;
       const p = video.play(); if (p) p.catch(() => {});
     } else if (t === 'ask') hideFilm();
   });
@@ -113,15 +127,5 @@
     requestAnimationFrame(watch);
   })();
 
-  // the top of the can in the pop frame, on screen (object-fit cover on phones, contain on wide screens)
-  function popXY() {
-    const r = video.getBoundingClientRect(), vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
-    const cs = getComputedStyle(video), cover = cs.objectFit === 'cover';
-    const s = cover ? Math.max(r.width / vw, r.height / vh) : Math.min(r.width / vw, r.height / vh);
-    const [px, py] = (cs.objectPosition || '50% 50%').split(' ').map((v) => parseFloat(v) / 100);
-    const ox = r.left + (r.width - vw * s) * (isNaN(px) ? 0.5 : px), oy = r.top + (r.height - vh * s) * (isNaN(py) ? 0.5 : py);
-    return [ox + POP_AT[0] * vw * s, oy + POP_AT[1] * vh * s, 90 * s * (vw / 720)];
-  }
-
-  Object.assign(J, { tick, popXY, T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000, YES_DELAY: (T_YES - T_POP) * 1000 });
+  Object.assign(J, { tick, onEnd, T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000 });
 })();
