@@ -18,7 +18,7 @@
   const HINT = hint.innerHTML;
 
   const START = 6;                 // the battery is low when you arrive
-  const RATE = 94 / 1.5;           // % per second while charging: 1.5 s from 6 to 100
+  const RATE = 94 / 8;             // % per second while charging: 8 s from 6 to 100 (the length of «reisen», journey.js)
   const DECAY = 94 / 2.4;          // % per second when let go early
   const DRAIN = 1.1;               // seconds for «Nei» to empty the battery
   const TAP = 280;                 // a press shorter than this is a tap: the can charges by itself
@@ -90,11 +90,19 @@
     setLevel(100);
     ja.classList.remove('holding');
     sound.charge(false);
-    sound.pop();
-    buzz([25, 40, 35]);
+    // with the film, the slam, the flash and the spray land on the frame where the tab lifts
+    const J = window.JOURNEY && JOURNEY.active ? JOURNEY : null;
+    setTimeout(() => { sound.pop(); buzz([25, 40, 35]); }, J ? J.HIT_DELAY : 0);
     emit('pop');
     const r = canBody.getBoundingClientRect();
-    if (!RM && !GL()) {
+    if (J && !RM) {
+      setTimeout(() => {
+        const [cx, cy, w] = J.popXY();
+        flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', cy + 'px');
+        replay(flash);
+        burst(cx, cy, w);
+      }, J.HIT_DELAY);
+    } else if (!RM && !GL()) {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.08;
       flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', (r.top + r.height / 2) + 'px');
       replay(flash); replay(ring);
@@ -107,7 +115,7 @@
       hint.innerHTML = HINT;
       say('Fullt ladet! Batteriet er byttet. Skål!');
       $('#share').focus({ preventScroll: true });
-    }, RM ? 0 : 320);
+    }, RM ? 0 : J ? J.YES_DELAY : 320);
   }
 
   // ---------- «Nei»: drain to 0, lights out ----------
@@ -246,6 +254,7 @@
     if (state === 'charging') {
       busy = true;
       setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
+      if (window.JOURNEY && JOURNEY.tick) JOURNEY.tick(dt);       // the film follows the meter (both ways)
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
       if (!RM && !GL() && (holding || auto)) {
@@ -321,16 +330,43 @@
         return on;
       },
       charge(start) {
-        if (!start) { if (hum) { const h = hum; hum = null; h.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); h.o.stop(ctx.currentTime + 0.3); } return; }
+        if (!start) {
+          if (hum) {
+            const h = hum, t = ctx.currentTime; hum = null;
+            [h.g, h.ng, h.sg].forEach((g) => g.gain.setTargetAtTime(0.0001, t, 0.05));
+            [h.o, h.ns, h.so].forEach((n) => n.stop(t + 0.3));
+          }
+          return;
+        }
         if (!ok() || hum) return;
         const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), gn = ctx.createGain();
         o.type = 'sawtooth'; o.frequency.value = 70; f.type = 'lowpass'; f.frequency.value = 400; gn.gain.value = 0.0001;
         gn.gain.setTargetAtTime(0.05, ctx.currentTime, 0.05);
         o.connect(f).connect(gn).connect(ctx.destination); o.start();
-        hum = { o, f, g: gn };
+        // the riser: silent until the surface breaks (c ≈ 0.4), then a band of noise and a tone climb to the pop
+        const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), nd = nb.getChannelData(0);
+        for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+        const ns = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+        ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.Q.value = 1.1; bp.frequency.value = 600; ng.gain.value = 0;
+        const so = ctx.createOscillator(), sg = ctx.createGain();
+        so.type = 'sine'; so.frequency.value = 220; sg.gain.value = 0;
+        ns.connect(bp).connect(ng).connect(ctx.destination); so.connect(sg).connect(ctx.destination); ns.start(); so.start();
+        hum = { o, f, g: gn, ns, bp, ng, so, sg };
       },
-      level(c) { if (hum) { const t = ctx.currentTime; hum.o.frequency.setTargetAtTime(70 + 520 * c, t, 0.03); hum.f.frequency.setTargetAtTime(400 + 3200 * c, t, 0.03); } },
-      pop() { if (!ok()) return; noise(0.35, 'bandpass', 3200, 0.5); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.05 + i * 0.05, 0.7, 0.06)); },
+      level(c) {
+        if (!hum) return;
+        const t = ctx.currentTime, r = clamp((c - 0.4) / 0.6), e = r * r * (3 - 2 * r);   // smoothstep 0.4 → 1
+        hum.o.frequency.setTargetAtTime(70 + 520 * c, t, 0.03); hum.f.frequency.setTargetAtTime(400 + 3200 * c, t, 0.03);
+        hum.bp.frequency.setTargetAtTime(600 + 6400 * e * e, t, 0.05); hum.ng.gain.setTargetAtTime(0.11 * e * e, t, 0.05);
+        hum.so.frequency.setTargetAtTime(220 + 700 * e, t, 0.05); hum.sg.gain.setTargetAtTime(0.03 * e, t, 0.05);
+      },
+      pop() {
+        if (!ok()) return;
+        tone(92, 0, 0.7, 0.3, 'sine', 36);            // the slam: a sub falling away …
+        noise(0.45, 'lowpass', 520, 0.6);             // … a low thump …
+        noise(0.35, 'bandpass', 3200, 0.5);           // … the crack, and the chord
+        [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.05 + i * 0.05, 0.7, 0.06));
+      },
       down() { if (!ok()) return; tone(440, 0, DRAIN, 0.07, 'triangle', 70); },
       fizz() { if (!ok()) return; noise(0.25, 'highpass', 5000, 0.12); },
       suspend(h) { if (ctx && on) (h ? ctx.suspend() : ctx.resume()).catch(() => {}); },

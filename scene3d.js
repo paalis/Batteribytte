@@ -387,7 +387,7 @@
     function pop() {
       yesAt = performance.now();
       tabTarget = 1;
-      if (RM) return;
+      if (RM || paused) return;                // the film (journey.js) has the pop: no stored flash for later
       // push + flash: cut on the flash to a low hero angle
       cutAt = yesAt;
       Object.assign(cam, { tx: 0, ty: 2.15, tz: 0, ld: Math.log(0.82), yaw: 22, pitch: -11, roll: 3 });
@@ -411,7 +411,12 @@
     });
 
     // ---------- the loop ----------
-    let last = performance.now(), started = false, slow = 0, quality = 2;
+    let last = performance.now(), started = false, slow = 0, quality = 2, paused = false;
+    // journey.js pauses the studio while the film is on screen, and resumes it after
+    window.BB3D = {
+      pause() { paused = true; renderer.setAnimationLoop(null); },
+      resume() { if (!paused) return; paused = false; last = performance.now(); if (started && !document.hidden) renderer.setAnimationLoop(frame); },
+    };
     function tune() {
       if (quality === 1) renderer.setPixelRatio(1);
       if (quality === 0) bloom.enabled = false;
@@ -551,7 +556,7 @@
       renderer.setAnimationLoop(frame);
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) renderer.setAnimationLoop(null);
-        else { last = performance.now(); renderer.setAnimationLoop(frame); }
+        else if (!paused) { last = performance.now(); renderer.setAnimationLoop(frame); }
       });
     });
 

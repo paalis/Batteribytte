@@ -80,6 +80,15 @@ a { color: var(--muted); }
   opacity: 0; transition: opacity .7s var(--ease-out); touch-action: none; cursor: grab; }
 .gl-canvas:active { cursor: grabbing; }
 .gl .gl-canvas { opacity: 1; }
+
+/* «reisen» (journey.js): the film takes over while charging; 200 ms cross-fade, the studio blurs out under it */
+.journey { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; display: block; object-fit: cover;
+  background: #050506; opacity: 0; pointer-events: none; transition: opacity .2s var(--ease-out); }
+.journey-on .journey { opacity: 1; }
+.gl-canvas { transition: opacity .7s var(--ease-out), filter .2s var(--ease-out); }
+.journey-on .gl-canvas { opacity: 0; filter: blur(6px); transition: opacity .2s var(--ease-out), filter .2s var(--ease-out); }
+.flash.quick { animation: flash .22s var(--ease-out) both; }
+@media (min-aspect-ratio: 4/3) { .journey { object-fit: contain; object-position: 75% 50%; } }
 .gl .scene { visibility: hidden; }
 /* scrims keep the type readable over a bright studio: top and bottom on phones, the left side on wide screens */
 .gl .stage::before, .gl .stage::after { content: ""; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none; }

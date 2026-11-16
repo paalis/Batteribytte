@@ -28,12 +28,37 @@ metallisk lokk og kant, blankt gulv med speiling, lav røyk og bloom. Logoens to
 Uten WebGL, eller hvis noe feiler, blir fotoversjonen stående. Bildefrekvensen overvåkes: på trege telefoner
 senkes pikseltetthet og så bloom.
 
+## «Reisen»: ladescenen (journey.js)
+
+AI-filmen `assets/journey2-720.mp4` (eller `-540` ved datasparing, treg forbindelse eller telefon med lite minne)
+er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` går jevnt begge veier.
+
+| Tid i filmen | Innhold | Nivå |
+|---|---|---|
+| 0–2,5 s | makro av lokket med en dråpe | 6 % → |
+| 2,5–5,9 s | gjennom dråpen, isbit, rosa væske med bobler | |
+| 5,9–9 s | flere bobler, overflaten brytes ca. 8 s (riseren starter, c ≈ 0,4) | |
+| 9–12,5 s | teal tåke og lynbuer | |
+| 12,5–15,4 s | tåken tynnes, boksen kommer fram | |
+| 16,5 s | `T_POP`: ladingen ender her | 100 % |
+| 16,65 / 16,85 s | tappen løftes / spruten (smell, blits og 2D-sprut) | spilles |
+| 18,4 s | «Fullt ladet!» kommer inn | |
+| 20,6 s | sluttbildet blir stående | |
+
+- **Lading tar 8 s** (`RATE = 94/8`). Ved hold er tiden c × `T_POP`, glattet med en kritisk dempet fjær. `currentTime` settes bare når avviket er over 1/48 s.
+- **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % eller «Lad igjen» gir tilbake til 3D.
+- **Overgangen** er 200 ms med kort blits, og 3D blir uskarpt og tones ut. 3D-renderingen står på pause mens filmen vises.
+- **Reserve:** er ikke filmen bufret 5 s når ladingen starter, går den ladingen i 3D som før. Nei bruker alltid 3D.
+- **Lasting:** filmen lastes etter første opptegning når nettleseren er ledig, og primes på første trykk for iOS.
+- **Redusert bevegelse:** ingen film, og den lastes heller ikke.
+- **Lyd:** summingen stiger med c, en riser kommer fra c ≈ 0,4 til 100 %, og smellet ved pop. Alt er av til «Lyd» trykkes.
+
 ## Flyt
 
 ```
 Åpne siden (batteri 6 %, blinker rødt)
    └─ «Er du klar?»
-        ├─ Ja: hold inne → lader 6→100 % på 1,5 s (gnister fra gulvet, glød, risting, summing)
+        ├─ Ja: hold inne → lader 6→100 % på 8 s («reisen» skrubbes; i 3D-reserven: gnister, glød, risting, summing)
         │      slipp for tidlig → nivået synker tilbake, «Hold inne til 100 %»
         │      trykk kort / Enter / J → lader av seg selv
         │      100 % → pop (blits, ring, gnister og dråper, boksen hopper) → «Fullt ladet!»
