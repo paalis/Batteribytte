@@ -1,5 +1,5 @@
 {
-  "about": "The clips the page plays. Swap a clip by changing its URLs here (see ASSETS.md); no code changes. Coordinates are fractions of the 720×1280 frame; times are seconds from the start of the clip.",
+  "about": "The clips the page plays. Swap a clip by changing its URLs here (see ASSETS.md); no code changes. Coordinates are fractions of the 720×1280 frame; times are seconds from the start of the clip. cuts: where the edit cuts (the page punches the frame and sweeps a light leak there). arcs/strikes: optional live lightning on top of the clip (empty when the clip has its own).",
   "width": 720,
   "height": 1280,
   "clips": {
@@ -10,7 +10,7 @@
     "charge": {
       "frames": "assets/clips/charge/{i}.webp",
       "pad": 3,
-      "count": 90,
+      "count": 120,
       "fps": 30,
       "scrub": "assets/clips/charge-scrub.mp4",
       "first": "assets/clips/charge-first.webp",
@@ -18,6 +18,12 @@
       "top": [
         0.5,
         0.2
+      ],
+      "cuts": [
+        1.0,
+        2.1,
+        3.0,
+        3.22
       ]
     },
     "open": {
@@ -26,30 +32,16 @@
       "last": "assets/clips/open-last.webp",
       "hit": 0.25,
       "top": [
-        0.49,
-        0.21
+        0.5,
+        0.42
       ],
-      "strikes": [
-        1.64,
-        1.72,
+      "strikes": [],
+      "arcs": [],
+      "cuts": [
+        0.25,
+        1.0,
         1.8,
-        2.06,
-        2.32,
-        2.62
-      ],
-      "arcs": [
-        [
-          0.24,
-          0.38,
-          0.37,
-          0.45
-        ],
-        [
-          0.63,
-          0.45,
-          0.76,
-          0.38
-        ]
+        2.0
       ]
     },
     "drain": {

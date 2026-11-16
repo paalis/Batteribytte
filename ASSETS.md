@@ -34,30 +34,31 @@ Verktøy som tar både startbilde og sluttbilde (for eksempel Runway, Kling, Lum
   > The camera drifts a few degrees left and returns to the exact first frame. Photoreal macro commercial look,
   > shallow depth of field, 30 fps. No text overlays, no hands, no other brands.
 
-### B · `charge`: lading (3 s, **skrubbes** av %-måleren)
+### B · `charge`: lading (4 s, **skrubbes** av %-måleren)
 - **Startbilde:** `charge-first.webp`, samme som idle. **Sluttbilde:** `charge-last.webp`, 100 %: boksen bakbelyst i varmt lys.
-- **Tid = nivå:** bilde nr. *i* av 90 tilsvarer 6 + 94·i/89 %. Klippet må derfor gå jevnt, uten kutt og uten pause.
+- **Tid = nivå:** bilde nr. *i* av 120 tilsvarer 6 + 94·i/119 %. Klippet bør ikke ha pauser.
+- **Kutt er lov:** når man skrubber gjennom et kutt, slår siden til med zoom-støt, lysflimmer og whoosh, som et klipp i takt. Før kuttene inn i `charge.cuts` (sekunder).
 - **Prompt:**
-  > Vertical 9:16, 3 seconds, one continuous camera move, no cuts. Start on the exact start frame. The camera pushes in
-  > to an extreme macro of cold condensation droplets on the can's label, ice cubes tumble past in slow motion and clink
-  > against the can, then the camera glides up the can to the rim and pulls back to a low heroic angle ending on the
-  > exact end frame. As it moves, a warm amber light grows behind the can until it glows. Dark studio, hard rim light,
+  > Vertical 9:16, 4 seconds, a fast commercial edit with speed ramps. Start on the exact start frame. 0–1 s: push in to
+  > an extreme macro of cold condensation droplets on the label. 1 s: cut to a low dutch angle at floor level: ice cubes
+  > fall in slow motion and splash on the glossy floor around the can. 2.1 s: cut to the top of the can from above, a
+  > cold breath of vapour rises. 3 s: whip pan into a low heroic angle ending on the exact end frame. As it moves, a warm amber light grows behind the can until it glows. Dark studio, hard rim light,
   > fog on the floor, photoreal high-speed commercial look, 30 fps. No text overlays, no other brands.
 
-### C · `open`: åpnes ved 100 % (3 s, spilles)
+### C · `open`: åpnes ved 100 % (4 s, spilles)
 - **Startbilde:** `charge-last.webp`. **Sluttbilde:** `open-last.webp`, trioen i tåke.
 - **Tider som siden bruker** (rett dem i `clips.json` hvis klippet ditt avviker):
   - `hit`: når flippen knepper (smell, sprut og ristet bilde), nå 0,25 s.
-  - `strikes`: når lynene slår (sekunder fra start), nå i trio-bildet 1,6–2,7 s.
-  - `arcs`: hvor lynene går, som brøkdeler av bildet fra boks til boks.
+  - `cuts`: hvor klippet kutter (siden slår til med zoom-støt, lys og whoosh), nå 0,25 / 1,0 / 1,8 / 2,0 s.
+  - `strikes` og `arcs`: valgfritt lyn tegnet live oppå klippet. Tomme nå, fordi placeholderen har lyn i selve klippet. Har AI-klippet ikke lyn, fyll dem inn (sekunder, og brøkdeler av bildet fra boks til boks).
   - `top`: hvor sprut og fizz kommer fra.
 - **Prompt:**
-  > Vertical 9:16, 3 seconds, fast commercial edit with speed ramps. Start on the exact start frame. 0.25 s: a fingertip
+  > Vertical 9:16, 4 seconds, fast commercial edit with speed ramps. Start on the exact start frame. 0.25 s: a fingertip
   > snaps the tab open, a burst of cold vapour and fine spray; slow-motion close-up from above as amber foam rises out
-  > of the opening and spills over the rim, running down the side of the can over the droplets. 1.6 s: cut to three
-  > identical cans side by side on the glossy floor in thick low fog, warm light behind the middle one, the camera
-  > slowly pushing in. Dark moody studio, hard rim light, high contrast, photoreal, 30 fps. No text, no other brands.
-  > (Lightning between the cans is added live by the page; leave the gaps between them clean.)
+  > of the opening and spills over the rim. 1 s: cut to the side, foam running down the can over the droplets.
+  > 1.8 s: whip pan; 2 s: three identical cans side by side on the glossy floor in thick low fog, blue-white lightning
+  > arcing between them, warm light behind the middle one, the camera slowly pushing in. Dark moody studio, hard rim light, high contrast, photoreal, 30 fps. No text, no other brands.
+  > (The page can also draw lightning live on top: if the clip has none, set `strikes` and `arcs` in clips.json.)
 
 ### D · `drain`: Nei (2 s, spilles)
 - **Startbilde:** `drain-first.webp`, samme som idle. **Sluttbilde:** nesten svart.
@@ -72,7 +73,7 @@ Legg råklippene i `assets/clips-src/` (ignorert av git) og kjør:
 
 ```sh
 tools/make-sequence.sh assets/clips-src/idle.mp4   idle
-tools/make-sequence.sh assets/clips-src/charge.mp4 charge assets/clips 90   # 60–120 bilder
+tools/make-sequence.sh assets/clips-src/charge.mp4 charge assets/clips 120  # 60–120 bilder
 tools/make-sequence.sh assets/clips-src/open.mp4   open
 tools/make-sequence.sh assets/clips-src/drain.mp4  drain
 ```

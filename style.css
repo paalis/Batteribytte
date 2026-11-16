@@ -102,6 +102,11 @@ a { color: var(--muted); }
 }
 .clips .stage[data-state="draining"] .dim, .clips .stage[data-state="no"] .dim { opacity: .2; }
 
+/* a light leak that sweeps across on every cut (motion.js) */
+.leak { position: absolute; inset: -20%; z-index: 3; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(55% 38% at 32% 42%, rgba(255, 196, 120, .85), transparent 70%),
+              radial-gradient(38% 28% at 72% 58%, rgba(255, 110, 90, .55), transparent 70%); }
+
 /* the counter: while it charges, the percentage is the biggest thing on screen */
 .count {
   grid-area: scene;

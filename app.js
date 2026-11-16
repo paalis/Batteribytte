@@ -439,6 +439,7 @@
     get level() { return level; },
     get pumping() { return state === 'charging' && (holding || auto); },
     fizz() { sound.fizz(); },
+    sfx(name, gain) { sound.play(name, gain); },
   };
 
   // ---------- the headline arrives letter by letter, once ----------

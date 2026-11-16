@@ -195,60 +195,183 @@
   });
 
 
-  // ---------- placeholder clips for the page (see ASSETS.md): four segments in one 12 s timeline ----------
-  //   A idle   0–4   seamless loop, 6 % and blinking red          (played as a looping video)
-  //   B charge 4–7   6 → 100 %, linear in time: frame i = 6 + 94·i/89 (scrubbed by the page, 90 frames)
-  //   C open   7–10  the tab cracks, vapour, cut to the top, cut to the backlit trio (lightning is drawn live)
-  //   D drain  10–12 from the idle frame the studio dies and the meter empties
-  const D = 12.0;
+  // ---------- placeholder clips for the page (see ASSETS.md): four segments in one 14 s timeline ----------
+  //   A idle   0–4    seamless loop at 6 %: a slow orbit, a glint across the label
+  //   B charge 4–8    6 → 100 %, linear in time (scrubbed, 120 frames): macro drops → ice falls in slow motion and
+  //                   splashes on the floor (low dutch angle) → the top of the can → a whip to the glowing hero
+  //   C open   8–12   the crack: spray and foam in slow motion from above → foam runs down the side → whip to the
+  //                   trio, lightning between the cans → push in
+  //   D drain  10 → 12–14 the studio dies
+  const D = 14.0;
   const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
   OM.music({ off: true });
   const L = { key: 0.45, rim: 2.4, sweepX: -7, sweepI: 0, back: 2.5, glow: 0.5, fill: 2.6, fog: 0.9, breath: 0, level: 6, red: 1,
-    smokeRise: 0, studio: 1, tab: 0, flash: 0 };
+    smokeRise: 0, studio: 1, tab: 0, flash: 0, ice: -1, pour: -1, bolt: 0 };
   const cam = OM.space(stage.camera, { fov: 34 });
-  const IDLE = { target: [0, 2.0, 0], distance: 13, yaw: -10, pitch: 4, roll: 0 };
+  const IDLE = { target: [0, 2.0, 0], distance: 13, yaw: -12, pitch: 4, roll: 0 };
+  const HERO = { target: [0, 2.15, 0], distance: 10, yaw: 8, pitch: -5, roll: 0 };
   const cut = (at, pose) => cam.to(tl, at, { ...pose, duration: 0.001, ease: 'none' });
+  const R_SIDE = 278.5 * S, HOLE = new THREE.Vector3(0, HCAN + 0.01, 0.13);
+  const rng = (seed) => OM.random(seed);
 
-  // A · idle: a slow breath of the camera that ends where it began
+  // ---------- props: ice, droplets, foam, lightning ----------
+  function roundedBox(size, r, seg = 6) {
+    const g = new THREE.BoxGeometry(size, size, size, seg, seg, seg), p = g.attributes.position, h = size / 2 - r, v = new THREE.Vector3(), c = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      c.set(Math.max(-h, Math.min(h, v.x)), Math.max(-h, Math.min(h, v.y)), Math.max(-h, Math.min(h, v.z)));
+      v.sub(c).normalize().multiplyScalar(r).add(c); p.setXYZ(i, v.x, v.y, v.z);
+    }
+    g.computeVertexNormals(); return g;
+  }
+  // ice in a dark studio reads by its edges and its frost: half clear, a cold inner glow, a hard clearcoat
+  const iceMat = new THREE.MeshPhysicalMaterial({ color: '#f2f8ff', transmission: 0.55, thickness: 0.3, roughness: 0.22, ior: 1.31,
+    emissive: new THREE.Color('#2a3a4c'), emissiveIntensity: 0.6, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 2.2 });
+  const iceGeo = roundedBox(0.34, 0.06);
+  const ri = rng(21);
+  const ICE = Array.from({ length: 8 }, (_, i) => {
+    const m = new THREE.Mesh(iceGeo, iceMat); m.castShadow = true; m.visible = false; scene.add(m);
+    const a = -1.1 + (i / 7) * 2.2 + (ri() - 0.5) * 0.3, rad = 1.0 + ri() * 0.9;
+    return { m, x: Math.sin(a) * rad, z: Math.cos(a) * rad * 0.8 + 0.2, y0: HCAN + 1.6 + ri() * 2.2, t0: ri() * 0.5, s: 0.7 + ri() * 0.6,
+      rx: (ri() - 0.5) * 6, ry: (ri() - 0.5) * 6, rz: (ri() - 0.5) * 6 };
+  });
+  // droplets: one instanced mesh for the drink (amber to red), one for clear water from the ice
+  function dropMesh(n, color) {
+    const m = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), new THREE.MeshPhysicalMaterial({ color, roughness: 0.03,
+      clearcoat: 1, clearcoatRoughness: 0.02, transmission: 0.6, thickness: 0.04, ior: 1.34, emissive: new THREE.Color(color), emissiveIntensity: 0.25, envMapIntensity: 2 }), n);
+    m.frustumCulled = false; scene.add(m); return m;
+  }
+  const amber = dropMesh(260, '#ffb257'), clear = dropMesh(88, '#e8f1ff');
+  const DROPS = { amber: [], clear: [] };
+  const rd = rng(33);
+  for (let i = 0; i < 260; i++) {                                  // the crack: up and out of the hole
+    const a = rd() * Math.PI * 2, up = 2.6 + rd() * 4.2, out = 0.4 + rd() * 2.4;
+    DROPS.amber.push({ key: 'pour', t0: rd() * 0.18, p: HOLE.clone(), v: new THREE.Vector3(Math.cos(a) * out, up, Math.sin(a) * out * 0.8 + 0.6),
+      r: 0.006 + Math.pow(rd(), 2.5) * 0.026, red: rd() < 0.3 });
+  }
+  ICE.forEach((c, k) => {                                          // each cube splashes where it lands
+    const th = c.t0 + Math.sqrt((2 * (c.y0 - 0.17)) / 9.8);
+    for (let i = 0; i < 11; i++) {
+      const a = rd() * Math.PI * 2, s = 0.6 + rd() * 1.6;
+      DROPS.clear.push({ key: 'ice', t0: th, p: new THREE.Vector3(c.x, 0.05, c.z), v: new THREE.Vector3(Math.cos(a) * s, 1.2 + rd() * 2.4, Math.sin(a) * s), r: 0.01 + rd() * 0.025 });
+    }
+  });
+  const redCol = new THREE.Color('#e25070'), ambCol = new THREE.Color('#ffb257');
+  DROPS.amber.forEach((d, i) => amber.setColorAt(i, d.red ? redCol : ambCol));
+  // foam: soft blobs that rise out of the hole, spread over the lid, spill over the rim and run down the side
+  // many small, flattened, half-translucent bubbles that overlap: reads as foam, not as balls
+  const foamMat = new THREE.MeshPhysicalMaterial({ color: '#fff4e2', roughness: 0.32, sheen: 1, sheenColor: new THREE.Color('#ffcf8a'),
+    clearcoat: 0.8, clearcoatRoughness: 0.15, transmission: 0.35, thickness: 0.05, ior: 1.33, emissive: new THREE.Color('#3a2a14'), emissiveIntensity: 0.35 });
+  const FN = 1100, foam = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 2), foamMat, FN);
+  foam.frustumCulled = false; foam.castShadow = true; scene.add(foam);
+  const rf = rng(44);
+  const FOAM = Array.from({ length: FN }, (_, i) => {
+    const u = i / FN, front = rf() < 0.75;                         // most of it spills toward the front
+    return { e: u * 0.9 + rf() * 0.08, a: front ? (rf() - 0.5) * 2.0 : rf() * Math.PI * 2, rr: Math.sqrt(rf()),
+      spill: rf() < 0.62, stop: 0.3 + Math.pow(rf(), 0.7) * 2.6, sp: 2.2 + rf() * 1.6, s: 0.012 + Math.pow(rf(), 2.2) * 0.04 };
+  });
+  // lightning: a jagged tube rebuilt for every strike, very bright so the bloom makes it glow
+  const boltMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 4.6, 6.5), toneMapped: false });
+  const boltGlow = new THREE.PointLight('#bcd2ff', 0, 8, 1.4); scene.add(boltGlow);
+  let bolts = [], boltKey = '';
+  function jag(a, b, seed) {
+    const r = rng(seed); let pts = [a.clone(), b.clone()];
+    for (let lv = 0; lv < 5; lv++) {
+      const next = [pts[0]];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const m = pts[i].clone().add(pts[i + 1]).multiplyScalar(0.5), len = pts[i].distanceTo(pts[i + 1]);
+        m.add(new THREE.Vector3((r() - 0.5), (r() - 0.5), (r() - 0.5) * 0.6).multiplyScalar(len * 0.45));
+        next.push(m, pts[i + 1]);
+      }
+      pts = next;
+    }
+    return pts;
+  }
+  const ARCS = [[[-1.4, 3.2, -0.4], [-0.62, 3.0, 0]], [[0.62, 2.6, 0], [1.4, 2.9, -0.4]], [[-1.5, 3.9, -0.45], [1.5, 3.9, -0.45]]];
+  function setBolts(on, seed) {
+    const k = on ? 'b' + seed : '';
+    if (k === boltKey) return; boltKey = k;
+    bolts.forEach((m) => { scene.remove(m); m.geometry.dispose(); }); bolts = [];
+    if (!on) return;
+    ARCS.forEach(([a, b], j) => {
+      if (j === 2 && seed % 2) return;
+      const pts = jag(new THREE.Vector3(...a), new THREE.Vector3(...b), seed * 7 + j);
+      const m = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, 0.02, 5, false), boltMat);
+      scene.add(m); bolts.push(m);
+    });
+  }
+
+  // ---------- A · idle: a slow orbit that closes on itself, a glint across the label ----------
   cam.set(IDLE);
-  cam.to(tl, 0, { yaw: -5, pitch: 5, duration: 2, ease: 'sine.inOut' });
-  cam.to(tl, 2, { yaw: -10, pitch: 4, duration: 2, ease: 'sine.inOut' });
+  cam.to(tl, 0, { yaw: 2, distance: 11.8, pitch: 6, duration: 2, ease: 'sine.inOut' });
+  cam.to(tl, 2, { yaw: -12, distance: 13, pitch: 4, duration: 2, ease: 'sine.inOut' });
+  tl.fromTo(L, { sweepX: -4, sweepI: 0 }, { sweepX: 4, sweepI: 4, duration: 1.4, ease: 'sine.inOut' }, 1.0).set(L, { sweepI: 0 }, 2.4);
 
-  // B · charge: one continuous move (it is scrubbed, so no cuts): into the drops, up the can, out to a low hero
+  // ---------- B · charge (scrubbed): macro → ice → top → whip to the hero ----------
   tl.addLabel('charge', 4);
-  cam.to(tl, 4.0, { target: [-0.25, 1.65, 0.7], distance: 1.6, yaw: -18, pitch: 2, duration: 1.3, ease: 'power2.inOut' });
-  cam.to(tl, 5.3, { target: [0, 3.55, 0.3], distance: 2.3, yaw: -6, pitch: 16, duration: 0.9, ease: 'sine.inOut' });
-  cam.to(tl, 6.2, { target: [0, 2.1, 0], distance: 10.5, yaw: 6, pitch: -4, duration: 0.8, ease: 'expo.out' });
-  tl.fromTo(L, { level: 6 }, { level: 100, duration: 3, ease: 'none' }, 4.0)
-    .to(L, { back: 9, glow: 1.6, fill: 4.2, rim: 3.5, duration: 3, ease: 'power2.in' }, 4.0)
-    .fromTo(L, { sweepX: -3, sweepI: 0 }, { sweepX: 3, sweepI: 6, duration: 1.0, ease: 'none' }, 4.4).set(L, { sweepI: 0 }, 5.4)
-    .fromTo(L, { breath: 0 }, { breath: 0.6, duration: 0.8, ease: 'power2.out' }, 5.6).set(L, { breath: 0 }, 6.4);
+  cam.to(tl, 4.0, { target: [-0.25, 1.7, 0.72], distance: 1.45, yaw: -20, pitch: 2, duration: 1.0, ease: 'power2.in' });
+  tl.fromTo(L, { sweepX: -3, sweepI: 0 }, { sweepX: 3, sweepI: 6, duration: 0.9, ease: 'sine.inOut' }, 4.1).set(L, { sweepI: 0 }, 5.0);
+  cut(5.0, { target: [0.35, 0.9, 1.0], distance: 3.4, yaw: 38, pitch: -7, roll: -9 });
+  cam.to(tl, 5.002, { yaw: 30, distance: 3.0, roll: -6, duration: 1.1, ease: 'sine.out' });
+  tl.fromTo(L, { ice: 0 }, { ice: 1.55, duration: 1.1, ease: 'power2.out' }, 5.0);    // slow motion that slows further
+  cut(6.1, { target: [0, HCAN - 0.1, 0.1], distance: 2.3, yaw: -8, pitch: 36, roll: 3 });
+  cam.to(tl, 6.102, { pitch: 22, distance: 2.0, duration: 0.9, ease: 'sine.inOut' });
+  tl.fromTo(L, { breath: 0 }, { breath: 0.8, duration: 0.9, ease: 'power2.out' }, 6.1).set(L, { breath: 0 }, 7.0);
+  cam.to(tl, 7.0, { yaw: 70, distance: 4, duration: 0.22, ease: 'expo.in' });               // whip …
+  cut(7.22, { ...HERO, yaw: -30, distance: 8 });
+  cam.to(tl, 7.222, { ...HERO, duration: 0.778, ease: 'expo.out' });                         // … into the hero
+  tl.fromTo(L, { level: 6 }, { level: 100, duration: 4, ease: 'none' }, 4.0)
+    .to(L, { back: 9, glow: 1.6, fill: 4.2, rim: 3.5, duration: 4, ease: 'power2.in' }, 4.0);
 
-  // C · open: anticipation, the crack, a cut to the top, a cut to the trio
-  tl.addLabel('open', 7);
-  cam.to(tl, 7.0, { distance: 11, duration: 0.25, ease: 'power2.in' });
-  tl.set(L, { level: 100, back: 9, glow: 1.6, fill: 4.2, rim: 3.5 }, 7.0)
-    .to(L, { tab: 1, duration: 0.12, ease: 'expo.out' }, 7.25)
-    .fromTo(L, { flash: 1 }, { flash: 0, duration: 0.5, ease: 'expo.out' }, 7.25)
-    .fromTo(L, { breath: 0 }, { breath: 1, duration: 1.1, ease: 'power2.out' }, 7.25).set(L, { breath: 0 }, 8.6)
-    .to(L, { fog: 1.4, smokeRise: 1, duration: 1.5, ease: 'power2.out' }, 7.25);
-  cut(7.6, { target: [0, HCAN - 0.05, 0], distance: 2.4, yaw: 10, pitch: 30, roll: -3 });
-  cam.to(tl, 7.602, { distance: 2.0, pitch: 26, duration: 1.0, ease: 'sine.out' });
-  cut(8.6, { target: [0, 1.9, 0], distance: 15, yaw: -4, pitch: 1, roll: 0 });
-  cam.to(tl, 8.602, { distance: 13.5, duration: 1.4, ease: 'power3.out' });
+  // ---------- C · open: anticipation, the crack in slow motion, foam, lightning ----------
+  tl.addLabel('open', 8);
+  tl.set(L, { level: 100, back: 9, glow: 1.6, fill: 4.2, rim: 3.5, ice: 1.55 }, 8.0);
+  cam.to(tl, 8.0, { distance: 10.7, pitch: -4, duration: 0.25, ease: 'power2.in' });
+  tl.to(L, { tab: 1, duration: 0.1, ease: 'expo.out' }, 8.25)
+    .fromTo(L, { flash: 1 }, { flash: 0, duration: 0.45, ease: 'expo.out' }, 8.25)
+    .fromTo(L, { breath: 0 }, { breath: 1, duration: 1.2, ease: 'power2.out' }, 8.25).set(L, { breath: 0 }, 9.5)
+    // speed ramp: very slow after the crack, then real time
+    .fromTo(L, { pour: 0 }, { pour: 0.6, duration: 0.75, ease: 'sine.in' }, 8.25)
+    .to(L, { pour: 2.2, duration: 1.0, ease: 'power2.in' }, 9.0)
+    .to(L, { pour: 3.4, duration: 2.0, ease: 'power1.out' }, 10.0)
+    .to(L, { fog: 1.5, smokeRise: 1, duration: 1.5, ease: 'power2.out' }, 10.0);
+  cut(8.25, { target: [0, HCAN + 0.05, 0.1], distance: 1.35, yaw: 18, pitch: 40, roll: 5 });
+  cam.to(tl, 8.252, { distance: 1.6, pitch: 30, roll: 2, duration: 0.75, ease: 'sine.out' });
+  cut(9.0, { target: [0.1, HCAN - 0.45, 0.6], distance: 2.1, yaw: 16, pitch: 12, roll: -4 });
+  cam.to(tl, 9.002, { target: [0.1, HCAN - 1.3, 0.6], pitch: 5, duration: 0.8, ease: 'sine.inOut' });
+  cam.to(tl, 9.8, { yaw: -40, duration: 0.2, ease: 'expo.in' });
+  cut(10.0, { target: [0, 2.0, 0], distance: 15.5, yaw: 6, pitch: 2, roll: -3 });
+  cam.to(tl, 10.002, { distance: 12.5, yaw: -3, roll: 0, duration: 2, ease: 'power3.out' });
+  // the strikes (one rebuilt bolt set per flash)
+  [[10.05, 10.12], [10.18, 10.27], [10.4, 10.5], [10.62, 10.7], [10.86, 10.98], [11.3, 11.36]].forEach(([a, b], i) =>
+    tl.set(L, { bolt: i + 1 }, a).set(L, { bolt: 0 }, b));
 
-  // D · drain: from the idle frame, the studio dies
-  tl.addLabel('drain', 10);
-  cut(10.0, IDLE);
-  tl.set(L, { key: 0.45, rim: 2.4, back: 2.5, glow: 0.5, fill: 2.6, fog: 0.9, smokeRise: 0, level: 6, studio: 1, tab: 0, flash: 0 }, 10.0)
-    .to(L, { studio: 0.12, fog: 0.35, duration: 1.4, ease: 'power2.in' }, 10.2)
-    .to(L, { level: 0, duration: 1.2, ease: 'power1.in' }, 10.2);
-  cam.to(tl, 10.002, { target: [0, 1.6, 0], distance: 14.5, pitch: 20, duration: 1.998, ease: 'power2.inOut' });
+  // ---------- D · drain: from the idle frame, the studio dies ----------
+  tl.addLabel('drain', 12);
+  cut(12.0, IDLE);
+  tl.set(L, { key: 0.45, rim: 2.4, back: 2.5, glow: 0.5, fill: 2.6, fog: 0.9, smokeRise: 0, level: 6, studio: 1, tab: 0, flash: 0, ice: -1, pour: -1 }, 12.0)
+    .to(L, { studio: 0.12, fog: 0.35, duration: 1.4, ease: 'power2.in' }, 12.2)
+    .to(L, { level: 0, duration: 1.2, ease: 'power1.in' }, 12.2);
+  cam.to(tl, 12.002, { target: [0, 1.6, 0], distance: 14.5, pitch: 20, duration: 1.998, ease: 'power2.inOut' });
   tl.to({}, { duration: 0 }, D);
 
   // ---------- draw ----------
-  const camPos = new THREE.Vector3();
+  const camPos = new THREE.Vector3(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e3 = new THREE.Euler(), v3 = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const tabs = [hero.getObjectByName('tabPivot'), mirror.children[1].getObjectByName('tabPivot')];
+  const hide = (mesh, n) => { m4.makeScale(0, 0, 0); for (let i = 0; i < n; i++) mesh.setMatrixAt(i, m4); mesh.instanceMatrix.needsUpdate = true; };
+  function drops(mesh, list, sim) {
+    list.forEach((d, i) => {
+      const s = sim[d.key] - d.t0;
+      if (!(s > 0) || s > 1.8) { m4.makeScale(0, 0, 0); mesh.setMatrixAt(i, m4); return; }
+      v3.copy(d.v).multiplyScalar(s).add(d.p); v3.y -= 4.9 * s * s;
+      if (v3.y < d.r) { m4.makeScale(0, 0, 0); mesh.setMatrixAt(i, m4); return; }
+      const vy = d.v.y - 9.8 * s, sp = Math.hypot(d.v.x, vy, d.v.z);
+      q.setFromUnitVectors(up, sc.set(d.v.x, vy, d.v.z).normalize());
+      const life = Math.min(1, (1.8 - s) * 3);
+      m4.compose(v3, q, sc.set(d.r * life, d.r * life * (1 + Math.min(1.5, sp * 0.12)), d.r * life)); mesh.setMatrixAt(i, m4);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+  }
   OM3.film(stage, tl, D, cam, (t) => {
     const s = L.studio;
     key.intensity = L.key * s; rimL.intensity = rimR.intensity = L.rim * s;
@@ -256,13 +379,13 @@
     back.intensity = (L.back + L.flash * 30) * s; fill.intensity = L.fill * s; glow.material.opacity = Math.min(1, L.glow * 0.38 + L.flash * 0.5) * s;
     glow.scale.setScalar(1 + (L.glow - 1) * 0.25);
     stage.renderer.toneMappingExposure = (0.35 + 0.65 * s) + L.flash * 0.45;
-    const inCharge = t >= 4 && t < 7;
+    const inCharge = t >= 4 && t < 8;
     const blink = L.level < 20 ? (inCharge ? 1 : (Math.floor(t * 2) % 2 === 0 ? 1 : 0.35)) : 0;
     drawMeter(L.level, blink);
     tabs.forEach((p) => { if (p) p.rotation.x = -L.tab * 1.15; });
     stage.camera.getWorldPosition(camPos);
     smoke.forEach((m, i) => {
-      const u = m.userData, x = u.x + Math.sin((t / 4) * Math.PI * 2 + u.ph) * 0.45;      // periodic over 4 s: the idle loop closes
+      const u = m.userData, x = u.x + Math.sin((t / 4) * Math.PI * 2 + u.ph) * 0.45;
       m.position.set(x, u.y + L.smokeRise * (0.6 + (i % 3) * 0.3), u.z);
       m.scale.set(u.s, u.s * 0.55, 1); m.lookAt(camPos);
       m.material.opacity = u.a * 0.1 * L.fog * s;
@@ -273,6 +396,49 @@
       m.scale.set(u.s * (0.4 + p), u.s * (0.3 + p * 0.7), 1); m.lookAt(camPos);
       m.material.opacity = Math.sin(p * Math.PI) * 0.55;
     });
+    // ice: falls (in the slowed time of the shot), one small bounce, then rests
+    ICE.forEach((c) => {
+      const st = L.ice - c.t0;
+      c.m.visible = L.ice >= 0;
+      if (!c.m.visible) return;
+      const th = Math.sqrt((2 * (c.y0 - 0.17)) / 9.8);
+      let y, spin = Math.max(0, st);
+      if (st < 0) y = c.y0;
+      else if (st < th) y = c.y0 - 4.9 * st * st;
+      else { const b = st - th, vb = 9.8 * th * 0.22; y = Math.max(0.17, 0.17 + vb * b - 4.9 * b * b); spin = th + Math.min(b, 0.3) * 0.4; }
+      c.m.position.set(c.x, y, c.z); c.m.scale.setScalar(c.s);
+      c.m.rotation.set(c.rx * spin * 0.4, c.ry * spin * 0.4, c.rz * spin * 0.4);
+    });
+    const sim = { pour: L.pour, ice: L.ice };
+    if (L.pour >= 0) drops(amber, DROPS.amber, sim); else hide(amber, 260);
+    if (L.ice >= 0) drops(clear, DROPS.clear, sim); else hide(clear, 90);
+    // foam
+    if (L.pour < 0) hide(foam, FN);
+    else FOAM.forEach((f, i) => {
+      const s2 = L.pour - f.e;
+      if (s2 <= 0) { m4.makeScale(0, 0, 0); foam.setMatrixAt(i, m4); return; }
+      const grow = Math.min(1, s2 / 0.25), size = f.s * (0.4 + 0.6 * grow);
+      let x, y, z;
+      const rTop = f.rr * RIM * 0.95;
+      if (s2 < 0.2 || !f.spill) {                                  // rise out of the hole and spread over the lid
+        const k = Math.min(1, s2 / 0.2), e = 1 - Math.pow(1 - k, 3);
+        x = HOLE.x + (Math.sin(f.a) * rTop - HOLE.x) * e; z = HOLE.z + (Math.cos(f.a) * rTop - HOLE.z) * e;
+        y = HCAN + 0.02 + size * 0.6 + Math.sin(k * Math.PI) * 0.12;
+      } else if (s2 < 0.35) {                                      // over the rim
+        const k = (s2 - 0.2) / 0.15, r = rTop + (RIM * 1.04 - rTop) * k;
+        x = Math.sin(f.a) * r; z = Math.cos(f.a) * r; y = HCAN + 0.02 + size * 0.6 - k * 0.12;
+      } else {                                                     // run down the side, slowing to a stop
+        const k = s2 - 0.35, d = f.stop * (1 - Math.exp(-k * f.sp));
+        const yy = HCAN - 0.1 - d, rad = (yy > HCAN - 0.45 ? RIM + (R_SIDE - RIM) * Math.min(1, (HCAN - 0.1 - yy) / 0.35) : R_SIDE) + size * 0.55;
+        x = Math.sin(f.a) * rad; z = Math.cos(f.a) * rad; y = yy;
+      }
+      const drip = s2 > 0.35 && f.spill ? 1.7 : 0.7;                // flattened on the lid, stretched where it runs
+      m4.compose(v3.set(x, y, z), q.identity(), sc.set(size * 1.15, size * drip, size * 1.15)); foam.setMatrixAt(i, m4);
+    });
+    foam.instanceMatrix.needsUpdate = true;
+    // lightning
+    setBolts(L.bolt > 0, L.bolt);
+    boltGlow.position.set(0, 3.2, 0.2); boltGlow.intensity = L.bolt > 0 ? 45 : 0;
   });
 
   window.__timelines['film'] = tl;

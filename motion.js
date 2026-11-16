@@ -103,4 +103,37 @@
 
   // the battery chip punches when it fills
   addEventListener('bb', (e) => { if (e.detail === 'pop') gsap.fromTo('#hud', { scale: 1.18 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.45)', delay: BB.clips?.open?.hit ?? 0.25 }); });
+
+  // ---------- the camera on the footage: it breathes while waiting, pushes in with the charge, punches on every cut ----------
+  // One place sets the scale (so nothing fights): breathing + the charge push + a kick that decays fast.
+  const leak = document.createElement('div');
+  leak.className = 'leak'; leak.setAttribute('aria-hidden', 'true');
+  document.getElementById('stage').appendChild(leak);
+  let kick = 0, push = 0, lastClipT = 0, T0 = performance.now(), lastNow = performance.now();
+  function cutHit(k = 1) {
+    kick = Math.max(kick, 0.06 * k);
+    gsap.fromTo(leak, { opacity: 0.8 * k, xPercent: -25 }, { opacity: 0, xPercent: 25, duration: 0.55, ease: 'power3.out', overwrite: 'auto' });
+    if (BB.sfx) BB.sfx('whoosh', 0.35 * k);
+  }
+  (function cam(now) {
+    const dt = Math.min(0.1, (now - lastNow) / 1000); lastNow = now;
+    const st = BB.state, c = Math.max(0, Math.min(1, (BB.level - 6) / 94));
+    const target = st === 'charging' ? 0.02 + 0.09 * c * c : st === 'yes' ? 0.03 : st === 'no' || st === 'draining' ? -0.015 : 0;
+    push += (target - push) * (1 - Math.exp(-dt * 5));
+    const breathe = st === 'ask' ? 0.018 * (1 - Math.cos(((now - T0) / 1000) * (Math.PI / 4))) : 0;
+    kick *= Math.exp(-dt * 9);
+    // scrubbing across a cut in the charge clip lands like an edit
+    if (st === 'charging' && BB.clips) {
+      const ch = BB.clips.charge, t = c * ((ch.count || 90) / (ch.fps || 30));
+      (ch.cuts || []).forEach((x) => { if (lastClipT < x && t >= x) cutHit(0.7); });
+      lastClipT = t;
+    } else lastClipT = 0;
+    gsap.set(clip, { scale: 1 + breathe + push + kick });
+    requestAnimationFrame(cam);
+  })(performance.now());
+  addEventListener('bb', (e) => {
+    if (e.detail !== 'pop' || !BB.clips) return;
+    const o = BB.clips.open;
+    (o.cuts || [o.hit ?? 0.25]).forEach((x, i) => setTimeout(() => cutHit(i === 0 ? 1.4 : 1), x * 1000));
+  });
 })();
