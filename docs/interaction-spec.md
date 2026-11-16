@@ -8,7 +8,7 @@ Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-
 (OLED)»: dypt svart, sparsom glød, synlig fokus, redusert bevegelse; tegnvis inngang på kort overskrift) og
 `find-animation-opportunities` (porten frekvens → formål → fart → funksjon, felles kurver).
 
-Filmversjonen ligger på `/film/` til sammenligning.
+Dette er den eneste versjonen av siden: `/film/` og `/v1/` sendes videre til forsiden.
 
 ## 3D-studioet (scene3d.js)
 

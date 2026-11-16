@@ -64,7 +64,6 @@ a { color: var(--muted); }
 .copy { grid-area: copy; text-align: center; z-index: 4; margin-top: clamp(6px, 2svh, 24px); }
 .scene { grid-area: scene; z-index: 1; }
 .controls { grid-area: controls; text-align: center; z-index: 4; padding-bottom: 6px; }
-.more { grid-area: more; z-index: 4; display: flex; gap: 16px; justify-content: center; font-size: .8rem; }
 
 .fx { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
 .dim { position: absolute; inset: 0; z-index: 2; background: #000; opacity: 0; pointer-events: none;
@@ -358,7 +357,6 @@ a { color: var(--muted); }
   .copy { align-self: end; }
   .controls { align-self: start; margin-top: clamp(16px, 3svh, 32px); }
   .choices, .actions { justify-content: flex-start; }
-  .more { justify-content: flex-start; }
   .title { font-size: clamp(3rem, 5.6vw, 5.6rem); }
 }
 
@@ -371,7 +369,7 @@ a { color: var(--muted); }
     grid-template-areas: "bar bar" ". scene" "copy scene" "controls scene" "more scene";
   }
   .copy, .controls { text-align: left; }
-  .choices, .actions, .more { justify-content: flex-start; }
+  .choices, .actions { justify-content: flex-start; }
   .kicker { font-size: .72rem; }
   .title { font-size: clamp(1.8rem, 10svh, 2.8rem); }
   .panel h2 { font-size: clamp(1.2rem, 7svh, 1.8rem); }
