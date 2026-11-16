@@ -94,6 +94,7 @@
     sound.charge(false);
     // with the film, the slam lands on the frame where the tab lifts; the film itself is the spectacle (no 2D sparks)
     const J = window.JOURNEY && JOURNEY.active ? JOURNEY : null;
+    if (J) panels.ask.hidden = true;                // the film has the screen until «Fullt ladet!» comes in
     setTimeout(() => { sound.pop(); buzz([25, 40, 35]); }, J ? J.HIT_DELAY : 0);
     emit('pop');
     const r = canBody.getBoundingClientRect();
@@ -135,7 +136,41 @@
     $('#retry').focus({ preventScroll: true });
   }
 
+  // ---------- with the film: at 100 % the can waits in the fog, and you open it yourself ----------
+  const jaLbl = ja.querySelector('.lbl');
+  function arm() {
+    setState('armed');
+    holding = auto = false;
+    setLevel(100);
+    sound.charge(false);
+    buzz(15);
+    ja.classList.remove('holding');
+    ja.classList.add('open');
+    jaLbl.textContent = 'Åpne!';
+    ja.title = 'Åpne (J)';
+    hint.innerHTML = 'Sveip opp – eller trykk <b>Åpne!</b>';
+    say('Fullt oppladet. Åpne boksen.');
+    emit('armed');
+    ja.focus({ preventScroll: true });
+  }
+  function unarm() {
+    ja.classList.remove('open');
+    jaLbl.textContent = 'Ja';
+    ja.title = 'Ja (J)';
+  }
+  function open() {
+    if (state !== 'armed') return;
+    unarm();
+    pop();
+  }
+  // swipe up anywhere to lift the tab
+  let swipeY = null;
+  addEventListener('pointerdown', (e) => { swipeY = state === 'armed' ? e.clientY : null; }, true);
+  addEventListener('pointermove', (e) => { if (swipeY != null && swipeY - e.clientY > 50) { swipeY = null; open(); } }, { passive: true });
+  addEventListener('pointerup', () => { swipeY = null; });
+
   function backToAsk() {
+    unarm();
     setState('ask');
     holding = auto = false;
     choices.classList.remove('locked');
@@ -266,7 +301,7 @@
         const r = canBody.getBoundingClientRect();
         while (emberAcc >= 1) { emberAcc--; ember(r, c); }
       }
-      if (level >= 100) pop();
+      if (level >= 100) (window.JOURNEY && JOURNEY.active && !RM ? arm() : pop());
       else if (!holding && !auto && level <= START) abortCharge();
     } else if (state === 'draining') {
       busy = true;
@@ -405,6 +440,7 @@
   ja.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
+    if (state === 'armed') { open(); return; }
     ja.setPointerCapture(e.pointerId);
     startCharge(false);
   });
@@ -413,11 +449,12 @@
   ja.addEventListener('pointercancel', up);
   ja.addEventListener('lostpointercapture', up);
   ja.addEventListener('contextmenu', (e) => e.preventDefault());
-  ja.addEventListener('click', (e) => { if (e.detail === 0) startCharge(true); });   // Enter, or a click without a pointer
+  ja.addEventListener('click', (e) => { if (e.detail === 0) (state === 'armed' ? open() : startCharge(true)); });   // Enter, or a click without a pointer
   ja.addEventListener('keydown', (e) => {
     if (e.key !== ' ') return;
     e.preventDefault();
-    if (!e.repeat) startCharge(false);
+    if (e.repeat) return;
+    if (state === 'armed') open(); else startCharge(false);
   });
   ja.addEventListener('keyup', (e) => { if (e.key === ' ') { e.preventDefault(); release(false); } });
   nei.addEventListener('click', answerNo);
@@ -435,6 +472,7 @@
     const k = e.key.toLowerCase();
     if (k === 'm') soundBtn.click();
     else if (k === 'j' && state === 'ask') startCharge(true);
+    else if (k === 'j' && state === 'armed') open();
     else if (k === 'n' && state === 'ask') answerNo();
   });
   document.addEventListener('visibilitychange', () => {

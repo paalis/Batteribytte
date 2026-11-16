@@ -40,7 +40,8 @@ er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` gå
 | 5,9–9 s | flere bobler, overflaten brytes ca. 8 s (riseren starter, c ≈ 0,4) | |
 | 9–12,5 s | teal tåke og lynbuer | |
 | 12,5–15,4 s | tåken tynnes, boksen kommer fram | |
-| 16,5 s | `T_POP`: ladingen ender her | 100 % |
+| 15,75–16,5 s | `T_POP`: ved 100 % venter boksen i tåka (filmen puster rolig fram og tilbake). Ja blir «Åpne!» | 100 % |
+| | **Du åpner selv:** trykk «Åpne!», sveip opp, eller J / Enter / Mellomrom | |
 | 16,65 / 16,85 s | tappen løftes / spruten (smell og vibrasjon; ingen 2D-effekter oppå filmen) | spilles |
 | 20,6 s | sluttbildet blir stående, og «Fullt ladet!» kommer inn | |
 
