@@ -47,7 +47,7 @@ er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` gå
 - **Lading tar 8 s** (`RATE = 94/8`). Ved hold er tiden c × `T_POP`, glattet med en kritisk dempet fjær. `currentTime` settes bare når avviket er over 1/48 s.
 - **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % eller «Lad igjen» gir tilbake til 3D.
 - **Overgangen** er 200 ms med kort blits, og 3D blir uskarpt og tones ut. 3D-renderingen står på pause mens filmen vises.
-- **Reserve:** er ikke filmen bufret 5 s når ladingen starter, går den ladingen i 3D som før. Nei bruker alltid 3D.
+- **Lading bruker alltid filmen:** er den ikke lastet når man trykker Ja, venter måleren på 6 % med «Laster filmen …» til første bilde vises. Bare hvis filmen ikke kan lastes i det hele tatt (feil, eller ingenting etter 20 s), lades det i 3D. Nei bruker 3D.
 - **Lasting:** filmen lastes etter første opptegning når nettleseren er ledig, og primes på første trykk for iOS.
 - **Redusert bevegelse:** ingen film, og den lastes heller ikke.
 - **Lyd:** summingen stiger med c, en riser kommer fra c ≈ 0,4 til 100 %, og smellet ved pop. Alt er av til «Lyd» trykkes.

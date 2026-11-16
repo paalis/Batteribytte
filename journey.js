@@ -1,7 +1,7 @@
 // Batteribytte · «reisen»: the AI film (assets/journey2-*.mp4, every frame a key frame) is the charging scene.
 // Holding «Ja» scrubs it with the meter (time = c × T_POP); at 100 % it plays on from T_POP: the tab lifts, foam runs
 // down the can, and it stops on the last frame. The 3D studio (scene3d.js) does everything else and stays the
-// fallback: if no frame of the film has arrived by 35 % of the charge, that charge runs in 3D as before. Off with reduced motion.
+// fallback only if the film cannot load at all; otherwise the meter waits for its first frame. Off with reduced motion.
 //
 // What the film holds (verified frame by frame): 0–2.5 s macro of the lid and a drop · 2.5–5.9 s through the drop,
 // ice, pink bubbles · 5.9–9 s more bubbles, the surface breaks at ~8 s · 9–12.5 s teal fog and lightning ·
@@ -78,11 +78,15 @@
     video.pause();
     setTimeout(() => { if (!J.active) { video.currentTime = 0; shown = 0; vel = 0; } }, 220);
   }
-  // the film may take over while the charge is still early (it starts on the frame that matches the meter)
-  const LATE = 0.35;
+  // charging always uses the film: until its first frame is on screen the meter waits («Laster filmen …»).
+  // Only if the film cannot load at all (an error, or nothing after MAX_WAIT) does the charge run in 3D.
+  const MAX_WAIT = 20000;
+  let failed = false, waitSince = 0;
+  video.addEventListener('error', () => { failed = true; });
+  const waiting = () => BB.state === 'charging' && !J.active && !failed && performance.now() - waitSince < MAX_WAIT;
   const cNow = () => clamp((BB.level - 6) / 94);
   function start() {
-    if (J.active || BB.state !== 'charging' || cNow() > LATE) return;
+    if (J.active || BB.state !== 'charging') return;
     video.pause();
     shown = cNow() * T_POP; vel = 0;
     const fadeIn = () => { if (BB.state === 'charging' && !J.active) showFilm(); };
@@ -106,11 +110,11 @@
   addEventListener('bb', (e) => {
     const t = e.detail;
     if (t === 'charge') {
+      waitSince = performance.now();
       load();
       // app.js sends 'charge' just before it sets the state: start right after, once it is 'charging'
       if (video.readyState >= 2) { Promise.resolve().then(start); return; }
-      // no frame yet (iOS fetches nothing before a play): ask for it inside this press and join in when it arrives;
-      // if it is too late in the charge, this one stays in 3D
+      // no frame yet (iOS fetches nothing before a play): ask for it inside this press; the meter waits for it
       kick();
       const late = () => start();
       video.addEventListener('loadeddata', late, { once: true });
@@ -127,5 +131,5 @@
     requestAnimationFrame(watch);
   })();
 
-  Object.assign(J, { tick, onEnd, T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000 });
+  Object.assign(J, { tick, onEnd, waiting, T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000 });
 })();

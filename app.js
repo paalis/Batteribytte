@@ -29,6 +29,7 @@
   let holding = false, auto = false, pressAt = 0, drainFrom = 0;
 
   function setState(s) { state = s; stage.dataset.state = s; }
+  const filmWait = () => !!(window.JOURNEY && JOURNEY.waiting && JOURNEY.waiting());
   // the 3D studio (scene3d.js) reads the state from here and hears the moments; while it runs, the photo
   // version's own can and particles stand down
   const GL = () => document.documentElement.classList.contains('gl');
@@ -72,10 +73,11 @@
     if (!holding) return;
     holding = false;
     ja.classList.remove('holding');
-    if (fromKeyboard || performance.now() - pressAt < TAP) { auto = true; hint.textContent = 'Lader …'; }
-    else if (level < 100) hint.textContent = 'Hold inne til 100 %';
+    if (fromKeyboard || performance.now() - pressAt < TAP) { auto = true; if (!hint.dataset.wait) hint.textContent = 'Lader …'; }
+    else if (level < 100 && !hint.dataset.wait) hint.textContent = 'Hold inne til 100 %';
   }
   function abortCharge() {           // let go early and the level ran all the way back
+    if (hint.dataset.wait) { delete hint.dataset.wait; hint.innerHTML = HINT; }
     setState('ask');
     auto = false;
     choices.classList.remove('locked');
@@ -248,8 +250,15 @@
 
     if (state === 'charging') {
       busy = true;
-      setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
-      if (window.JOURNEY && JOURNEY.tick) JOURNEY.tick(dt);       // the film follows the meter (both ways)
+      // the film is the charge: until its first frame is on screen, the meter waits
+      if (filmWait()) {
+        if (!hint.dataset.wait) { hint.dataset.wait = '1'; hint.textContent = 'Laster filmen …'; }
+        if (!holding && !auto) setLevel(level - DECAY * dt);
+      } else {
+        if (hint.dataset.wait) { delete hint.dataset.wait; hint.textContent = auto ? 'Lader …' : 'Hold inne …'; }
+        setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
+        if (window.JOURNEY && JOURNEY.tick) JOURNEY.tick(dt);     // the film follows the meter (both ways)
+      }
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
       if (!RM && !GL() && (holding || auto)) {
@@ -436,7 +445,7 @@
   window.BB = {
     get state() { return state; },
     get level() { return level; },
-    get pumping() { return state === 'charging' && (holding || auto); },
+    get pumping() { return state === 'charging' && (holding || auto) && !filmWait(); },
     fizz() { sound.fizz(); },
   };
 
