@@ -1,7 +1,26 @@
 {
   "trailingSlash": true,
   "redirects": [
-    { "source": "/v2", "destination": "/", "permanent": false },
-    { "source": "/v2/(.*)", "destination": "/", "permanent": false }
+    {
+      "source": "/v2",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/v2/(.*)",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)\\.mp4",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=2592000"
+        }
+      ]
+    }
   ]
 }

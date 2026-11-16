@@ -27,6 +27,8 @@
      live in the browser. Interaction spec: docs/interaction-spec.md -->
 <main class="stage" id="stage" data-state="ask">
   <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+  <!-- «reisen»: the charging scene (journey.js); loaded after the first paint, shown only while charging -->
+  <video class="journey" id="journey" muted playsinline preload="metadata" poster="assets/journey2-poster.jpg" aria-hidden="true" disablepictureinpicture></video>
 
   <header class="bar">
     <button class="chip" id="sound" type="button" aria-pressed="false" aria-keyshortcuts="M" title="Slå på lyd (M)">
@@ -69,7 +71,7 @@
         <button class="choice yes" id="ja" type="button" aria-keyshortcuts="J" aria-describedby="hint" title="Ja (J)"><span class="charge" id="charge" aria-hidden="true"></span><span class="lbl">Ja</span></button>
         <button class="choice no" id="nei" type="button" aria-keyshortcuts="N" title="Nei (N)"><span class="lbl">Nei</span></button>
       </div>
-      <p class="hint" id="hint">Trykk – eller hold <b>Ja</b> inne og lad selv</p>
+      <p class="hint" id="hint">Hold <b>Ja</b> inne og lad selv – eller trykk og se på</p>
     </section>
 
     <section class="panel" id="yes" aria-labelledby="yes-h" hidden>
@@ -94,6 +96,7 @@
 </main>
 
 <script src="app.js" defer></script>
+<script src="journey.js" defer></script>
 <script src="scene3d.js" defer></script>
 </body>
 </html>
