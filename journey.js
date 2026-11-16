@@ -119,17 +119,27 @@
       const late = () => start();
       video.addEventListener('loadeddata', late, { once: true });
       video.addEventListener('canplay', late, { once: true });
+    } else if (t === 'armed' && J.active) {
+      // the can waits in the fog just before the tab moves: the film breathes slowly back and forth
+      armedAt = performance.now();
     } else if (t === 'pop' && J.active) {
       video.currentTime = T_POP;
       playing = true;
       const p = video.play(); if (p) p.catch(() => {});
     } else if (t === 'ask') hideFilm();
   });
+  let armedAt = 0;
+  const HOLD_A = 15.75, HOLD_B = T_POP - 0.04;     // the stretch the waiting can breathes over
   // releasing all the way back (no event for that) also returns to 3D
-  (function watch() {
+  (function watch(now) {
     if (J.active && BB.state === 'ask') hideFilm();
+    if (J.active && BB.state === 'armed' && !video.seeking) {
+      const k = (1 - Math.cos(((now - armedAt) / 1000) * (Math.PI / 1.8))) / 2;   // a slow ease in and out
+      const t = HOLD_B - (HOLD_B - HOLD_A) * k;
+      if (Math.abs(video.currentTime - t) > 1 / 48) video.currentTime = t;
+    }
     requestAnimationFrame(watch);
-  })();
+  })(performance.now());
 
   Object.assign(J, { tick, onEnd, waiting, T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000 });
 })();
