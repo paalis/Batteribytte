@@ -10,6 +10,26 @@
       "source": "/v2/(.*)",
       "destination": "/",
       "permanent": false
+    },
+    {
+      "source": "/film",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/film/(.*)",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/v1",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/v1/(.*)",
+      "destination": "/",
+      "permanent": false
     }
   ],
   "headers": [
