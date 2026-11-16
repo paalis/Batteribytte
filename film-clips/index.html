@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="no" data-om-signature="off" data-composition-variables='[
+  {"id":"portrait","type":"boolean","label":"Stående format (9:16)","default":true},
+  {"id":"line1","type":"string","label":"Tekst 1","default":"DET ER TID FOR"},
+  {"id":"line2","type":"string","label":"Tekst 2","default":"BATTERI"},
+  {"id":"line3","type":"string","label":"Tekst 3","default":"BYTTE!"},
+  {"id":"ground","type":"color","label":"Studio","default":"#07070a"},
+  {"id":"cold","type":"color","label":"Kaldt lys","default":"#dbe6ff"},
+  {"id":"warm","type":"color","label":"Varmt lys (Ja)","default":"#ffc27a"}
+]'>
+<head>
+<meta charset="utf-8">
+<title>Batteribytte · placeholder-klipp</title>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="vendor/om.js"></script>
+<script src="vendor/om-three.js"></script>
+<style id="om-fonts">
+@font-face { font-family: "Archivo Black"; src: url("assets/fonts/ArchivoBlack-400.woff") format("woff"); font-weight: 400; font-style: normal; }
+</style>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--ground); }
+  #film { position: relative; width: 720px; height: 1280px; overflow: hidden; background: var(--ground); }
+  #gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* the hook: big stacked heavy type over the hero can (Dr Pepper grammar) */
+  .type { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center;
+          font-family: "Archivo Black", sans-serif; color: #f6f4f0; line-height: .86; letter-spacing: -.01em;
+          text-shadow: 0 10px 60px rgba(0,0,0,.55); }
+  .type .l1 { font-size: 84px; letter-spacing: .14em; line-height: 1.4; display: block; }
+  .type .l2, .type .l3 { font-size: 230px; display: block; }
+  .black { position: absolute; inset: 0; background: #000; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="film" data-composition-id="film" data-width="720" data-height="1280" data-fps="30">
+  <canvas id="gl" data-om-id="scene"></canvas>
+</div>
+
+<script>
+  const V = OM.vars();
+  const P = !!V.portrait;
+  const B = (n) => n * 0.5;                    // 120 bpm: beat n in seconds
+  const rand = OM.random(7);
+
+  // ---------- the studio: blue-black, soft boxes for reflections, fog, depth of field, bloom ----------
+  const stage = OM3.stage(document.getElementById('gl'), {
+    background: V.ground, fov: P ? 34 : 26, exposure: 1.0,
+    envColors: { top: '#2a2c33', horizon: '#0e0f13', floor: '#050506' }, envIntensity: 0.6,
+    dof: { aperture: 0.0016, maxblur: 0.008 }, bloom: { strength: 0.32, radius: 0.45, threshold: 0.93 }, fog: [13, 36],
+  });
+  const { THREE, scene } = stage;
+
+  // ---------- the can: a lathe of the photo's own silhouette, the photo mapped straight on ----------
+  const IMG_W = 564, IMG_H = 1476, CX = 282.5, TOP = 24, BOT = 1472, S = 4.0 / (BOT - TOP);
+  const PROFILE = [[1472, 30], [1468, 110], [1464, 147.5], [1452, 199], [1444, 209.5], [1434, 222], [1424, 229], [1414, 246], [1404, 260],
+    [1394, 270], [1384, 275.5], [1374, 277.5], [700, 278.5], [190, 277.5], [184, 277.5], [174, 276], [164, 274.5], [154, 271], [144, 267],
+    [134, 263], [124, 259], [114, 254], [104, 248], [94, 242], [84, 236], [74, 230], [64, 226], [44, 223], [30, 225], [24, 225.5]];
+  const RIM = 225.5 * S, HCAN = (BOT - TOP) * S;
+  const BAR1 = { x: 96, y: 624, w: 140, h: 81 }, BAR2 = { x: 96, y: 726, w: 140, h: 54 };
+
+  // label canvas = photo + condensation + the meter; bump = the drops
+  const K = 2, label = document.createElement('canvas'), bump = document.createElement('canvas');
+  label.width = bump.width = IMG_W * K; label.height = bump.height = IMG_H * K;
+  const base = document.createElement('canvas'); base.width = label.width; base.height = label.height;
+  const labelTex = new THREE.CanvasTexture(label); labelTex.colorSpace = THREE.SRGBColorSpace; labelTex.anisotropy = 8;
+  const bumpTex = new THREE.CanvasTexture(bump);
+  const photo = new Image(); photo.src = 'assets/battery-fresh.webp';
+  let barCols = null, meterDrawn = '';
+  OM3.ready(photo.decode().then(() => {
+    const g = base.getContext('2d');
+    g.drawImage(photo, 0, 0, base.width, base.height);
+    // the paint behind the bars, sampled just right of them, row by row
+    const px = g.getImageData(0, 0, base.width, base.height).data;
+    const cols = (bar) => Array.from({ length: bar.h }, (_, i) => {
+      const y = (bar.y + i) * K, x = (bar.x + bar.w + 10) * K, o = (y * base.width + x) * 4;
+      return `rgb(${px[o]},${px[o + 1]},${px[o + 2]})`;
+    });
+    barCols = { b1: cols(BAR1), b2: cols(BAR2) };
+    // condensation: many small drops, a few big ones, darker rim + sharp highlight; bump from the same drops
+    const r = OM.random(11), bg = bump.getContext('2d');
+    bg.fillStyle = '#000'; bg.fillRect(0, 0, bump.width, bump.height);
+    for (let i = 0; i < 900; i++) {
+      const y = (190 + r() * 1180) * K, x = (CX + (r() - 0.5) * 2 * 270) * K, rad = (0.8 + Math.pow(r(), 3.4) * 5.5) * K;
+      const grad = g.createRadialGradient(x - rad * .3, y - rad * .35, rad * .1, x, y, rad);
+      grad.addColorStop(0, 'rgba(255,255,255,.10)'); grad.addColorStop(.7, 'rgba(255,255,255,.04)');
+      grad.addColorStop(.88, 'rgba(60,10,0,.30)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad; g.beginPath(); g.ellipse(x, y, rad, rad * 1.12, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(x - rad * .32, y - rad * .4, rad * .26, rad * .18, -.5, 0, Math.PI * 2); g.fill();
+      const bgr = bg.createRadialGradient(x, y, 0, x, y, rad);
+      bgr.addColorStop(0, '#fff'); bgr.addColorStop(.8, '#aaa'); bgr.addColorStop(1, '#000');
+      bg.fillStyle = bgr; bg.beginPath(); bg.ellipse(x, y, rad, rad * 1.12, 0, 0, Math.PI * 2); bg.fill();
+    }
+    bumpTex.needsUpdate = true;
+    drawMeter(100, 0);
+  }));
+
+  // level 0–100 empties the bars from the right; under 20 the remainder turns red
+  function drawMeter(level, red) {
+    const id = Math.round(level * 2) + '|' + red.toFixed(2);
+    if (!barCols || id === meterDrawn) return;
+    meterDrawn = id;
+    const g = label.getContext('2d');
+    g.drawImage(base, 0, 0);
+    const f = Math.max(0, Math.min(level, 100)) / 100;
+    for (const [bar, cols] of [[BAR1, barCols.b1], [BAR2, barCols.b2]]) {
+      const x0 = (bar.x + bar.w * f) * K;
+      cols.forEach((c, i) => { g.fillStyle = c; g.fillRect(x0, (bar.y + i) * K, (bar.w * (1 - f) + 1) * K, K); });
+      if (red > 0) { g.fillStyle = `rgba(255,45,85,${red})`; g.fillRect((bar.x + 3) * K, (bar.y + 3) * K, Math.max(0, bar.w * f - 3) * K, (bar.h - 6) * K); }
+    }
+    labelTex.needsUpdate = true;
+  }
+
+  function lathe() {
+    const pts = PROFILE.map(([row, hw]) => new THREE.Vector2(hw * S, (BOT - row) * S));
+    const geo = new THREE.LatheGeometry(pts, 128);
+    const pos = geo.attributes.position, uv = geo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i);
+      uv.setXY(i, (CX + x / S) / IMG_W, 1 - (BOT - y / S) / IMG_H);   // straight-on projection of the photo
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const canGeo = lathe();
+  const canMat = new THREE.MeshPhysicalMaterial({ map: labelTex, bumpMap: bumpTex, bumpScale: 1.2, metalness: 0.12, roughness: 0.38,
+    clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: 0.8 });
+  const lidMat = new THREE.MeshPhysicalMaterial({ color: '#1b1b1e', metalness: 0.9, roughness: 0.28, clearcoat: 0.5 });
+  const rimMat = new THREE.MeshPhysicalMaterial({ color: '#a9adb4', metalness: 1, roughness: 0.32, envMapIntensity: 0.6 });
+  function makeCan() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(canGeo, canMat); body.castShadow = true; g.add(body);
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(RIM * 0.93, RIM * 0.93, 0.02, 96), lidMat); lid.position.y = HCAN - 0.035; g.add(lid);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(RIM * 0.97, 0.028, 16, 96), rimMat); rim.rotation.x = Math.PI / 2; rim.position.y = HCAN - 0.006; g.add(rim);
+    const tab = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.22, 6, 16), rimMat); tab.rotation.set(Math.PI / 2, 0, Math.PI / 2); tab.scale.set(1, 1, 0.25);
+    const tp = new THREE.Group(); tp.name = 'tabPivot'; tp.position.set(0, HCAN - 0.012, -0.02); g.add(tp);
+    tab.position.set(0, 0, 0.14); tp.add(tab);
+    return g;
+  }
+  const cans = [makeCan(), makeCan(), makeCan()];
+  const hero = cans[1];
+  cans[0].position.set(-1.95, 0, -0.45); cans[0].rotation.y = 0.18;
+  cans[2].position.set(1.95, 0, -0.45); cans[2].rotation.y = -0.18;
+  scene.add(...cans);
+
+  // ---------- floor: dark, glossy, with the cans mirrored under it ----------
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshPhysicalMaterial({ color: '#050507', roughness: 0.3,
+    clearcoat: 1, clearcoatRoughness: 0.15, transparent: true, opacity: 0.9, envMapIntensity: 0.3 }));
+  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+  const mirror = new THREE.Group(); mirror.scale.y = -1; scene.add(mirror);
+  cans.forEach((c) => { const m = c.clone(); m.traverse((o) => { if (o.material) { o.material = o.material.clone(); o.material.side = THREE.DoubleSide; } }); mirror.add(m); });
+
+  // ---------- light ----------
+  const cold = new THREE.Color(V.cold), warm = new THREE.Color(V.warm);
+  const key = new THREE.DirectionalLight(cold, 1.2); key.position.set(-5, 7, 6); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 }); key.shadow.radius = 8;
+  const rimL = new THREE.SpotLight(cold, 2.5, 0, 0.45, 0.7, 0); rimL.position.set(-6, 5, -6); rimL.target.position.set(0, 2, 0);
+  const rimR = new THREE.SpotLight(cold, 2.5, 0, 0.45, 0.7, 0); rimR.position.set(6, 5, -6); rimR.target.position.set(0, 2, 0);
+  const sweep = new THREE.SpotLight('#ffffff', 0, 0, 0.13, 0.55, 0); sweep.position.set(-7, 3.2, 7); sweep.target.position.set(-3, 2, 0);
+  const back = new THREE.PointLight(warm, 0, 3.2, 1); back.position.set(0, 2.6, -0.95);
+  // a narrow light on the hero's face: what makes it 'switch on' against its darker neighbours
+  const fill = new THREE.SpotLight('#fff3e2', 0, 0, 0.12, 1, 0); fill.position.set(0, 2.2, 9); fill.target.position.set(0, 2.2, 0);
+  scene.add(key, rimL, rimL.target, rimR, rimR.target, sweep, sweep.target, back, fill, fill.target);
+  // the glow behind the hero can (with bloom it reads as light, not a sticker)
+  const glowCv = document.createElement('canvas'); glowCv.width = glowCv.height = 256;
+  { const g = glowCv.getContext('2d'), gr = g.createRadialGradient(128, 128, 0, 128, 128, 128);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.25, 'rgba(255,220,170,.55)'); gr.addColorStop(1, 'rgba(255,200,140,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 6.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(glowCv), color: warm,
+    transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  glow.position.set(0, 1.9, -1.0); scene.add(glow);
+
+  // ---------- fog: low rolling smoke on the floor, a cold breath from the top ----------
+  function wisp(seed) {
+    const r = OM.random(seed), c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    const g = c.getContext('2d'); g.filter = 'blur(18px)';
+    for (let i = 0; i < 60; i++) {
+      const x = 60 + r() * 392, y = 190 - Math.pow(r(), 1.5) * 110, rad = 26 + r() * 50, a = 0.08 * (1 - (190 - y) / 160);
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, `rgba(235,240,255,${a})`); gr.addColorStop(1, 'rgba(235,240,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  const WT = [1, 2, 3, 4].map(wisp);
+  const smoke = Array.from({ length: 26 }, (_, i) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5), new THREE.MeshBasicMaterial({ map: WT[i % 4], transparent: true, opacity: 0,
+      depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    m.userData = { x: -9 + rand() * 18, z: -3.5 + rand() * 6.5, y: 0.15 + rand() * 0.6, s: 3 + rand() * 4, v: (rand() - 0.5) * 0.35, a: 0.35 + rand() * 0.5, ph: rand() * 6 };
+    scene.add(m); return m;
+  });
+  const breath = Array.from({ length: 6 }, (_, i) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.5), new THREE.MeshBasicMaterial({ map: WT[(i + 1) % 4], transparent: true, opacity: 0,
+      depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    m.userData = { dx: (rand() - 0.5) * 0.5, dz: (rand() - 0.5) * 0.3, rise: 0.8 + rand() * 0.9, s: 0.9 + rand() * 0.8, d: rand() * 0.25 };
+    scene.add(m); return m;
+  });
+
+
+  // ---------- placeholder clips for the page (see ASSETS.md): four segments in one 12 s timeline ----------
+  //   A idle   0–4   seamless loop, 6 % and blinking red          (played as a looping video)
+  //   B charge 4–7   6 → 100 %, linear in time: frame i = 6 + 94·i/89 (scrubbed by the page, 90 frames)
+  //   C open   7–10  the tab cracks, vapour, cut to the top, cut to the backlit trio (lightning is drawn live)
+  //   D drain  10–12 from the idle frame the studio dies and the meter empties
+  const D = 12.0;
+  const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+  OM.music({ off: true });
+  const L = { key: 0.45, rim: 2.4, sweepX: -7, sweepI: 0, back: 2.5, glow: 0.5, fill: 2.6, fog: 0.9, breath: 0, level: 6, red: 1,
+    smokeRise: 0, studio: 1, tab: 0, flash: 0 };
+  const cam = OM.space(stage.camera, { fov: 34 });
+  const IDLE = { target: [0, 2.0, 0], distance: 13, yaw: -10, pitch: 4, roll: 0 };
+  const cut = (at, pose) => cam.to(tl, at, { ...pose, duration: 0.001, ease: 'none' });
+
+  // A · idle: a slow breath of the camera that ends where it began
+  cam.set(IDLE);
+  cam.to(tl, 0, { yaw: -5, pitch: 5, duration: 2, ease: 'sine.inOut' });
+  cam.to(tl, 2, { yaw: -10, pitch: 4, duration: 2, ease: 'sine.inOut' });
+
+  // B · charge: one continuous move (it is scrubbed, so no cuts): into the drops, up the can, out to a low hero
+  tl.addLabel('charge', 4);
+  cam.to(tl, 4.0, { target: [-0.25, 1.65, 0.7], distance: 1.6, yaw: -18, pitch: 2, duration: 1.3, ease: 'power2.inOut' });
+  cam.to(tl, 5.3, { target: [0, 3.55, 0.3], distance: 2.3, yaw: -6, pitch: 16, duration: 0.9, ease: 'sine.inOut' });
+  cam.to(tl, 6.2, { target: [0, 2.1, 0], distance: 10.5, yaw: 6, pitch: -4, duration: 0.8, ease: 'expo.out' });
+  tl.fromTo(L, { level: 6 }, { level: 100, duration: 3, ease: 'none' }, 4.0)
+    .to(L, { back: 9, glow: 1.6, fill: 4.2, rim: 3.5, duration: 3, ease: 'power2.in' }, 4.0)
+    .fromTo(L, { sweepX: -3, sweepI: 0 }, { sweepX: 3, sweepI: 6, duration: 1.0, ease: 'none' }, 4.4).set(L, { sweepI: 0 }, 5.4)
+    .fromTo(L, { breath: 0 }, { breath: 0.6, duration: 0.8, ease: 'power2.out' }, 5.6).set(L, { breath: 0 }, 6.4);
+
+  // C · open: anticipation, the crack, a cut to the top, a cut to the trio
+  tl.addLabel('open', 7);
+  cam.to(tl, 7.0, { distance: 11, duration: 0.25, ease: 'power2.in' });
+  tl.set(L, { level: 100, back: 9, glow: 1.6, fill: 4.2, rim: 3.5 }, 7.0)
+    .to(L, { tab: 1, duration: 0.12, ease: 'expo.out' }, 7.25)
+    .fromTo(L, { flash: 1 }, { flash: 0, duration: 0.5, ease: 'expo.out' }, 7.25)
+    .fromTo(L, { breath: 0 }, { breath: 1, duration: 1.1, ease: 'power2.out' }, 7.25).set(L, { breath: 0 }, 8.6)
+    .to(L, { fog: 1.4, smokeRise: 1, duration: 1.5, ease: 'power2.out' }, 7.25);
+  cut(7.6, { target: [0, HCAN - 0.05, 0], distance: 2.4, yaw: 10, pitch: 30, roll: -3 });
+  cam.to(tl, 7.602, { distance: 2.0, pitch: 26, duration: 1.0, ease: 'sine.out' });
+  cut(8.6, { target: [0, 1.9, 0], distance: 15, yaw: -4, pitch: 1, roll: 0 });
+  cam.to(tl, 8.602, { distance: 13.5, duration: 1.4, ease: 'power3.out' });
+
+  // D · drain: from the idle frame, the studio dies
+  tl.addLabel('drain', 10);
+  cut(10.0, IDLE);
+  tl.set(L, { key: 0.45, rim: 2.4, back: 2.5, glow: 0.5, fill: 2.6, fog: 0.9, smokeRise: 0, level: 6, studio: 1, tab: 0, flash: 0 }, 10.0)
+    .to(L, { studio: 0.12, fog: 0.35, duration: 1.4, ease: 'power2.in' }, 10.2)
+    .to(L, { level: 0, duration: 1.2, ease: 'power1.in' }, 10.2);
+  cam.to(tl, 10.002, { target: [0, 1.6, 0], distance: 14.5, pitch: 20, duration: 1.998, ease: 'power2.inOut' });
+  tl.to({}, { duration: 0 }, D);
+
+  // ---------- draw ----------
+  const camPos = new THREE.Vector3();
+  const tabs = [hero.getObjectByName('tabPivot'), mirror.children[1].getObjectByName('tabPivot')];
+  OM3.film(stage, tl, D, cam, (t) => {
+    const s = L.studio;
+    key.intensity = L.key * s; rimL.intensity = rimR.intensity = L.rim * s;
+    sweep.intensity = L.sweepI * s; sweep.position.x = L.sweepX; sweep.target.position.x = L.sweepX * 0.5;
+    back.intensity = (L.back + L.flash * 30) * s; fill.intensity = L.fill * s; glow.material.opacity = Math.min(1, L.glow * 0.38 + L.flash * 0.5) * s;
+    glow.scale.setScalar(1 + (L.glow - 1) * 0.25);
+    stage.renderer.toneMappingExposure = (0.35 + 0.65 * s) + L.flash * 0.45;
+    const inCharge = t >= 4 && t < 7;
+    const blink = L.level < 20 ? (inCharge ? 1 : (Math.floor(t * 2) % 2 === 0 ? 1 : 0.35)) : 0;
+    drawMeter(L.level, blink);
+    tabs.forEach((p) => { if (p) p.rotation.x = -L.tab * 1.15; });
+    stage.camera.getWorldPosition(camPos);
+    smoke.forEach((m, i) => {
+      const u = m.userData, x = u.x + Math.sin((t / 4) * Math.PI * 2 + u.ph) * 0.45;      // periodic over 4 s: the idle loop closes
+      m.position.set(x, u.y + L.smokeRise * (0.6 + (i % 3) * 0.3), u.z);
+      m.scale.set(u.s, u.s * 0.55, 1); m.lookAt(camPos);
+      m.material.opacity = u.a * 0.1 * L.fog * s;
+    });
+    breath.forEach((m) => {
+      const u = m.userData, p = Math.max(0, Math.min(1, (L.breath - u.d) / (1 - u.d)));
+      m.position.set(u.dx * p, HCAN + 0.05 + p * u.rise, u.dz + 0.1);
+      m.scale.set(u.s * (0.4 + p), u.s * (0.3 + p * 0.7), 1); m.lookAt(camPos);
+      m.material.opacity = Math.sin(p * Math.PI) * 0.55;
+    });
+  });
+
+  window.__timelines['film'] = tl;
+</script>
+</body>
+</html>

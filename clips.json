@@ -1,0 +1,61 @@
+{
+  "about": "The clips the page plays. Swap a clip by changing its URLs here (see ASSETS.md); no code changes. Coordinates are fractions of the 720×1280 frame; times are seconds from the start of the clip.",
+  "width": 720,
+  "height": 1280,
+  "clips": {
+    "idle": {
+      "video": "assets/clips/idle.mp4",
+      "poster": "assets/clips/idle-first.webp"
+    },
+    "charge": {
+      "frames": "assets/clips/charge/{i}.webp",
+      "pad": 3,
+      "count": 90,
+      "fps": 30,
+      "scrub": "assets/clips/charge-scrub.mp4",
+      "first": "assets/clips/charge-first.webp",
+      "last": "assets/clips/charge-last.webp",
+      "top": [
+        0.5,
+        0.2
+      ]
+    },
+    "open": {
+      "video": "assets/clips/open.mp4",
+      "poster": "assets/clips/open-first.webp",
+      "last": "assets/clips/open-last.webp",
+      "hit": 0.25,
+      "top": [
+        0.49,
+        0.21
+      ],
+      "strikes": [
+        1.64,
+        1.72,
+        1.8,
+        2.06,
+        2.32,
+        2.62
+      ],
+      "arcs": [
+        [
+          0.24,
+          0.38,
+          0.37,
+          0.45
+        ],
+        [
+          0.63,
+          0.45,
+          0.76,
+          0.38
+        ]
+      ]
+    },
+    "drain": {
+      "video": "assets/clips/drain.mp4",
+      "poster": "assets/clips/drain-first.webp",
+      "last": "assets/clips/drain-last.webp"
+    }
+  }
+}

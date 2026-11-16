@@ -10,23 +10,26 @@ Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-
 
 Filmversjonen ligger på `/film/` til sammenligning.
 
-## 3D-studioet (scene3d.js)
+## Reklamefilm-laget (clips.json, player.js, fx.js, motion.js)
 
-Mellom trykkene er siden et ekte 3D-studio i sanntid (Three.js, samme studio som filmen i `film-src/`):
-boksen er dreid etter fotoets egen silhuett, fotoet er etiketten (baksiden i boksens egne farger), med kondens,
-metallisk lokk og kant, blankt gulv med speiling, lav røyk og bloom. Logoens to stolper er batterimåleren.
+Siden er klippet som en reklame (stilretning fra Monster Ultra, Dr Pepper og en ølboks-ASMR, men med vår egen boks):
 
-| Steg | Kamera (video-director) | Hva skjer |
-|---|---|---|
-| Åpning | Makro på kondensen, et lys glir over, trekker ut til helten | Overskriften kommer tegn for tegn |
-| Venter | Står nesten stille (rolig drift, følger pekeren) | Dra for å snu boksen, trykk for å la den bruse |
-| Lader | Kjører inn lavt og rundt boksen | Gnister trekkes opp i spiral, lyset blir varmt, boksen dirrer |
-| Pop | Push + flash: klipp til lav heltevinkel | Blits, sjokkring på gulvet, gnister og dråper, flippen åpnes |
-| Fullt ladet | Langsom bane rundt boksen | Etterglød |
-| Nei | Kran opp og bort | Studiolyset slukkes, boksen velter |
+| Steg | Klipp | Live oppå | Tekst og lyd |
+|---|---|---|---|
+| Venter | `idle` i loop | tåke (WebGL-shader) | overskriften stiger ut av en maske, tegn for tegn |
+| Lader | `charge` **skrubbes** av nivået (bilde = nivå) | fizz fra toppen, varmere tåke | stor teller med støt ved 25/50/75 %, riser følger nivået |
+| 100 % | `open` spilles | sprut, lyn mellom boksene, blits | tsss + smell på `hit`, bildet rister, «Fullt ladet!» slår inn på 16-deler |
+| Nei | `drain` spilles | tynn tåke | ordene faller ned |
 
-Uten WebGL, eller hvis noe feiler, blir fotoversjonen stående. Bildefrekvensen overvåkes: på trege telefoner
-senkes pikseltetthet og så bloom.
+- **Skrubbing:**
+  - Telefon: WebP-sekvens på `<canvas>`, med et vindu av ca. 16 dekodede bilder.
+  - Desktop: video med nøkkelbilde på hvert bilde.
+  - Slipper man for tidlig, spoles klippet tilbake.
+- **Ladingen:** har en speed ramp (starter rolig, akselererer, ca. 1,5 s totalt).
+- **Easing:** ingen lineær bevegelse i grensesnittet. Bruker power3/expo, back/elastic for overshoot og et lite «sammenpress» før store bevegelser.
+- **Lyd:** av til man trykker «Lyd». Samplene hentes først da (`tools/make-sfx.mjs`, huashu-motion).
+- **Reserve:** uten klipp eller med feil blir fotoversjonen stående. Med redusert bevegelse vises stillbilder, uten effekter.
+- **Klippene:** krav og AI-prompter står i `ASSETS.md`.
 
 ## Flyt
 

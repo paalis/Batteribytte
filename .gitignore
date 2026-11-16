@@ -2,3 +2,8 @@ film-src/out/
 film-src/.om/
 film-src/index-*.png
 film-src-v/
+
+# raw AI clips before packing (tools/make-sequence.sh) and the placeholder render
+assets/clips-src/
+film-clips/out/
+film-clips/.om/

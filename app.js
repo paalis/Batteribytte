@@ -1,6 +1,7 @@
-// Batteribytte — an interactive charging station. Hold «Ja» (or tap it) and the can charges from 6 to 100 %:
-// it glows, shakes and pulls sparks up from the floor, then pops. «Nei» drains it and the lights go.
-// The can follows the pointer and fizzes when tapped. Sound is made with Web Audio and is off until asked for.
+// Batteribytte — an interactive charging station. Hold «Ja» (or tap it) and the can charges from 6 to 100 %,
+// then opens. «Nei» drains it and the lights go. This file owns the state, the meter and the sound; the clips
+// (player.js), live effects (fx.js) and type motion (motion.js) follow it through window.BB and 'bb' events.
+// Without clips the photo can below does its own glow, sparks and pop. Sound is off until «Lyd» is pressed.
 // Interaction spec: docs/interaction-spec.md
 (() => {
   const $ = (s) => document.querySelector(s);
@@ -29,9 +30,8 @@
   let holding = false, auto = false, pressAt = 0, drainFrom = 0;
 
   function setState(s) { state = s; stage.dataset.state = s; }
-  // the 3D studio (scene3d.js) reads the state from here and hears the moments; while it runs, the photo
-  // version's own can and particles stand down
-  const GL = () => document.documentElement.classList.contains('gl');
+  // while the clips run (player.js), the photo version's own can and particles stand down
+  const GL = () => document.documentElement.classList.contains('clips');
   const emit = (type) => dispatchEvent(new CustomEvent('bb', { detail: type }));
   let lastAria = -1;
   function setLevel(v) {
@@ -58,7 +58,7 @@
   // ---------- «Ja»: hold to charge, or tap and it charges itself ----------
   function startCharge(isAuto) {
     if (state !== 'ask' && state !== 'charging') return;
-    if (state === 'ask') { say('Lader.'); buzz(10); emit('charge'); }
+    if (state === 'ask') { say('Lader.'); buzz(10); emit('charge'); sound.play('ice', 0.7); }
     setState('charging');
     choices.classList.add('locked');
     holding = !isAuto; auto = !!isAuto;
@@ -245,7 +245,9 @@
 
     if (state === 'charging') {
       busy = true;
-      setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
+      // a speed ramp: it starts slowly and accelerates toward the top (still about 1.5 s from 6 to 100)
+      const c0 = clamp((level - START) / (100 - START));
+      setLevel(level + (holding || auto ? RATE * (0.5 + 1.2 * c0) : -DECAY) * dt);
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
       if (!RM && !GL() && (holding || auto)) {
@@ -296,6 +298,16 @@
   const sound = (() => {
     let ctx = null, on = false, hum = null;
     const ok = () => on && ctx;
+    // recorded-style effects, rendered with tools/make-sfx.mjs; fetched only once the user turns sound on
+    const SFX = ['hit', 'tsss', 'ice', 'whoosh'], buf = {};
+    const loadSfx = () => SFX.forEach((n) => { if (!(n in buf)) { buf[n] = null;
+      fetch(`assets/sfx/${n}.m4a`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).then((d) => { buf[n] = d; }).catch(() => {}); } });
+    function play(name, gain = 1, at = 0) {
+      if (!ok() || !buf[name]) return false;
+      const s = ctx.createBufferSource(), gn = ctx.createGain();
+      s.buffer = buf[name]; gn.gain.value = gain; s.connect(gn).connect(ctx.destination); s.start(ctx.currentTime + at);
+      return true;
+    }
     function noise(dur, type, freq, gain) {
       const n = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate), d = n.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -317,20 +329,40 @@
         on = !on;
         if (on && !ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) ctx = new AC(); }
         if (ctx) (on ? ctx.resume() : ctx.suspend()).catch(() => {});
+        if (on && ctx) loadSfx();
         if (!on) this.charge(false);
         return on;
       },
       charge(start) {
-        if (!start) { if (hum) { const h = hum; hum = null; h.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); h.o.stop(ctx.currentTime + 0.3); } return; }
+        if (!start) { if (hum) { const h = hum; hum = null; h.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); h.ng.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.04); h.o.stop(ctx.currentTime + 0.3); h.ns.stop(ctx.currentTime + 0.3); } return; }
         if (!ok() || hum) return;
+        // the riser: a saw and a band of noise that both climb with the meter
         const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), gn = ctx.createGain();
         o.type = 'sawtooth'; o.frequency.value = 70; f.type = 'lowpass'; f.frequency.value = 400; gn.gain.value = 0.0001;
         gn.gain.setTargetAtTime(0.05, ctx.currentTime, 0.05);
         o.connect(f).connect(gn).connect(ctx.destination); o.start();
-        hum = { o, f, g: gn };
+        const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), nd = nb.getChannelData(0);
+        for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+        const ns = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+        ns.buffer = nb; ns.loop = true; bp.type = 'bandpass'; bp.Q.value = 0.9; bp.frequency.value = 500; ng.gain.value = 0.0001;
+        ng.gain.setTargetAtTime(0.03, ctx.currentTime, 0.08);
+        ns.connect(bp).connect(ng).connect(ctx.destination); ns.start();
+        hum = { o, f, g: gn, ns, bp, ng };
       },
-      level(c) { if (hum) { const t = ctx.currentTime; hum.o.frequency.setTargetAtTime(70 + 520 * c, t, 0.03); hum.f.frequency.setTargetAtTime(400 + 3200 * c, t, 0.03); } },
-      pop() { if (!ok()) return; noise(0.35, 'bandpass', 3200, 0.5); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.05 + i * 0.05, 0.7, 0.06)); },
+      level(c) {
+        if (!hum) return;
+        const t = ctx.currentTime;
+        hum.o.frequency.setTargetAtTime(70 + 520 * c, t, 0.03); hum.f.frequency.setTargetAtTime(400 + 3200 * c, t, 0.03);
+        hum.bp.frequency.setTargetAtTime(500 + 5200 * c * c, t, 0.03); hum.ng.gain.setTargetAtTime(0.03 + 0.09 * c * c, t, 0.05);
+      },
+      pop() {
+        if (!ok()) return;
+        const hit = (window.BB && BB.clips && BB.clips.open && BB.clips.open.hit) || 0;
+        // tsss when the tab cracks, the slam on the hit; the synth pop if the samples are not in yet
+        if (!play('tsss', 0.9) | !play('hit', 1, hit)) { noise(0.35, 'bandpass', 3200, 0.5); [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.05 + i * 0.05, 0.7, 0.06)); }
+        play('whoosh', 0.5, hit + 0.55);
+      },
+      play,
       down() { if (!ok()) return; tone(440, 0, DRAIN, 0.07, 'triangle', 70); },
       fizz() { if (!ok()) return; noise(0.25, 'highpass', 5000, 0.12); },
       suspend(h) { if (ctx && on) (h ? ctx.suspend() : ctx.resume()).catch(() => {}); },

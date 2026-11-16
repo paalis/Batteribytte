@@ -74,22 +74,59 @@ a { color: var(--muted); }
 .flash.go { animation: flash .55s var(--ease-out) both; }
 @keyframes flash { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ---------- the live 3D studio (scene3d.js) replaces the photo can once it is ready ---------- */
+/* ---------- the clips (player.js) replace the photo can once the first one plays ---------- */
 
-.gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; display: block;
-  opacity: 0; transition: opacity .7s var(--ease-out); touch-action: none; cursor: grab; }
-.gl-canvas:active { cursor: grabbing; }
-.gl .gl-canvas { opacity: 1; }
-.gl .scene { visibility: hidden; }
-/* scrims keep the type readable over a bright studio: top and bottom on phones, the left side on wide screens */
-.gl .stage::before, .gl .stage::after { content: ""; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none; }
-.gl .stage::before { top: 0; height: 30%; background: linear-gradient(to bottom, rgba(5, 5, 6, .75), transparent); }
-.gl .stage::after { bottom: 0; height: 40%; background: linear-gradient(to top, rgba(5, 5, 6, .88) 35%, transparent); }
-@media (min-aspect-ratio: 4/3) {
-  .gl .stage::before { inset: 0 auto 0 0; width: 55%; height: auto; background: linear-gradient(to right, rgba(5, 5, 6, .8) 30%, transparent); }
-  .gl .stage::after { display: none; }
+.clip { position: absolute; z-index: 1; overflow: hidden; background: #000; opacity: 0; transition: opacity .6s var(--ease-out); pointer-events: none; }
+.clip.strip {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 88%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 88%, transparent);
+  mask-composite: intersect;
 }
-.gl .stage[data-state="draining"] .dim, .gl .stage[data-state="no"] .dim { opacity: .15; }
+.clip .layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; }
+.clip .layer.on { opacity: 1; }                       /* hard cuts, like the edit */
+.fog, .fx2 { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
+.fog { z-index: 2; }
+.fx2 { z-index: 3; }
+.clips .clip { opacity: 1; }
+.clips .fog, .clips .fx2 { display: block; }
+.clips .scene { visibility: hidden; }
+.clips .stage { background: #000; }
+/* scrims keep the type readable over the footage: top and bottom on phones, the left side on wide screens */
+.clips .stage::before, .clips .stage::after { content: ""; position: absolute; left: 0; right: 0; z-index: 3; pointer-events: none; }
+.clips .stage::before { top: 0; height: 30%; background: linear-gradient(to bottom, rgba(0, 0, 0, .78), transparent); }
+.clips .stage::after { bottom: 0; height: 40%; background: linear-gradient(to top, rgba(0, 0, 0, .9) 35%, transparent); }
+@media (min-aspect-ratio: 4/3) {
+  .clips .stage::before { inset: 0 auto 0 0; width: 55%; height: auto; background: linear-gradient(to right, rgba(0, 0, 0, .85) 30%, transparent); }
+  .clips .stage::after { display: none; }
+}
+.clips .stage[data-state="draining"] .dim, .clips .stage[data-state="no"] .dim { opacity: .2; }
+
+/* the counter: while it charges, the percentage is the biggest thing on screen */
+.count {
+  grid-area: scene;
+  align-self: end;
+  justify-self: center;
+  z-index: 4;
+  margin: 0 0 2svh;
+  font-family: var(--display);
+  font-size: clamp(3.6rem, 21vw, 9rem);
+  line-height: .9;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  color: var(--ink);
+  text-shadow: 0 0 calc(10px + var(--charge) * 50px) rgba(255, 190, 110, calc(.25 + var(--charge) * .6)), 0 6px 30px rgba(0, 0, 0, .6);
+  opacity: 0;
+  pointer-events: none;
+}
+@media (min-aspect-ratio: 4/3) { .count { font-size: clamp(4rem, 11vw, 9rem); } }
+
+/* GSAP (motion.js) takes over the type and press motion from the CSS fallbacks */
+.gsap .ch, .gsap .panel.enter { animation: none; }
+.gsap .choice:active, .gsap .choice.yes.holding { transform: none; }
+/* GSAP reads end values when a tween starts; a CSS transition on the same property would hand it the start values */
+.gsap .choice, .gsap .chip { transition-property: background-color, border-color, box-shadow; }
+.panel h2 .w { display: inline-block; }
 
 /* ---------- the can ---------- */
 
@@ -196,9 +233,8 @@ a { color: var(--muted); }
 .kicker {
   margin: 0;
   font-family: var(--display);
-  font-size: clamp(.8rem, 3.4vw, 1.1rem);
-  letter-spacing: .3em;
-  text-transform: uppercase;
+  font-size: clamp(1rem, 4.6vw, 1.4rem);
+  letter-spacing: .01em;
   color: var(--muted);
 }
 .title {

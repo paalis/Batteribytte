@@ -18,15 +18,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/ArchivoBlack-400.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="clips.json" as="fetch" crossorigin>
 <link rel="stylesheet" href="style.css">
 <noscript><style>.hint, #sound { display: none; }</style></noscript>
 </head>
 <body>
 
-<!-- Batteribytte: an interactive charging station. The can is a real photo; the light, sparks and sound are made
-     live in the browser. Interaction spec: docs/interaction-spec.md -->
+<!-- Batteribytte: an interactive charging station, shot like a commercial. The clips (clips.json, ASSETS.md) are
+     scrubbed by the battery level; fog, fizz and lightning are drawn live on top. Without clips, the photo can below
+     stays. Interaction spec: docs/interaction-spec.md -->
 <main class="stage" id="stage" data-state="ask">
+  <div class="clip" id="clip" aria-hidden="true"></div>
+  <canvas class="fog" id="fog" aria-hidden="true"></canvas>
   <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+  <canvas class="fx2" id="fx2" aria-hidden="true"></canvas>
+  <p class="count" id="count" aria-hidden="true"></p>
 
   <header class="bar">
     <button class="chip" id="sound" type="button" aria-pressed="false" aria-keyshortcuts="M" title="Slå på lyd (M)">
@@ -94,6 +100,9 @@
 </main>
 
 <script src="app.js" defer></script>
-<script src="scene3d.js" defer></script>
+<script src="lib/gsap.min.js" defer></script>
+<script src="player.js" defer></script>
+<script src="fx.js" defer></script>
+<script src="motion.js" defer></script>
 </body>
 </html>
