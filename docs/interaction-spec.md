@@ -41,9 +41,8 @@ er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` gå
 | 9–12,5 s | teal tåke og lynbuer | |
 | 12,5–15,4 s | tåken tynnes, boksen kommer fram | |
 | 16,5 s | `T_POP`: ladingen ender her | 100 % |
-| 16,65 / 16,85 s | tappen løftes / spruten (smell, blits og 2D-sprut) | spilles |
-| 18,4 s | «Fullt ladet!» kommer inn | |
-| 20,6 s | sluttbildet blir stående | |
+| 16,65 / 16,85 s | tappen løftes / spruten (smell og vibrasjon; ingen 2D-effekter oppå filmen) | spilles |
+| 20,6 s | sluttbildet blir stående, og «Fullt ladet!» kommer inn | |
 
 - **Lading tar 8 s** (`RATE = 94/8`). Ved hold er tiden c × `T_POP`, glattet med en kritisk dempet fjær. `currentTime` settes bare når avviket er over 1/48 s.
 - **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % eller «Lad igjen» gir tilbake til 3D.
