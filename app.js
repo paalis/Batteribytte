@@ -15,7 +15,8 @@
   const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
   const rnd = (a, b) => a + Math.random() * (b - a);
-  const HINT = hint.innerHTML;
+  const HINT_PHOTO = hint.innerHTML;
+  const HINT_SCROLL = 'Scroll ned for å lade – eller hold <b>Ja</b>';
 
   const START = 6;                 // the battery is low when you arrive
   const RATE = 94 / 8;             // % per second while charging: 8 s from 6 to 100 (the length of «reisen», journey.js)
@@ -29,6 +30,10 @@
   let holding = false, auto = false, pressAt = 0, drainFrom = 0;
 
   function setState(s) { state = s; stage.dataset.state = s; }
+  // with the scroll-driven film (journey.js), the charge IS the scroll position: one progress, read by everything
+  const SCROLL = () => !!(window.JOURNEY && JOURNEY.active && JOURNEY.scroll);
+  const progressNow = () => (window.JOURNEY ? JOURNEY.progress : 0);
+  const HINT = () => (SCROLL() ? HINT_SCROLL : HINT_PHOTO);
   const filmWait = () => !!(window.JOURNEY && JOURNEY.waiting && JOURNEY.waiting());
   const emit = (type) => dispatchEvent(new CustomEvent('bb', { detail: type }));
   let lastAria = -1;
@@ -43,38 +48,54 @@
     if (step !== lastAria) { lastAria = step; hud.setAttribute('aria-valuenow', r); hud.setAttribute('aria-valuetext', r + ' prosent'); }
   }
 
+  // panels change with a View Transition where the browser has one (the old panel sinks, the new one rises),
+  // otherwise with the small CSS entrance
   function show(id) {
-    for (const [k, el] of Object.entries(panels)) {
-      el.hidden = k !== id;
-      if (k === id && !RM) { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
-    }
+    const VT = !RM && document.startViewTransition && !document.hidden;
+    const swap = () => {
+      for (const [k, el] of Object.entries(panels)) {
+        el.hidden = k !== id;
+        if (k === id && !RM && !VT) { el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); }
+      }
+    };
+    if (VT) { try { document.startViewTransition(swap); return; } catch (e) { /* fall through */ } }
+    swap();
   }
   function say(msg) { status.textContent = msg; }
   function buzz(p) { if (navigator.vibrate) navigator.vibrate(p); }
   function replay(el) { el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 
   // ---------- «Ja»: hold to charge, or tap and it charges itself ----------
+  // isAuto: true = a tap, Enter or J (charges by itself) · false = held · 'scroll' = the user scrolled into it
   function startCharge(isAuto) {
     if (state !== 'ask' && state !== 'charging') return;
     if (state === 'ask') { say('Lader.'); buzz(10); emit('charge'); }
     setState('charging');
     choices.classList.add('locked');
-    holding = !isAuto; auto = !!isAuto;
+    const byScroll = isAuto === 'scroll';
+    holding = !isAuto; auto = isAuto === true;
     pressAt = performance.now();
-    ja.classList.add('holding');
-    hint.textContent = auto ? 'Lader …' : 'Hold inne …';
+    ja.classList.toggle('holding', holding);
+    hint.textContent = byScroll ? 'Scroll videre – eller hold Ja' : auto ? 'Lader …' : 'Hold inne …';
     sound.charge(true);
+    if (SCROLL() && !byScroll) JOURNEY.go('up');       // holding «Ja» scrolls the page for you
     kick();
   }
   function release(fromKeyboard) {
     if (!holding) return;
     holding = false;
     ja.classList.remove('holding');
-    if (fromKeyboard || performance.now() - pressAt < TAP) { auto = true; if (!hint.dataset.wait) hint.textContent = 'Lader …'; }
-    else if (level < 100 && !hint.dataset.wait) hint.textContent = 'Hold inne til 100 %';
+    if (fromKeyboard || performance.now() - pressAt < TAP) {
+      auto = true;
+      if (!hint.dataset.wait) hint.textContent = 'Lader …';
+      if (SCROLL()) JOURNEY.go('up');
+    } else if (level < 100) {
+      if (!hint.dataset.wait) hint.textContent = 'Hold inne til 100 %';
+      if (SCROLL()) JOURNEY.go('fall');              // let go early and it runs back
+    }
   }
   function abortCharge() {           // let go early and the level ran all the way back
-    if (hint.dataset.wait) { delete hint.dataset.wait; hint.innerHTML = HINT; }
+    delete hint.dataset.wait; hint.innerHTML = HINT();
     setState('ask');
     auto = false;
     choices.classList.remove('locked');
@@ -105,7 +126,7 @@
     }
     const done = () => {
       show('yes');
-      hint.innerHTML = HINT;
+      hint.innerHTML = HINT();
       say('Fullt ladet! Batteriet er byttet. Skål!');
       $('#share').focus({ preventScroll: true });
     };
@@ -145,7 +166,7 @@
     ja.classList.add('open');
     jaLbl.textContent = 'Åpne!';
     ja.title = 'Åpne (J)';
-    hint.innerHTML = 'Sveip opp – eller trykk <b>Åpne!</b>';
+    hint.innerHTML = SCROLL() && FINE ? 'Scroll videre – eller trykk <b>Åpne!</b>' : 'Sveip opp – eller trykk <b>Åpne!</b>';
     say('Fullt oppladet. Åpne boksen.');
     emit('armed');
     ja.focus({ preventScroll: true });
@@ -171,7 +192,7 @@
     setState('ask');
     holding = auto = false;
     choices.classList.remove('locked');
-    hint.innerHTML = HINT;
+    hint.innerHTML = HINT();
     setLevel(START);
     show('ask');
     say('Er du klar? Velg ja eller nei.');
@@ -280,7 +301,23 @@
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     let busy = false;
 
-    if (state === 'charging') {
+    if (SCROLL() && (state === 'ask' || state === 'charging' || state === 'armed')) {
+      // the scroll position is the charge: read it, and let it move the state both ways
+      const p = progressNow();
+      if (state === 'ask' && p > 0.003) startCharge('scroll');
+      if (state === 'armed' && p < 0.995) { unarm(); setState('charging'); hint.textContent = 'Scroll videre – eller hold Ja'; sound.charge(true); }
+      if (state === 'charging') {
+        busy = holding || auto;
+        setLevel(START + (100 - START) * p);
+        sound.level(clamp(p));
+        if (p >= 0.999) arm();
+        else if (p <= 0.001 && !holding && performance.now() - pressAt > 400 && !JOURNEY.moving) abortCharge();
+        else if (auto && !JOURNEY.moving && performance.now() - pressAt > 400) {
+          // the user took over the scroll mid-way (wheel or touch): the page is theirs now
+          auto = false; hint.textContent = 'Scroll videre – eller hold Ja';
+        }
+      }
+    } else if (state === 'charging') {
       busy = true;
       // the film is the charge: until its first frame is on screen, the meter waits
       if (filmWait()) {
@@ -476,11 +513,22 @@
     if (document.hidden && holding) release(false);
   });
 
+  // journey.js reports the load of the film here: loading it is the first charge, 0 → 6 %
+  let booted = false;
+  function boot(f) {
+    if (booted) return;
+    if (f >= 1) { booted = true; hint.innerHTML = HINT(); }
+    if (state === 'ask') setLevel(START * clamp(f));
+  }
+
   window.BB = {
     get state() { return state; },
     get level() { return level; },
     get pumping() { return state === 'charging' && (holding || auto) && !filmWait(); },
     fizz() { sound.fizz(); },
+    kick,
+    boot,
+    open,
   };
 
   // ---------- the headline arrives letter by letter, once ----------
@@ -490,7 +538,9 @@
       word.innerHTML = [...word.textContent].map((c) => `<span class="ch" aria-hidden="true" style="--i:${i++}">${c}</span>`).join('');
     }
   }
-  setLevel(START);
+  // with the film, the battery starts empty and fills to 6 % as the film loads (journey.js calls boot)
+  if (document.documentElement.classList.contains('film-base')) { setLevel(0); hint.textContent = 'Lader inn filmen …'; }
+  else setLevel(START);
   say('Det er tid for batteribytte! Er du klar? Velg ja eller nei.');
   kick();
 })();
