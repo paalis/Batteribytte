@@ -2,14 +2,18 @@
 
 En liten side for kolleger og venner: en kort produktfilm i svart studio (tre Battery Fresh-bokser, lys som
 sveiper over, makro av etiketten, kald røyk), og så spørsmålet «Er du klar?» med Ja / Nei.
-Ja lader batteriet på boksen og tenner den; Nei slukker lyset. Lyd lages i nettleseren (Web Audio)
-og starter ved første trykk.
+Du lader ved å **scrolle** (eller holde inne Ja, som scroller for deg): filmen, batteriet, tekstene og lyset følger
+én felles tidslinje. Ved 100 % åpner du boksen selv, filmen spilles til slutt, og boksen trer ut av filmen
+som en ekte 3D-boks du kan snu. Nei slukker lyset. Lyd lages i nettleseren (Web Audio) og starter ved første trykk.
 
-- `index.html`, `style.css`, `app.js`, `journey.js` — hele siden, uten byggesteg.
-- `assets/journey2-*.mp4` — filmen, som er basen på hele siden og skrubbes av ladingen; `assets/base-poster.jpg` er heltebildet som vises før den er lastet.
-- `assets/battery-fresh.webp` (produktfoto), `assets/og.jpg` (delingsbilde), `favicon.svg`,
-  `fonts/` (Bebas Neue, SIL OFL, se `fonts/OFL.txt`).
-- Respekterer «redusert bevegelse» (hopper rett til spørsmålet) og fungerer med tastatur og skjermleser.
+- `index.html`, `style.css`, `app.js` (tilstander, knapper, lyd, fotoreserven), `journey.js` (scroll, film, tidslinje) — uten byggesteg.
+- `frames/720/` og `frames/540/` — filmen som bildesekvens (494 WebP-bilder, 24 fps), tegnet på canvas.
+  Lages fra `assets/journey2-720.mp4` med `tools/make-frames.sh`. `assets/base-poster.jpg` vises før de er lastet.
+- `lib/` — GSAP + ScrollTrigger, Lenis og `can3d.js` (three.js + `src/can3d.js`, bygges med `tools/build-can3d.sh`). Se `lib/README.md`.
+- `assets/battery-fresh.webp` (produktfoto, også kilden til 3D-boksen), `assets/og.jpg` (delingsbilde), `favicon.svg`,
+  `fonts/` (Archivo Black, SIL OFL, se `fonts/OFL.txt`).
+- Respekterer «redusert bevegelse» (ingen scroll-film, fotoboksen lades med knappen) og fungerer med tastatur og skjermleser.
+- Interaksjonsspesifikasjon: `docs/interaction-spec.md`.
 
 ## Agent-verktøy
 

@@ -80,11 +80,21 @@ a { color: var(--muted); }
   transform: scale(1.04); transform-origin: 50% 60%; will-change: transform;
   filter: none; transition: filter .25s var(--ease-out); animation: drift 22s ease-in-out infinite alternate; }
 @keyframes drift { from { scale: 1; } to { scale: 1.035; } }
-.film-poster, .journey { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
-.journey { background: transparent; opacity: 0; transition: opacity .5s var(--ease-out); }
-.film-ready .journey { opacity: 1; }
-/* the rewind and fast-forward whoosh: blurred, brighter, a little more colour */
-.rush .film { filter: blur(3px) brightness(1.3) saturate(1.25); transition: filter .12s var(--ease-out); }
+.film-poster, .frames { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.frames { opacity: 0; transition: opacity .5s var(--ease-out);
+  /* speed is blur: journey.js sets these from how fast the film's time is moving */
+  filter: blur(var(--speed-blur, 0px)) brightness(var(--speed-light, 1)); }
+.film-ready .frames { opacity: 1; }
+/* the light rises with the charge (on the master timeline) */
+.bloom { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 60% 45% at 50% 58%, rgba(255, 196, 120, .35), rgba(79, 214, 200, .12) 55%, transparent 75%); }
+/* the finale: the film steps back and the 3D can comes forward in the same box */
+.can3d { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s var(--ease-out); }
+.can3d canvas { display: block; width: 100%; height: 100%; }
+.finale .can3d { opacity: 1; pointer-events: auto; cursor: grab; }
+.finale .can3d:active { cursor: grabbing; }
+.finale .frames { filter: brightness(.38) blur(5px) saturate(.8); transition: filter 1s var(--ease-out); }
+.finale .film { pointer-events: auto; }
 html:not(.film-base) .film { display: none; }
 .film { -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent); mask-image: linear-gradient(to bottom, #000 82%, transparent); }
 .film-base .scene { visibility: hidden; }
@@ -392,4 +402,49 @@ html:not(.film-base) .film { display: none; }
   .chip:active, .choice:active, .choice.yes.holding { transform: none; }
   .can-body, .stage[data-state] .can-body { transition: filter .3s linear; transform: none; }
   .dim, .stage[data-state] .dim { transition: opacity .3s linear; }
+}
+
+/* ---------- scroll mode (journey.js): the stage stands still and the page scrolls under it ---------- */
+.track { display: none; }
+.scroll-mode body { overflow: visible; }
+.scroll-mode .stage { position: fixed; inset: 0 0 auto; width: 100%; }
+.scroll-mode .track { display: block; height: 620vh; }
+/* Lenis */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: clip; }
+
+/* the captions: one line at a time over the film, placed on the scroll by film time */
+.chapters { display: none; }
+.scroll-mode .chapters { display: grid; position: absolute; inset: 0; z-index: 4; pointer-events: none; place-items: center; }
+.cap { grid-area: 1 / 1; margin: 0; padding: 0 var(--gutter); max-width: 16ch; text-align: center; visibility: hidden;
+  font-family: var(--display); font-size: clamp(1.7rem, 8vw, 3.4rem); line-height: 1; text-transform: uppercase;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, .7), 0 0 calc(var(--charge) * 30px) rgba(255, 190, 110, calc(var(--charge) * .6)); }
+@media (min-aspect-ratio: 4/3) {
+  .scroll-mode .chapters { place-items: center start; padding-left: max(6vw, var(--gutter)); }
+  .cap { text-align: left; max-width: 12ch; }
+}
+@media (max-aspect-ratio: 4/3) { .scroll-mode .chapters { place-items: start center; padding-top: 26svh; } }
+
+/* a small mouse with a wheel that rolls: «you can scroll» before the first scroll */
+.scroll-cue { display: none; }
+.scroll-mode .stage[data-state="ask"] .scroll-cue { display: block; width: 20px; height: 32px; margin: 10px auto 0;
+  border: 2px solid rgba(255, 255, 255, .55); border-radius: 12px; position: relative; }
+.scroll-cue::after { content: ""; position: absolute; left: 50%; top: 6px; width: 3px; height: 7px; margin-left: -1.5px;
+  border-radius: 2px; background: var(--ink); animation: cue 1.6s var(--ease-out) infinite; }
+@keyframes cue { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 10px; } }
+@media (min-width: 900px) and (min-aspect-ratio: 5/4) { .scroll-mode .stage[data-state="ask"] .scroll-cue { margin-left: 0; } }
+
+/* ---------- View Transitions between the panels: the old one sinks away, the new one rises ---------- */
+.panel { view-transition-name: panel; }
+.hud { view-transition-name: hud; }
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-old(panel) { animation: vt-out .22s cubic-bezier(.55, 0, .85, .35) both; }
+::view-transition-new(panel) { animation: vt-in .45s var(--ease-expo) .08s both; }
+::view-transition-group(panel) { animation-duration: .45s; animation-timing-function: var(--ease-expo); }
+@keyframes vt-out { to { opacity: 0; translate: 0 14px; filter: blur(6px); } }
+@keyframes vt-in { from { opacity: 0; translate: 0 22px; scale: .96; filter: blur(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .scroll-cue::after { animation: none; }
 }

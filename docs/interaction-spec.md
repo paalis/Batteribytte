@@ -10,46 +10,53 @@ Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-
 
 Dette er den eneste versjonen av siden: `/film/` og `/v1/` sendes videre til forsiden.
 
-## Filmen er basen (journey.js)
+## Én tidslinje: scrolling er ladingen (journey.js)
 
-AI-filmen `assets/journey2-720.mp4` (eller `-540` ved datasparing, treg forbindelse eller telefon med lite minne)
-er bakgrunnen på hele siden, ikke bare ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` går jevnt begge veier.
-Én kritisk dempet fjær styrer filmens tid mot der tilstanden vil ha den, så alle «klipp» er bevegelser.
+Alt som beveger seg leser én verdi, fremdriften `p` (0–1). Scrolling flytter den (Lenis gir myk treghet, GSAP
+ScrollTrigger kobler scrollen til hovedtidslinjen), «Ja» flytter den (å holde inne scroller siden for deg), og
+tastaturet flytter den. Filmen, batteriet, tekstene, lyset på «Ja», bloom-lyset og lyden leses av samme `p` i samme bilde.
 
-- **Første opptegning:** `assets/base-poster.jpg` (heltebildet, 16,1 s) står der med en gang; videoen fader inn over når den er lastet.
-- **Er du klar? / Nei:** boksen står i tåka og filmen puster rolig mellom 15,75 og 16,46 s. Med mus følger bildet pekeren, på touch driver det sakte innover. Nei dimmer og tømmer batteriet.
-- **Ja:** filmen spoler tilbake til makroen av lokket i én «whoosh» (uskarp, lysere, blits), og så skrubbes den av måleren.
-- **Lad igjen / slipper man helt ned:** den spoler fram til boksen i tåka igjen.
-- **Bred skjerm:** filmen beholder sin egen form til høyre, med myke kanter.
+- **Filmen er en bildesekvens**, ikke video: `frames/720` eller `frames/540` (telefon, datasparing, treg linje), 494 bilder
+  på 24 fps, tegnet på canvas. Hvert bilde er nøyaktig begge veier i alle nettlesere. Mellom to bilder blandes det neste inn,
+  så sakte scrolling glir. Bildene lastes grovt først (hvert 32., så hvert 8.), så hele filmen kan skrubbes tidlig.
+- **Lasting er den første ladingen:** batteriet fyller seg 0 → 6 % mens første runde med bilder kommer inn («Lader inn filmen …»).
+- **Fart er uskarphet:** filmtiden følger `p` med en kritisk dempet fjær (løst eksakt, stabil på alle bildefrekvenser).
+  Jo raskere tiden går, jo mer uskarpt og lyst blir bildet. Spolingen tilbake til makroen blir dermed en «whoosh» av seg selv.
+- **Bred skjerm:** filmen beholder sin egen form til høyre, med myke kanter. Tekstene står til venstre.
 
-| Tid i filmen | Innhold | Nivå |
-|---|---|---|
-| 0–2,5 s | makro av lokket med en dråpe | 6 % → |
-| 2,5–5,9 s | gjennom dråpen, isbit, rosa væske med bobler | |
-| 5,9–9 s | flere bobler, overflaten brytes ca. 8 s (riseren starter, c ≈ 0,4) | |
-| 9–12,5 s | teal tåke og lynbuer | |
-| 12,5–15,4 s | tåken tynnes, boksen kommer fram | |
-| 15,75–16,5 s | `T_POP`: ved 100 % venter boksen i tåka (filmen puster rolig fram og tilbake). Ja blir «Åpne!» | 100 % |
-| | **Du åpner selv:** trykk «Åpne!», sveip opp, eller J / Enter / Mellomrom | |
-| 16,65 / 16,85 s | tappen løftes / spruten (smell og vibrasjon; ingen 2D-effekter oppå filmen) | spilles |
-| 20,6 s | sluttbildet blir stående, og «Fullt ladet!» kommer inn | |
+| p | Filmen | Batteri | Tekst |
+|---|---|---|---|
+| 0 | boksen i tåka, puster mellom 15,75 og 16,46 s (pekeren flytter bildet) | 6 % | «Det er tid for Batteribytte!», «Er du klar?», scroll-hint |
+| 0–0,06 | spoler tilbake til makroen av lokket (uskarp, blits) | | overskriften løftes bort |
+| 0,06–1 | 0 → 16,5 s skrubbes av scrollen | 6 → 100 % | fem linjer som følger filmen (dråpe, bobler, trykk, strøm, nesten full) |
+| 1 | `T_POP`: boksen venter, «Ja» blir «Åpne!» | 100 % | «Scroll videre / sveip opp – eller trykk Åpne!» |
 
-- **Lading tar 8 s** (`RATE = 94/8`). Ved hold er tiden c × `T_POP`, glattet med en kritisk dempet fjær. `currentTime` settes bare når avviket er over 1/48 s.
-- **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % spoler den fram til boksen i tåka.
-- **Lading bruker alltid filmen:** er den ikke lastet når man trykker Ja, venter måleren på 6 % med «Laster filmen …» til første bilde vises. Bare hvis filmen ikke kan lastes i det hele tatt (feil, eller ingenting etter 20 s), lades det med fotoboksen (gnister, glød, risting), som også er reserven ellers.
-- **Lasting:** filmen lastes etter første opptegning når nettleseren er ledig, og primes på første trykk for iOS.
-- **Redusert bevegelse:** ingen film, og den lastes heller ikke. Fotoboksen vises.
-- **Lyd:** summingen stiger med c, en riser kommer fra c ≈ 0,4 til 100 %, og smellet ved pop. Alt er av til «Lyd» trykkes.
+- **Du åpner selv:** en ny scroll nedover (ikke farten fra scrollen som brakte deg dit), sveip opp, «Åpne!», J, Enter eller Mellomrom.
+  Filmen spilles da i sanntid fra 16,5 s til siste bilde (tappen 16,65 s, spruten og smellet 16,85 s), og scrollen låses.
+- **Finalen:** filmen trer tilbake (mørkere, uskarp), og boksen kommer ut av filmen som ekte 3D (`lib/can3d.js`) på samme sted,
+  med en hel omdreining inn. Dra for å snu den; den finner tilbake til forsiden med treghet. 3D-boksen bygges av produktfotoet:
+  omrisset blir profilen, og etiketten rulles ut fra fotoet (baksiden får etikettens egen fargeovergang).
+- **Hold Ja:** scroller mot slutten på 8 s for hele veien. Slipper du for tidlig, faller den tilbake (2,4 s for hele veien).
+  Kort trykk, Enter eller J lader av seg selv. Scroller du selv underveis, tar du over.
+- **Scroll tilbake** fra «Åpne!» gjør den til «Ja» igjen. Helt til toppen er spørsmålet tilbake.
+- **Nei** låser scrollen, tømmer batteriet og slukker lyset. «Prøv igjen» låser opp.
+- **Lad igjen:** scrollen går til toppen, og filmen spoler fram til boksen i tåka igjen.
+- **Overganger mellom panelene** bruker View Transitions der nettleseren har det (det gamle synker, det nye stiger fram), ellers CSS.
+- **Reserve:** med redusert bevegelse, eller hvis bibliotekene eller bildene ikke kan lastes (ingen heltebilde etter 20 s),
+  er siden én skjerm uten scroll, og fotoboksen lades med knappen (gnister, glød, risting).
+- **Lyd:** summingen stiger med `p`, en riser kommer fra `p` ≈ 0,4 til 100 %, og smellet ved åpning. Alt er av til «Lyd» trykkes.
 
 ## Flyt
 
 ```
-Åpne siden (batteri 6 %, blinker rødt, filmen puster i bakgrunnen)
+Åpne siden (batteriet fylles 0→6 % mens filmen lastes, blinker rødt, filmen puster i bakgrunnen)
    └─ «Er du klar?»
-        ├─ Ja: hold inne → lader 6→100 % på 8 s (filmen spoler tilbake og skrubbes; i fotoreserven: gnister, glød, risting, summing)
+        ├─ Scroll ned → lader 6→100 % (filmen spoler tilbake og skrubbes av scrollen, tekstene følger filmen)
+        ├─ Ja: hold inne → scroller for deg, 6→100 % på 8 s (i fotoreserven: gnister, glød, risting, summing)
         │      slipp for tidlig → nivået synker tilbake, «Hold inne til 100 %»
         │      trykk kort / Enter / J → lader av seg selv
-        │      100 % → pop (blits, ring, gnister og dråper, boksen hopper) → «Fullt ladet!»
+        │      100 % → «Åpne!» → filmen spilles til slutt → 3D-boksen → «Fullt ladet!»
+        │              (fotoreserven: pop med blits, ring, gnister og dråper, boksen hopper)
         │                → Varsle kollegaene (deling / kopier lenke) · Lad igjen
         └─ Nei / N → tømmes til 0 % på 1,1 s, lyset går → «Lavt batteri…» → Prøv igjen
 Med film: bildet følger pekeren. Uten film (reserve): boksen vipper mot pekeren og bruser når du trykker på den.

@@ -29,11 +29,14 @@
      live in the browser. Interaction spec: docs/interaction-spec.md -->
 <main class="stage" id="stage" data-state="ask">
   <canvas class="fx" id="fx" aria-hidden="true"></canvas>
-  <!-- the film is the base of the whole page (journey.js): the poster is its hero frame, the video takes over silently
-       once it has loaded, breathes behind «Er du klar?» and is scrubbed by the charge -->
+  <!-- the film is the base of the whole page (journey.js): the poster is its hero frame; the image sequence takes
+       over on a canvas once its first frames are in, breathes behind «Er du klar?» and is scrubbed by the scroll.
+       In the finale the can steps out of the film as a real 3D can (lib/can3d.js) in the same box. -->
   <div class="film" id="film" aria-hidden="true">
     <img class="film-poster" src="assets/base-poster.jpg" width="720" height="1280" alt="" fetchpriority="high">
-    <video class="journey" id="journey" muted playsinline preload="metadata" aria-hidden="true" disablepictureinpicture></video>
+    <canvas class="frames" id="frames"></canvas>
+    <div class="bloom"></div>
+    <div class="can3d" id="can3d"></div>
   </div>
 
   <header class="bar">
@@ -65,6 +68,15 @@
   <div class="dim" aria-hidden="true"></div>
   <div class="flash" id="flash" aria-hidden="true"></div>
 
+  <!-- what the film shows, one line at a time, placed on the scroll by film time (seconds) -->
+  <div class="chapters" aria-hidden="true">
+    <p class="cap" data-from="0.4" data-to="2.6">Det starter med én dråpe</p>
+    <p class="cap" data-from="3" data-to="5.8">Iskald. Rosa. Full av bobler.</p>
+    <p class="cap" data-from="6.2" data-to="9">Trykket bygger seg opp …</p>
+    <p class="cap" data-from="9.4" data-to="12.4">… og så kommer strømmen</p>
+    <p class="cap" data-from="12.8" data-to="15.4">Batteriet er nesten fullt</p>
+  </div>
+
   <div class="copy">
     <p class="kicker">Det er tid for</p>
     <h1 class="title" id="title" aria-label="Batteribytte!"><span class="nw">Batteri</span><wbr><span class="nw">bytte!</span></h1>
@@ -78,6 +90,7 @@
         <button class="choice no" id="nei" type="button" aria-keyshortcuts="N" title="Nei (N)"><span class="lbl">Nei</span></button>
       </div>
       <p class="hint" id="hint">Hold <b>Ja</b> inne og lad selv – eller trykk og se på</p>
+      <span class="scroll-cue" aria-hidden="true"></span>
     </section>
 
     <section class="panel" id="yes" aria-labelledby="yes-h" hidden>
@@ -99,7 +112,12 @@
   <p class="toast" id="toast" role="status" hidden></p>
   <p class="sr-only" id="status" aria-live="polite"></p>
 </main>
+<!-- the scroll room: its length is the charge (journey.js maps it onto the master timeline) -->
+<div class="track" id="track" aria-hidden="true"></div>
 
+<script src="lib/gsap.min.js" defer></script>
+<script src="lib/ScrollTrigger.min.js" defer></script>
+<script src="lib/lenis.min.js" defer></script>
 <script src="app.js" defer></script>
 <script src="journey.js" defer></script>
 </body>
