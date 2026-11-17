@@ -18,6 +18,8 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preload" href="fonts/ArchivoBlack-400.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="assets/base-poster.jpg" as="image" fetchpriority="high">
+<script>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("film-base")</script>
 <link rel="stylesheet" href="style.css">
 <noscript><style>.hint, #sound { display: none; }</style></noscript>
 </head>
@@ -27,8 +29,12 @@
      live in the browser. Interaction spec: docs/interaction-spec.md -->
 <main class="stage" id="stage" data-state="ask">
   <canvas class="fx" id="fx" aria-hidden="true"></canvas>
-  <!-- «reisen»: the charging scene (journey.js); loaded after the first paint, shown only while charging -->
-  <video class="journey" id="journey" muted playsinline preload="metadata" poster="assets/journey2-poster.jpg" aria-hidden="true" disablepictureinpicture></video>
+  <!-- the film is the base of the whole page (journey.js): the poster is its hero frame, the video takes over silently
+       once it has loaded, breathes behind «Er du klar?» and is scrubbed by the charge -->
+  <div class="film" id="film" aria-hidden="true">
+    <img class="film-poster" src="assets/base-poster.jpg" width="720" height="1280" alt="" fetchpriority="high">
+    <video class="journey" id="journey" muted playsinline preload="metadata" aria-hidden="true" disablepictureinpicture></video>
+  </div>
 
   <header class="bar">
     <button class="chip" id="sound" type="button" aria-pressed="false" aria-keyshortcuts="M" title="Slå på lyd (M)">

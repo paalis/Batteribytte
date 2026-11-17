@@ -289,11 +289,10 @@
       } else {
         if (hint.dataset.wait) { delete hint.dataset.wait; hint.textContent = auto ? 'Lader …' : 'Hold inne …'; }
         setLevel(level + (holding || auto ? RATE : -DECAY) * dt);
-        if (window.JOURNEY && JOURNEY.tick) JOURNEY.tick(dt);     // the film follows the meter (both ways)
       }
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
-      if (!RM && (holding || auto)) {
+      if (!RM && (holding || auto) && !(window.JOURNEY && JOURNEY.active)) {   // with the film, the film is the spectacle
         emberAcc += (30 + 170 * c) * dt;
         const r = canBody.getBoundingClientRect();
         while (emberAcc >= 1) { emberAcc--; ember(r, c); }
