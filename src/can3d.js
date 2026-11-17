@@ -1,8 +1,8 @@
 // Batteribytte · the can in real 3D, for the finale after the film has played to its last frame.
 //
-// There is no 3D model: the can is built from the product photo (assets/battery-fresh.webp) at runtime.
-//   - the silhouette (the photo's alpha, row by row) is the profile of a LatheGeometry, so neck, lid and base
-//     have the can's own shape;
+// The shape is a real 500 ml can (Ø 66.2 mm, 168 mm: base bevel and dome, body, shoulder, neck, seamed rim,
+// countersunk lid, a stay-on tab and its opening). It stands opened, as the film leaves it.
+// The label is built from the product photo (assets/battery-fresh.webp) at runtime:
 //   - the label is unwrapped from the photo: a column at angle φ on the can is the photo column at x = sin φ
 //     (a cylinder seen from the front), so the front reads like the photo. The back, which no photo shows,
 //     gets the label's own gradient row by row.
@@ -12,7 +12,7 @@
 import {
   WebGLRenderer, Scene, PerspectiveCamera, LatheGeometry, Vector2, CanvasTexture, MeshPhysicalMaterial,
   MeshStandardMaterial, Mesh, CircleGeometry, Group, DirectionalLight, PMREMGenerator, SRGBColorSpace,
-  NeutralToneMapping,
+  NeutralToneMapping, ExtrudeGeometry, Shape, Path, MeshBasicMaterial,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
@@ -117,6 +117,33 @@ export function buildLabel(img) {
   return { canvas: out, pts, height: (y1 - y0) / half, top, bottom };
 }
 
+// ---------- a 500 ml can, in mm (the label covers the outer wall, v = height / H) ----------
+const H = 168;
+const OUTER = [
+  [24.6, 0], [26.5, 0.4], [29.5, 2], [31.8, 4.5], [32.9, 7.5], [33.1, 9.5],
+  [33.1, 145], [32.8, 148.5], [31.9, 151.5], [30.4, 154.5], [28.8, 157.5], [27.6, 160], [27.1, 162],
+  [27.1, 163.6], [27.75, 164.4], [27.9, 166.2], [27.6, 167.6], [27.0, 168],
+];
+const LID = [[27.0, 168], [26.2, 167.7], [25.7, 166.6], [25.5, 165.2], [25.0, 164.6], [23.5, 164.5], [0.01, 164.4]];
+const BASE = [[0.01, 5.2], [10, 4.9], [18, 3.6], [22.5, 1.6], [24.0, 0.4], [24.6, 0]];
+const lathe = (pts, seg = 160) => new LatheGeometry(pts.map(([r, y]) => new Vector2(r, y)), seg, -Math.PI, Math.PI * 2);
+function outerGeometry() {
+  const g = lathe(OUTER);
+  const pos = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setY(i, pos.getY(i) / H);
+  uv.needsUpdate = true;
+  return g;
+}
+function tabGeometry() {
+  const s = new Shape();
+  s.absarc(0, 3.5, 7.5, 0, Math.PI, false);
+  s.lineTo(-7.5, -14); s.absarc(0, -14, 7.5, Math.PI, Math.PI * 2, false); s.lineTo(7.5, 3.5);
+  const hole = new Path(); hole.absellipse(0, -12, 4.6, 5.2, 0, Math.PI * 2, true); s.holes.push(hole);
+  const g = new ExtrudeGeometry(s, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.25, bevelSize: 0.35, bevelSegments: 2 });
+  g.rotateX(-Math.PI / 2);
+  return g;
+}
+
 export async function mount(el, { photo = 'assets/battery-fresh.webp' } = {}) {
   const img = await loadImage(photo);
   const label = buildLabel(img);
@@ -137,19 +164,22 @@ export async function mount(el, { photo = 'assets/battery-fresh.webp' } = {}) {
   const tex = new CanvasTexture(label.canvas);
   tex.colorSpace = SRGBColorSpace;
   tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  const body = new Mesh(
-    new LatheGeometry(label.pts, 128, -Math.PI, Math.PI * 2),
-    new MeshPhysicalMaterial({ map: tex, metalness: 0.35, roughness: 0.38, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
-  );
-  const metal = new MeshStandardMaterial({ color: 0x9a9ca3, metalness: 1, roughness: 0.32 });
-  const lid = new Mesh(new CircleGeometry(label.top.x * 0.98, 64), metal);
-  lid.rotation.x = -Math.PI / 2; lid.position.y = label.top.y - 0.01;
-  const base = new Mesh(new CircleGeometry(label.bottom.x * 0.98, 64), metal);
-  base.rotation.x = Math.PI / 2; base.position.y = label.bottom.y + 0.01;
+  const wall = new MeshPhysicalMaterial({ map: tex, metalness: 0.35, roughness: 0.38, clearcoat: 0.35, clearcoatRoughness: 0.3 });
+  const metal = new MeshStandardMaterial({ color: 0x9da1a9, metalness: 1, roughness: 0.3 });
+  const dull = new MeshStandardMaterial({ color: 0x8e9299, metalness: 1, roughness: 0.42 });
 
   const can = new Group();
-  can.add(body, lid, base);
-  can.position.y = -label.height / 2;               // pivot in the middle of the can
+  can.add(new Mesh(outerGeometry(), wall), new Mesh(lathe(LID), metal), new Mesh(lathe(BASE), dull));
+  // opened, like the film's last frame: the tab stands up and the opening is dark
+  const hole = new Mesh(new CircleGeometry(1, 40), new MeshBasicMaterial({ color: 0x050506 }));
+  hole.scale.set(7, 9.5, 1); hole.rotation.x = -Math.PI / 2; hole.position.set(0, 164.5, 11.5);
+  const tab = new Mesh(tabGeometry(), metal);
+  tab.rotation.y = Math.PI;                          // finger hole to the back, nose over the opening
+  const tabPivot = new Group(); tabPivot.position.set(0, 164.9, -2); tabPivot.add(tab);
+  tabPivot.rotation.x = 1.15;
+  const rivet = new Mesh(new CircleGeometry(2.4, 24), metal); rivet.rotation.x = -Math.PI / 2; rivet.position.set(0, 165.6, -2);
+  can.add(hole, tabPivot, rivet);
+  can.position.y = -H / 2;                           // pivot in the middle of the can
   const turn = new Group();                          // drag and idle sway turn this
   turn.add(can);
   const tilt = new Group();                          // a slight lean toward the camera, like the film
@@ -157,17 +187,18 @@ export async function mount(el, { photo = 'assets/battery-fresh.webp' } = {}) {
   tilt.rotation.x = 0.06;
   scene.add(tilt);
 
+  // units are mm now: the lights only need a direction
   const key = new DirectionalLight(0xffe2b8, 2.2); key.position.set(-3, 4, 5); scene.add(key);
   const rim = new DirectionalLight(0x4fd6c8, 2.6); rim.position.set(4, 1.5, -3); scene.add(rim);
   const rim2 = new DirectionalLight(0x4fd6c8, 1.2); rim2.position.set(-4, 0.5, -2); scene.add(rim2);
 
   // the camera frames the can where it stands in the film's last frame: 53 % of the frame's height, centre at 62 %
-  const camera = new PerspectiveCamera(18, 9 / 16, 0.1, 100);
+  const camera = new PerspectiveCamera(18, 9 / 16, 1, 10000);
   const FIT_H = 0.53, FIT_Y = 0.625;
   function fit(w, h) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    const visH = label.height / FIT_H;
+    const visH = H / FIT_H;
     const dist = visH / 2 / Math.tan((camera.fov * Math.PI) / 360);
     camera.position.set(0, 0, dist);
     camera.lookAt(0, 0, 0);

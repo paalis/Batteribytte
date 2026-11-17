@@ -34,8 +34,9 @@ tastaturet flytter den. Filmen, batteriet, tekstene, lyset på «Ja», bloom-lys
 - **Du åpner selv:** en ny scroll nedover (ikke farten fra scrollen som brakte deg dit), sveip opp, «Åpne!», J, Enter eller Mellomrom.
   Filmen spilles da i sanntid fra 16,5 s til siste bilde (tappen 16,65 s, spruten og smellet 16,85 s), og scrollen låses.
 - **Finalen:** filmen trer tilbake (mørkere, uskarp), og boksen kommer ut av filmen som ekte 3D (`lib/can3d.js`) på samme sted,
-  med en hel omdreining inn. Dra for å snu den; den finner tilbake til forsiden med treghet. 3D-boksen bygges av produktfotoet:
-  omrisset blir profilen, og etiketten rulles ut fra fotoet (baksiden får etikettens egen fargeovergang).
+  med en hel omdreining inn. Dra for å snu den; den finner tilbake til forsiden med treghet. 3D-boksen har formen til en ekte
+  500 ml-boks (Ø 66 mm × 168 mm: bunn, skulder, hals, falset kant, lokk) og står åpnet slik filmen slutter, med tappen oppe.
+  Etiketten rulles ut fra produktfotoet (baksiden får etikettens egen fargeovergang).
 - **Hold Ja:** scroller mot slutten på 8 s for hele veien. Slipper du for tidlig, faller den tilbake (2,4 s for hele veien).
   Kort trykk, Enter eller J lader av seg selv. Scroller du selv underveis, tar du over.
 - **Scroll tilbake** fra «Åpne!» gjør den til «Ja» igjen. Helt til toppen er spørsmålet tilbake.
