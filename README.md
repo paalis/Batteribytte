@@ -5,8 +5,8 @@ sveiper over, makro av etiketten, kald røyk), og så spørsmålet «Er du klar?
 Ja lader batteriet på boksen og tenner den; Nei slukker lyset. Lyd lages i nettleseren (Web Audio)
 og starter ved første trykk.
 
-- `index.html`, `style.css`, `app.js`, `journey.js`, `scene3d.js` — hele siden, uten byggesteg.
-- `assets/journey2-*.mp4` — filmen «reisen», som er ladescenen.
+- `index.html`, `style.css`, `app.js`, `journey.js` — hele siden, uten byggesteg.
+- `assets/journey2-*.mp4` — filmen, som er basen på hele siden og skrubbes av ladingen; `assets/base-poster.jpg` er heltebildet som vises før den er lastet.
 - `assets/battery-fresh.webp` (produktfoto), `assets/og.jpg` (delingsbilde), `favicon.svg`,
   `fonts/` (Bebas Neue, SIL OFL, se `fonts/OFL.txt`).
 - Respekterer «redusert bevegelse» (hopper rett til spørsmålet) og fungerer med tastatur og skjermleser.
