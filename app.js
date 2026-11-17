@@ -30,9 +30,6 @@
 
   function setState(s) { state = s; stage.dataset.state = s; }
   const filmWait = () => !!(window.JOURNEY && JOURNEY.waiting && JOURNEY.waiting());
-  // the 3D studio (scene3d.js) reads the state from here and hears the moments; while it runs, the photo
-  // version's own can and particles stand down
-  const GL = () => document.documentElement.classList.contains('gl');
   const emit = (type) => dispatchEvent(new CustomEvent('bb', { detail: type }));
   let lastAria = -1;
   function setLevel(v) {
@@ -98,7 +95,7 @@
     setTimeout(() => { sound.pop(); buzz([25, 40, 35]); }, J ? J.HIT_DELAY : 0);
     emit('pop');
     const r = canBody.getBoundingClientRect();
-    if (!J && !RM && !GL()) {
+    if (!J && !RM) {
       const cx = r.left + r.width / 2, cy = r.top + r.height * 0.08;
       flash.style.setProperty('--fx', cx + 'px'); flash.style.setProperty('--fy', (r.top + r.height / 2) + 'px');
       replay(flash); replay(ring);
@@ -199,7 +196,7 @@
   can.addEventListener('pointermove', (e) => { if (!FINE && e.buttons) aim(e.clientX, e.clientY); }, { passive: true });
   can.addEventListener('pointerup', () => { if (!FINE) { tilt.tx = tilt.ty = 0; kick(); } });
   can.addEventListener('click', () => {
-    if (GL() || state === 'charging' || state === 'draining') return;
+    if (state === 'charging' || state === 'draining') return;
     sound.fizz();
     if (RM) return;
     const r = canBody.getBoundingClientRect();
@@ -296,7 +293,7 @@
       }
       const c = clamp((level - START) / (100 - START));
       sound.level(c);
-      if (!RM && !GL() && (holding || auto)) {
+      if (!RM && (holding || auto)) {
         emberAcc += (30 + 170 * c) * dt;
         const r = canBody.getBoundingClientRect();
         while (emberAcc >= 1) { emberAcc--; ember(r, c); }

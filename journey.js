@@ -1,6 +1,6 @@
 // Batteribytte · «reisen»: the AI film (assets/journey2-*.mp4, every frame a key frame) is the charging scene.
 // Holding «Ja» scrubs it with the meter (time = c × T_POP); at 100 % it plays on from T_POP: the tab lifts, foam runs
-// down the can, and it stops on the last frame. The 3D studio (scene3d.js) does everything else and stays the
+// down the can, and it stops on the last frame. The photo version of the can does everything else and stays the
 // fallback only if the film cannot load at all; otherwise the meter waits for its first frame. Off with reduced motion.
 //
 // What the film holds (verified frame by frame): 0–2.5 s macro of the lid and a drop · 2.5–5.9 s through the drop,
@@ -67,12 +67,10 @@
     J.active = true;
     quickFlash();
     root.classList.add('journey-on');
-    if (window.BB3D) setTimeout(() => { if (J.active) BB3D.pause(); }, 220);
   }
   function hideFilm() {
     if (!J.active) return;
     J.active = false;
-    if (window.BB3D) BB3D.resume();
     root.classList.remove('journey-on');
     playing = false;
     video.pause();

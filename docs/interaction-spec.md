@@ -10,24 +10,6 @@ Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-
 
 Dette er den eneste versjonen av siden: `/film/` og `/v1/` sendes videre til forsiden.
 
-## 3D-studioet (scene3d.js)
-
-Mellom trykkene er siden et ekte 3D-studio i sanntid (Three.js, samme studio som filmen i `film-src/`):
-boksen er dreid etter fotoets egen silhuett, fotoet er etiketten (baksiden i boksens egne farger), med kondens,
-metallisk lokk og kant, blankt gulv med speiling, lav røyk og bloom. Logoens to stolper er batterimåleren.
-
-| Steg | Kamera (video-director) | Hva skjer |
-|---|---|---|
-| Åpning | Makro på kondensen, et lys glir over, trekker ut til helten | Overskriften kommer tegn for tegn |
-| Venter | Står nesten stille (rolig drift, følger pekeren) | Dra for å snu boksen, trykk for å la den bruse |
-| Lader | Kjører inn lavt og rundt boksen | Gnister trekkes opp i spiral, lyset blir varmt, boksen dirrer |
-| Pop | Push + flash: klipp til lav heltevinkel | Blits, sjokkring på gulvet, gnister og dråper, flippen åpnes |
-| Fullt ladet | Langsom bane rundt boksen | Etterglød |
-| Nei | Kran opp og bort | Studiolyset slukkes, boksen velter |
-
-Uten WebGL, eller hvis noe feiler, blir fotoversjonen stående. Bildefrekvensen overvåkes: på trege telefoner
-senkes pikseltetthet og så bloom.
-
 ## «Reisen»: ladescenen (journey.js)
 
 AI-filmen `assets/journey2-720.mp4` (eller `-540` ved datasparing, treg forbindelse eller telefon med lite minne)
@@ -46,9 +28,9 @@ er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` gå
 | 20,6 s | sluttbildet blir stående, og «Fullt ladet!» kommer inn | |
 
 - **Lading tar 8 s** (`RATE = 94/8`). Ved hold er tiden c × `T_POP`, glattet med en kritisk dempet fjær. `currentTime` settes bare når avviket er over 1/48 s.
-- **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % eller «Lad igjen» gir tilbake til 3D.
-- **Overgangen** er 200 ms med kort blits, og 3D blir uskarpt og tones ut. 3D-renderingen står på pause mens filmen vises.
-- **Lading bruker alltid filmen:** er den ikke lastet når man trykker Ja, venter måleren på 6 % med «Laster filmen …» til første bilde vises. Bare hvis filmen ikke kan lastes i det hele tatt (feil, eller ingenting etter 20 s), lades det i 3D. Nei bruker 3D.
+- **Slipper man**, synker nivået og filmen spoler tilbake. Helt ned til 6 % eller «Lad igjen» gir tilbake til fotoboksen.
+- **Overgangen** er 200 ms med kort blits.
+- **Lading bruker alltid filmen:** er den ikke lastet når man trykker Ja, venter måleren på 6 % med «Laster filmen …» til første bilde vises. Bare hvis filmen ikke kan lastes i det hele tatt (feil, eller ingenting etter 20 s), lades det med fotoboksen (gnister, glød, risting). Nei bruker fotoboksen.
 - **Lasting:** filmen lastes etter første opptegning når nettleseren er ledig, og primes på første trykk for iOS.
 - **Redusert bevegelse:** ingen film, og den lastes heller ikke.
 - **Lyd:** summingen stiger med c, en riser kommer fra c ≈ 0,4 til 100 %, og smellet ved pop. Alt er av til «Lyd» trykkes.
@@ -58,7 +40,7 @@ er ladescenen. Alle bilder er nøkkelbilder, så skrubbing med `currentTime` gå
 ```
 Åpne siden (batteri 6 %, blinker rødt)
    └─ «Er du klar?»
-        ├─ Ja: hold inne → lader 6→100 % på 8 s («reisen» skrubbes; i 3D-reserven: gnister, glød, risting, summing)
+        ├─ Ja: hold inne → lader 6→100 % på 8 s («reisen» skrubbes; i fotoreserven: gnister, glød, risting, summing)
         │      slipp for tidlig → nivået synker tilbake, «Hold inne til 100 %»
         │      trykk kort / Enter / J → lader av seg selv
         │      100 % → pop (blits, ring, gnister og dråper, boksen hopper) → «Fullt ladet!»
