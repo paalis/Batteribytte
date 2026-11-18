@@ -34,7 +34,7 @@
   ],
   "headers": [
     {
-      "source": "/frames/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

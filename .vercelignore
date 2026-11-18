@@ -5,7 +5,6 @@ vendor/
 skills-lock.json
 film-src/
 film-src-v/
-# sources of the published files: the film (cut into frames/ by tools/make-frames.sh) and the 3D can (built into lib/)
-assets/*.mp4
+# sources of the published files (Blender scripts, the page's sources built into lib/pant/)
 src/
 tools/
