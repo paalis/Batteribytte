@@ -27,7 +27,7 @@ def g2b(p):
 # camera stations, in the page's (three.js) coordinates: position, target, vertical field of view
 STATIONS = {
     'start':   ((0.06, 1.2, 2.05), (0.0, 1.12, 0.0), 50),
-    'inside':  ((0.13, 1.21, -0.19), (0.0, 1.02, -0.33), 62),
+    'inside':  ((0.15, 1.235, -0.17), (0.0, 1.01, -0.33), 62),
     'button':  ((0.32, 1.02, 0.62), (0.22, 0.95, 0.0), 46),
     'hatch':   ((0.0, 0.62, 1.05), (0.0, 0.33, 0.0), 48),
     'hero':    ((0.0, 0.98, 1.05), (0.0, 0.95, 0.45), 40),

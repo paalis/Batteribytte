@@ -37,7 +37,7 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 // ---------- camera stations (shared with tools/blender/render_stills.py) ----------
 const ST = {
   start:  { pos: V(0.06, 1.2, 2.05), tgt: V(0, 1.12, 0), fov: 50 },
-  inside: { pos: V(0.13, 1.21, -0.19), tgt: V(0, 1.02, -0.33), fov: 62 },
+  inside: { pos: V(0.15, 1.235, -0.17), tgt: V(0, 1.01, -0.33), fov: 62 },   // above and beside the press's path
   button: { pos: V(0.32, 1.02, 0.62), tgt: V(0.22, 0.95, 0), fov: 46 },
   hatch:  { pos: V(0.0, 0.62, 1.05), tgt: V(0, 0.33, 0), fov: 48 },
   hero:   { pos: V(0.0, 0.98, 1.05), tgt: V(0, 0.95, 0.45), fov: 40 },
@@ -77,8 +77,9 @@ export async function createWorld(canvas, ui) {
   const key = new DirectionalLight(0xd6e8ff, 0.9); key.position.set(-1.2, 2.6, 2.2); scene.add(key);
   const warm = new PointLight(0xffa860, 1.2, 5, 2); warm.position.set(1.4, 1.5, 0.9); scene.add(warm);
   const holeLight = new PointLight(0x4fd6c8, 0.25, 1.2, 2); holeLight.position.set(0, 1.05, 0.22); scene.add(holeLight);
-  const chamberRed = new PointLight(0xff2a1a, 0, 0.7, 2); chamberRed.position.set(0, 1.2, -0.3); scene.add(chamberRed);
-  const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.12, 1.18, -0.2); scene.add(chamberFill);
+  const chamberRed = new PointLight(0xff2a1a, 0, 0.7, 2); chamberRed.position.set(0, 1.13, -0.135); scene.add(chamberRed);
+  // (in front of the press path, behind the camera: the faces it lights head-on are never seen, so no hot spot as the press comes down)
+  const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.14, 1.12, -0.18); scene.add(chamberFill);
   const heroLight = new PointLight(0xfff0d8, 0, 2.0, 2); heroLight.position.set(-0.35, 1.25, 0.95); scene.add(heroLight);
 
   const camera = new PerspectiveCamera(50, 1, 0.01, 30);
@@ -783,7 +784,7 @@ export async function createWorld(canvas, ui) {
       if (seg > 0 && level < SEGS[seg - 1] - 0.03) seg--;
       pulse = Math.max(0, pulse - dt * 4);
       fresh.u.uLevel.value = level;
-      meterGlow = 0.6 + 2.6 * level + 2.5 * pulse;
+      meterGlow = 0.5 + 1.8 * level + 1.5 * pulse;
       energy = 0.15 + 2.2 * level * level + 0.6 * pulse;
       S.chargeLevel(level);
       scrState.bar = level; scrState.sub = `${Math.round(level * 100)} %`;
@@ -799,7 +800,7 @@ export async function createWorld(canvas, ui) {
         armed = true; holding = auto = false;
         S.charge.stop(); S.full(); flashIt(false);
         say('100 %', 'DRA FLIKEN OPP', '#4dff8a', { blink: true });
-        energy = 0.9; meterGlow = 3.2;
+        energy = 0.9; meterGlow = 2.3;
         tween(RM ? 0.01 : 0.45, (k) => { fresh.holder.position.y = base.y + Math.sin(Math.PI * k) * 0.03; }, easeOut);   // a hop
         frameHook = (d, tt) => { if (tab) tab.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(tt * 6); fresh.holder.position.y = base.y + Math.sin(tt * 1.6) * 0.006; };
         self.done();
