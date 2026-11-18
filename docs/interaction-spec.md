@@ -34,14 +34,18 @@ tastaturet flytter den. Filmen, batteriet, tekstene, lyset på «Ja», bloom-lys
 - **Du åpner selv:** en ny scroll nedover (ikke farten fra scrollen som brakte deg dit), sveip opp, «Åpne!», J, Enter eller Mellomrom.
 - **Klimakset er levende 3D** (`lib/can3d.js`): filmen blir stående på den lukkede boksen, og Blender-boksen
   (`assets/can/battery-can.glb`) legger seg nøyaktig over den. Så, på 1,9 s:
-  1. **0–0,6 s, ladingen:** lynårene (bakt i Blender, `energy`) blusser opp og flimrer stadig raskere, boksen dirrer, gløden rundt vokser.
+  1. **0–0,6 s, ladingen:** lynårene (bakt i Blender, `energy`) blusser opp og flimrer stadig raskere, boksen dirrer, og en ekte
+     glød (bloom i 3D-lerretet: bare det som lyser sterkere enn hvitt, lagt til som lys over filmen) vokser rundt dem.
+     Med lyd på: en sagtann som klatrer to oktaver gjennom et filter som åpner seg, med sus og en tremolo som går fortere, til smellet.
   2. **0,6 s, åpningen:** tappen smeller opp (modellens egen animasjon «open»), spruten skyter opp i sakte film
      (`assets/can/spray.webp`: en partikkelsprut rendret med Cycles fra nøyaktig dette kameraet). Ved 0,9 s: blits, smell og vibrasjon.
-  3. **Etterpå:** filmen trer tilbake (mørkere, uskarp), energien dør ut til et svakt flimmer, og boksen tar én heltesving
+  3. **Etterpå:** skummet velter opp av åpningen og renner nedover boksen (2 s: en krone som veller over kanten og to striper
+     som følger boksens profil; formnøkler fra Blender), filmen trer tilbake (mørkere, uskarp), energien dør ut til et svakt flimmer, og boksen tar én heltesving
      med et lysstreif over etiketten. «Fullt ladet!» kommer inn ved 1,9 s mens svingen går. Så kan du dra og snu boksen selv.
   Er 3D-boksen ikke klar (den lastes når batteriet er fullt), spilles filmen til siste bilde som før, og boksen trer ut etterpå.
 - **3D-boksen og effektene lages i Blender** (Blender 5.3 som Python-modul, `pip install bpy`): `tools/blender/build_can.py`
-  (modellen: 500 ml-form, etiketten fra produktfotoet, kondensdråper, lynårer, tapp på hengsel), `render_spray.py` (spruten)
+  (modellen: 500 ml-form, etiketten fra produktfotoet, kondensdråper, lynårer, tapp på hengsel, skum; `--foam` gir et
+  nærbilde av skummet i `tools/blender/foam.png`), `render_spray.py` (spruten)
   og `render_og.py` (delingsbildet `assets/og.jpg`: den ladede boksen med frosset sprut, tåke og tittelen).
 - **Hold Ja:** scroller mot slutten på 8 s for hele veien. Slipper du for tidlig, faller den tilbake (2,4 s for hele veien).
   Kort trykk, Enter eller J lader av seg selv. Scroller du selv underveis, tar du over.

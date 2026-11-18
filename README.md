@@ -11,7 +11,7 @@ og tar en heltesving du kan overta. Nei slukker lyset. Lyd lages i nettleseren (
   Lages fra `assets/journey2-720.mp4` med `tools/make-frames.sh`. `assets/base-poster.jpg` vises før de er lastet.
 - `lib/` — GSAP + ScrollTrigger, Lenis og `can3d.js` (three.js + `src/can3d.js`, bygges med `tools/build-can3d.sh`). Se `lib/README.md`.
 - `assets/can/` — klimakset i 3D, laget i Blender (Blender som Python-modul, ingen installasjon: `pip install bpy==5.3.0 pillow`):
-  `battery-can.glb` (modellen med lynårer og åpne-animasjon, `tools/blender/build_can.py`; `--render` gir `tools/blender/preview.png`)
+  `battery-can.glb` (modellen med lynårer, skum og åpne-animasjon, `tools/blender/build_can.py`; `--render` gir `tools/blender/preview.png`, `--foam` et nærbilde av skummet)
   og `spray.webp`/`spray.json` (spruten, `tools/blender/render_spray.py`). Delingsbildet `assets/og.jpg` er `tools/blender/render_og.py`.
 - `assets/battery-fresh.webp` (produktfoto, også kilden til 3D-boksen), `assets/og.jpg` (delingsbilde), `favicon.svg`,
   `fonts/` (Archivo Black, SIL OFL, se `fonts/OFL.txt`).

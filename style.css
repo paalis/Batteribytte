@@ -94,7 +94,7 @@ a { color: var(--muted); }
 .finale .can3d { opacity: 1; pointer-events: auto; cursor: grab; }
 /* the live show: the 3D can takes over from the film at once, in the same place; its glow follows the surge */
 .live3d .can3d { opacity: 1; transition: opacity .12s linear; }
-.can3d canvas { filter: drop-shadow(0 0 calc(var(--surge, 0) * 7px) rgba(79, 214, 200, calc(var(--surge, 0) * .22))); }
+/* (the glow itself is a bloom in the 3D canvas, lib/can3d.js) */
 .finale .can3d:active { cursor: grabbing; }
 .finale .frames { filter: brightness(.38) blur(5px) saturate(.8); transition: filter 1s var(--ease-out); }
 .finale .film { pointer-events: auto; }

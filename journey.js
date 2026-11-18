@@ -323,5 +323,6 @@
     T_POP: { value: T_POP },
     // when the slam lands after «Åpne!»: on the tab's snap in the live show, on the spray in the film
     HIT_DELAY: { get: () => (can3d ? can3d.HIT_MS : (T_HIT - T_POP) * 1000) },
+    live: { get: () => !!can3d },                    // «Åpne!» will run the live 3D show
   });
 })();

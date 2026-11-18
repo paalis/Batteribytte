@@ -11,6 +11,8 @@ What it makes (units: metres, Blender Z up → glTF Y up, the label's front face
     at x = sin φ; the back, which no photo shows, gets the label's own gradient row by row;
   - condensation: a normal map of droplets, denser toward the cold bottom of the can;
   - a stay-on tab on a hinge and the opening under it, with an animation «open» (tab lifts, opening appears);
+  - «foam»: a crown of foam over the opening and two runs of foam that grow down the wall, following the can's own
+    profile (shape keys, exported as morph targets with their own animation «Foam»; bubbly normal map);
   - «energy»: lightning veins baked from Blender's own procedural nodes (warped Voronoi edges) into an emissive map
     on the label. The web page keeps its intensity at 0 and makes it surge and flicker as the can charges and opens.
 """
@@ -207,6 +209,182 @@ def droplets(tw=2048, th=1656, seed=7):
     nrm = np.stack([nx / l, ny / l, nz / l], -1) * 0.5 + 0.5
     rough = 0.38 - np.clip(hgt / 2.0, 0, 1) * 0.28    # lacquer 0.38; wet drops are glossier
     return nrm.astype(np.float32), rough.astype(np.float32)
+
+
+def foam_normal(tw=512, th=512, seed=11):
+    """Foam: many small packed bubbles, each a shallow dish with a bright rim → a tangent-space normal map that tiles."""
+    rng = np.random.default_rng(seed)
+    hgt = np.zeros((th, tw), np.float32)
+    for _ in range(2600):
+        cx, cy, r = rng.random() * tw, rng.random() * th, rng.uniform(2.0, 9.0)
+        x0, x1, y0, y1 = int(cx - r - 1), int(cx + r + 2), int(cy - r - 1), int(cy + r + 2)
+        gy, gx = np.mgrid[y0:y1, x0:x1]
+        q = 1 - ((gx - cx) / r) ** 2 - ((gy - cy) / r) ** 2
+        dome = np.sqrt(np.clip(q, 0, None)) * r * 0.5
+        np.maximum.at(hgt, (np.mod(gy, th), np.mod(gx, tw)), dome)
+    dx = np.roll(hgt, -1, 1) - np.roll(hgt, 1, 1)
+    dy = np.roll(hgt, -1, 0) - np.roll(hgt, 1, 0)
+    nx, ny, nz = -dx, -dy, np.full_like(dx, 2.5)
+    l = np.sqrt(nx * nx + ny * ny + nz * nz)
+    return (np.stack([nx / l, ny / l, nz / l], -1) * 0.5 + 0.5).astype(np.float32)
+
+
+def wall_radius(z):
+    """The can's outer radius (mm) at height z (mm), from the profile."""
+    for (r0, y0), (r1, y1) in zip(OUTER, OUTER[1:]):
+        if y0 <= z <= y1 and y1 > y0:
+            return r0 + (r1 - r0) * (z - y0) / (y1 - y0)
+    return OUTER[-1][0] if z > OUTER[-1][1] else OUTER[0][0]
+
+
+def foam_material(nrm_img):
+    m, p, nt = principled('Foam')
+    p.inputs['Base Color'].default_value = (0.96, 0.9, 0.8, 1)        # cream, a little of the drink in it
+    p.inputs['Roughness'].default_value = 0.5
+    p.inputs['Subsurface Weight'].default_value = 0.35
+    p.inputs['Coat Weight'].default_value = 0.4                         # wet
+    p.inputs['Coat Roughness'].default_value = 0.15
+    nt_ = nt.nodes.new('ShaderNodeTexImage'); nt_.image = nrm_img
+    mapping = nt.nodes.new('ShaderNodeMapping')
+    mapping.inputs['Scale'].default_value = (2, 22, 1)                  # bubbles of a millimetre or two
+    uv = nt.nodes.new('ShaderNodeTexCoord')
+    nt.links.new(uv.outputs['UV'], mapping.inputs['Vector'])
+    nt.links.new(mapping.outputs['Vector'], nt_.inputs['Vector'])
+    nm = nt.nodes.new('ShaderNodeNormalMap'); nm.inputs['Strength'].default_value = 1.0
+    nt.links.new(nt_.outputs['Color'], nm.inputs['Color'])
+    nt.links.new(nm.outputs['Normal'], p.inputs['Normal'])
+    return m
+
+
+def foam_run(name, phi0, z_end, w_top, w_tip, th_top, states, mat, root):
+    """A run of foam down the wall: a flattened tube hugging the can, from the rim at angle phi0 (deg, 0 = front) down to
+    z_end (mm). Shape keys grow it in `states` steps: in step k it reaches k/states of the way, the rest of the tube
+    waits bunched at its tip, so blending one step into the next slides the tip down along the can."""
+    RING, AROUND = 1.4, 14
+    zs = []
+    z = 167.6
+    while z > z_end:
+        zs.append(z)
+        z -= RING
+    zs.append(z_end)
+    n = len(zs)
+
+    def frame_at(i):
+        z = zs[i]
+        s = i / (n - 1)
+        phi = math.radians(phi0 + 3.5 * math.sin(z / 16.0))                 # it meanders a little
+        r = wall_radius(z)
+        if z > 166.0:                                                        # over the seam lip: bulge outward
+            r += 0.8
+        w = (w_top + (w_tip - w_top) * s) * (1.0 + 0.45 * max(0.0, (s - 0.88) / 0.12))  # a heavier drop at the tip
+        w *= 1 + 0.2 * math.sin(z * 0.3 + phi0) + 0.08 * math.sin(z * 0.75 + 2 * phi0)        # it swells and pinches
+        th = th_top * (1 - 0.3 * s) * (w / (w_top + (w_tip - w_top) * s))
+        t = (math.cos(phi), math.sin(phi), 0.0)                              # around the can
+        nrm = (math.sin(phi), -math.cos(phi), 0.0)                           # out of the wall
+        return z, r, w, th, t, nrm
+
+    def ring(i, reach):
+        """Vertex positions of ring i when the run reaches ring `reach` (rings beyond it sit at the tip, smaller)."""
+        j = min(i, reach)
+        z, r, w, th, t, nrm = frame_at(j)
+        if i > reach:
+            w *= 0.55
+            th *= 0.7
+        pts = []
+        for k in range(AROUND):
+            a = 2 * math.pi * k / AROUND
+            ca, sa = math.cos(a), math.sin(a)
+            bump = 1 + 0.09 * math.sin(2 * a + z * 0.35 + phi0) + 0.05 * math.sin(3 * a - z * 0.6)  # soft lumps
+            off = r + th * 0.32 + th * 0.55 * sa * bump                       # a rounded bead, its back in the wall
+            side = w * 0.5 * ca * bump
+            x = nrm[0] * off + t[0] * side
+            y = nrm[1] * off + t[1] * side
+            pts.append((x * MM, y * MM, z * MM))
+        return pts
+
+    me = bpy.data.meshes.new(name)
+    full = [p for i in range(n) for p in ring(i, n - 1)]
+    faces = []
+    for i in range(n - 1):
+        for k in range(AROUND):
+            k1 = (k + 1) % AROUND
+            faces.append((i * AROUND + k, i * AROUND + k1, (i + 1) * AROUND + k1, (i + 1) * AROUND + k))
+    faces.append(tuple(range(AROUND))[::-1])                                 # caps
+    faces.append(tuple((n - 1) * AROUND + k for k in range(AROUND)))
+    me.from_pydata(full, [], faces)
+    uvl = me.uv_layers.new(name='UVMap')
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            vi = me.loops[li].vertex_index
+            uvl.data[li].uv = ((vi % AROUND) / AROUND, (vi // AROUND) / (n - 1))
+    for poly in me.polygons:
+        poly.use_smooth = True
+    ob = bpy.data.objects.new(name, me)
+    bpy.context.collection.objects.link(ob)
+    ob.data.materials.append(mat)
+    ob.parent = root
+
+    # shape keys: Basis = nothing yet (everything bunched in the first ring, tiny); then the steps
+    ob.shape_key_add(name='Basis')
+    basis = ob.data.shape_keys.key_blocks['Basis']
+    z0 = ring(0, 0)
+    for i in range(n):
+        for k in range(AROUND):
+            x, y, z = z0[k]
+            basis.data[i * AROUND + k].co = (x * 0.15, y * 0.15 + z0[0][1] * 0.85, z)
+    keys = []
+    for st in range(1, states + 1):
+        kb = ob.shape_key_add(name=f'Step{st}', from_mix=False)
+        reach = max(1, round((n - 1) * st / states))
+        pts = [p for i in range(n) for p in ring(i, reach)]
+        for v, co in zip(kb.data, pts):
+            v.co = co
+        keys.append(kb)
+    return ob, keys
+
+
+def foam_crown(mat, root):
+    """A dome of foam over the opening, spilling over the front of the rim; one shape key from flat to full."""
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=1, location=(1.5 * MM, -14 * MM, 166.8 * MM))
+    ob = bpy.context.active_object
+    ob.name = 'FoamCrown'
+    ob.scale = (14 * MM, 13 * MM, 5.5 * MM)
+    ob.data.materials.append(mat)
+    for poly in ob.data.polygons:
+        poly.use_smooth = True
+    ob.shape_key_add(name='Basis')
+    kb = ob.shape_key_add(name='Full', from_mix=False)
+    for v in ob.data.shape_keys.key_blocks['Basis'].data:
+        x, y, z = v.co
+        v.co = (x * 0.08, y * 0.08, z * 0.05 - 0.4)                          # a speck in the opening
+    for v in kb.data:
+        x, y, z = v.co
+        bump = 1 + 0.12 * math.sin(7 * x + 3 * y) * math.cos(5 * y)         # lumpy, not a perfect dome
+        v.co = (x * bump, y * bump * (1.15 if y < 0 else 0.9), max(z, -0.35) * bump)
+    ob.parent = root
+    return ob, kb
+
+
+def build_foam(root, nrm_img):
+    mat = foam_material(nrm_img)
+    crown, ck = foam_crown(mat, root)
+    runs = [foam_run('FoamRun', 9, 52, 15.0, 7.5, 6.0, 6, mat, root),
+            foam_run('FoamRun2', -26, 128, 8.5, 5.0, 4.0, 4, mat, root)]
+    # «Foam», 2 s at 24 fps: the crown wells up over frames 1–8; the runs creep down from frame 4 (the long one to 48)
+    ck.value = 0; ck.keyframe_insert('value', frame=1)
+    ck.value = 1; ck.keyframe_insert('value', frame=8)
+    for (ob, keys), (f0, f1) in zip(runs, [(4, 48), (6, 34)]):
+        n = len(keys)
+        for i, kb in enumerate(keys):
+            # step i is fully on at its own moment and hands over linearly to the next
+            at = f0 + (f1 - f0) * (i + 1) / n
+            prev = f0 + (f1 - f0) * i / n
+            nxt = f0 + (f1 - f0) * (i + 2) / n
+            kb.value = 0; kb.keyframe_insert('value', frame=prev)
+            kb.value = 1; kb.keyframe_insert('value', frame=at)
+            if i < n - 1:
+                kb.value = 0; kb.keyframe_insert('value', frame=nxt)
+    return crown, runs
 
 
 def to_image(name, arr, alpha=None, non_color=False):
@@ -447,6 +625,9 @@ def build():
     tab.parent = hinge
     tab.location = (0, 0, 0)
 
+    print('foam …')
+    build_foam(root, to_image('foam_normal', foam_normal(), non_color=True))
+
     # «open»: the tab lifts on its hinge (finger end up), the opening appears under the nose
     act_frames = (1, 10, 18)
     for f, ang, s in zip(act_frames, (0.0, 1.3, 1.15), (0.0, 1.0, 1.0)):
@@ -454,7 +635,7 @@ def build():
         hinge.keyframe_insert('rotation_euler', frame=f)
         hole.scale = (7 * MM * max(s, 1e-3), 9.5 * MM * max(s, 1e-3), 1)
         hole.keyframe_insert('scale', frame=f)
-    scene.frame_start, scene.frame_end = 1, 18
+    scene.frame_start, scene.frame_end = 1, 48
     return root, hinge, hole
 
 
@@ -463,7 +644,7 @@ def export():
     bpy.ops.export_scene.gltf(
         filepath=OUT, export_format='GLB', export_yup=True, export_apply=True,
         export_image_format='WEBP', export_image_quality=85,
-        export_animations=True, export_animation_mode='SCENE', export_force_sampling=True,
+        export_animations=True, export_animation_mode='ACTIONS', export_force_sampling=True,
         export_cameras=False, export_lights=False,
     )
     print('wrote', OUT, os.path.getsize(OUT) // 1024, 'kB')
@@ -516,8 +697,35 @@ def render(path):
     print('rendered', path)
 
 
+def render_foam(path):
+    """A close look at the foam at the end of «Foam» (frame 48) — to judge its shape."""
+    scene = bpy.context.scene
+    scene.frame_set(48)
+    world = bpy.data.worlds.new('W'); scene.world = world; world.use_nodes = True
+    world.node_tree.nodes['Background'].inputs['Color'].default_value = (0.03, 0.035, 0.04, 1)
+    bpy.data.materials['Label'].node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value = 0.0
+    for name, loc, power in (('K', (-0.25, -0.35, 0.3), 5), ('F', (0.3, -0.3, 0.2), 1.5)):
+        l = bpy.data.lights.new(name, 'AREA'); l.size, l.energy = 0.4, power
+        ob = bpy.data.objects.new(name, l); bpy.context.collection.objects.link(ob); ob.location = loc
+        from mathutils import Vector
+        ob.rotation_euler = (Vector((0, 0, 0.13)) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
+    cam_d = bpy.data.cameras.new('C'); cam_d.lens = 70
+    cam = bpy.data.objects.new('C', cam_d); bpy.context.collection.objects.link(cam)
+    cam.location = (0.05, -0.38, 0.24); 
+    from mathutils import Vector
+    cam.rotation_euler = (Vector((0.0, 0, 0.13)) - cam.location).to_track_quat('-Z', 'Y').to_euler()
+    scene.camera = cam
+    scene.render.engine = 'CYCLES'; scene.cycles.samples = 48; scene.cycles.use_denoising = True
+    scene.view_settings.view_transform = 'Standard'
+    scene.render.resolution_x, scene.render.resolution_y = 480, 640
+    scene.render.filepath = path
+    bpy.ops.render.render(write_still=True)
+
+
 if __name__ == '__main__':
     build()
     export()
+    if '--foam' in sys.argv:
+        render_foam(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'foam.png'))
     if '--render' in sys.argv:
         render(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'preview.png'))

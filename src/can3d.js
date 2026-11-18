@@ -12,12 +12,68 @@
 // Built into lib/can3d.js by tools/build-can3d.sh (esbuild: only the parts of three.js this file uses).
 import {
   WebGLRenderer, Scene, PerspectiveCamera, Group, DirectionalLight, PMREMGenerator, SRGBColorSpace,
-  NeutralToneMapping, AnimationMixer, LoopOnce, Box3, Vector3,
+  NeutralToneMapping, AnimationMixer, LoopOnce, Box3, Vector3, WebGLRenderTarget, HalfFloatType, ShaderMaterial,
+  Mesh, BufferGeometry, Float32BufferAttribute, OrthographicCamera, CustomBlending, AddEquation, OneFactor, ZeroFactor,
+  Vector2, NoToneMapping, LinearSRGBColorSpace,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+
+// ---------- a small bloom that keeps the canvas transparent ----------
+// The scene is drawn as usual. A quarter-size copy of it (linear, half float) keeps only what is brighter than 1
+// (the energy veins, hard highlights), is blurred twice at two sizes, and is added on top with alpha left alone:
+// on a premultiplied canvas that is pure added light, so the glow spills over the film behind without a dark fringe.
+function makeBloom(renderer) {
+  const tri = new BufferGeometry();
+  tri.setAttribute('position', new Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  const cam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const vert = 'varying vec2 vUv; void main(){ vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0., 1.); }';
+  const mk = (frag, uniforms, extra = {}) => new Mesh(tri, new ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms, depthTest: false, depthWrite: false, ...extra }));
+  const bright = mk(`uniform sampler2D t; uniform float thr; varying vec2 vUv;
+    void main(){ vec4 c = texture2D(t, vUv); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c.rgb * smoothstep(thr, thr + 0.6, l), 1.); }`,
+  { t: { value: null }, thr: { value: 2.2 } });
+  const blur = mk(`uniform sampler2D t; uniform vec2 dir; varying vec2 vUv;
+    void main(){ vec3 s = texture2D(t, vUv).rgb * 0.227;
+      s += (texture2D(t, vUv + dir * 1.385).rgb + texture2D(t, vUv - dir * 1.385).rgb) * 0.316;
+      s += (texture2D(t, vUv + dir * 3.231).rgb + texture2D(t, vUv - dir * 3.231).rgb) * 0.07;
+      gl_FragColor = vec4(s, 1.); }`, { t: { value: null }, dir: { value: new Vector2() } });
+  const add = mk(`uniform sampler2D a; uniform sampler2D b; uniform float k; varying vec2 vUv;
+    void main(){ vec3 c = (texture2D(a, vUv).rgb + texture2D(b, vUv).rgb * 1.4) * k;
+      c = c / (1. + c);                                   // soft: the glow never clips
+      gl_FragColor = vec4(pow(c, vec3(1. / 2.2)), 0.); }`,
+  { a: { value: null }, b: { value: null }, k: { value: 1 } },
+  { transparent: true, blending: CustomBlending, blendEquation: AddEquation, blendSrc: OneFactor, blendDst: OneFactor,
+    blendSrcAlpha: ZeroFactor, blendDstAlpha: OneFactor });
+  const rt = (w, h) => new WebGLRenderTarget(w, h, { type: HalfFloatType, depthBuffer: false });
+  let src = null, a1, a2, b1, b2, W = 0, H = 0;
+  const pass = (mesh, target) => { renderer.setRenderTarget(target); renderer.render(mesh, cam); };
+  return {
+    setSize(w, h) {
+      W = Math.max(8, Math.round(w / 4)); H = Math.max(8, Math.round(h / 4));
+      [src, a1, a2, b1, b2].forEach((t) => t && t.dispose());
+      src = new WebGLRenderTarget(W, H, { type: HalfFloatType });
+      a1 = rt(W, H); a2 = rt(W, H); b1 = rt(W >> 1, H >> 1); b2 = rt(W >> 1, H >> 1);
+    },
+    render(scene, camera, strength) {
+      if (!src || strength <= 0.001) return;
+      const tm = renderer.toneMapping, cs = renderer.outputColorSpace, ac = renderer.autoClear;
+      renderer.toneMapping = NoToneMapping; renderer.outputColorSpace = LinearSRGBColorSpace;
+      renderer.setRenderTarget(src); renderer.setClearColor(0, 0); renderer.clear(); renderer.render(scene, camera);
+      bright.material.uniforms.t.value = src.texture; pass(bright, a1);
+      blur.material.uniforms.t.value = a1.texture; blur.material.uniforms.dir.value.set(1 / W, 0); pass(blur, a2);
+      blur.material.uniforms.t.value = a2.texture; blur.material.uniforms.dir.value.set(0, 1 / H); pass(blur, a1);
+      blur.material.uniforms.t.value = a1.texture; blur.material.uniforms.dir.value.set(2 / W, 0); pass(blur, b1);
+      blur.material.uniforms.t.value = b1.texture; blur.material.uniforms.dir.value.set(0, 2 / H); pass(blur, b2);
+      renderer.toneMapping = tm; renderer.outputColorSpace = cs;
+      renderer.setRenderTarget(null); renderer.autoClear = false;
+      add.material.uniforms.a.value = a1.texture; add.material.uniforms.b.value = b2.texture; add.material.uniforms.k.value = strength;
+      renderer.render(add, cam);
+      renderer.autoClear = ac;
+    },
+  };
+}
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -47,19 +103,28 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
     if (o.material.map) o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
     if (o.material.emissiveMap) { o.material.emissiveIntensity = 0; glowing.push(o.material); }
   });
-  // stand it with its middle at the origin (glTF is in metres; the can is 0.168 m tall)
-  const bb = new Box3().setFromObject(can), size = bb.getSize(new Vector3());
+  // stand it with its middle at the origin (glTF is in metres; the can is 0.168 m tall). Measured on the wall alone:
+  // three.js grows the bounds of morphed meshes by their whole displacement, so the foam would make the can look taller.
+  const wall = can.getObjectByName('Wall') || can;
+  const bb = new Box3().setFromObject(wall), size = bb.getSize(new Vector3());
   const H = size.y;
   can.position.y = -(bb.min.y + H / 2);
 
   // the «open» animation, scrubbed by k (Blender exports one clip per animated object: the hinge and the opening)
+  // The model's clips: the tab and the opening («open»), and the foam (crown and runs, morph targets)
   const mixer = new AnimationMixer(can);
-  const actions = gltf.animations.map((clip) => {
-    const a = mixer.clipAction(clip);
-    a.setLoop(LoopOnce, 1);
-    a.clampWhenFinished = true;
-    return a;
-  });
+  const isFoam = (clip) => clip.tracks.some((t) => /Foam/.test(t.name));
+  const make = (clip) => { const a = mixer.clipAction(clip); a.setLoop(LoopOnce, 1); a.clampWhenFinished = true; return a; };
+  const actions = gltf.animations.filter((c) => !isFoam(c)).map(make);
+  const foamActions = gltf.animations.filter(isFoam).map(make);
+  const foamDur = foamActions.reduce((m, a) => Math.max(m, a.getClip().duration), 0) || 2;
+  const foamMeshes = [];
+  can.traverse((o) => { if (o.isMesh && /Foam/.test(o.name + (o.parent ? o.parent.name : ''))) foamMeshes.push(o); });
+  const setFoam = (sec) => {                         // seconds into the foam (0 = none yet)
+    for (const a of foamActions) { a.play(); a.paused = true; a.time = Math.min(sec, a.getClip().duration); }
+    for (const m of foamMeshes) m.visible = sec > 0.01;
+    mixer.update(0);
+  };
   const openDur = actions.reduce((m, a) => Math.max(m, a.getClip().duration), 0) || 0.75;
   let openK = 0;
   const setOpen = (k) => {
@@ -68,6 +133,7 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
     mixer.update(0);
   };
   setOpen(0);
+  setFoam(0);
 
   const turn = new Group();                          // drag, the hero turn and the idle sway turn this
   turn.add(can);
@@ -87,8 +153,10 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
   // the camera frames the can where it stands in the film: 53 % of the frame's height, centre at 62.5 %
   const camera = new PerspectiveCamera(18, 9 / 16, 0.01, 50);
   const FIT_H = 0.53, FIT_Y = 0.625;
+  const bloom = makeBloom(renderer);
   function fit(w, h) {
     renderer.setSize(w, h, false);
+    bloom.setSize(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
     camera.aspect = w / h;
     const visH = H / FIT_H;
     const dist = visH / 2 / Math.tan((camera.fov * Math.PI) / 360);
@@ -158,6 +226,8 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
       energy = Math.max(0.12, 3.2 * Math.exp(-d * 2.6)) * (0.8 + 0.2 * Math.random());
       tremble = Math.max(0, 1 - d * 5);
     }
+    // the foam wells up from the slam and runs down the can
+    if (t >= HIT_AT) setFoam(t - HIT_AT);
     if (!show.hit && t >= HIT_AT) { show.hit = true; show.onHit && show.onHit(); }
     if (!show.done && t >= DONE_AT) { show.done = true; show.resolve(); }
     // 3 · the hero turn: one slow turn with the light sweeping across the label
@@ -199,6 +269,7 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
     } else sweep.intensity = 0;
     el.style.setProperty('--surge', energy.toFixed(3));
     renderer.render(scene, camera);
+    bloom.render(scene, camera, 0.9 * clamp(energy / 2));    // only the energy glows; at rest, nothing
     raf = visible ? requestAnimationFrame(frame) : 0;
   }
   const kick = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } };
@@ -208,7 +279,7 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
     resize: fit,
     // the finale without the show: a full turn in from behind that settles on the front
     show() {
-      visible = true; t0 = performance.now(); angle = 0; vel = 0; setOpen(1);
+      visible = true; t0 = performance.now(); angle = 0; vel = 0; setOpen(1); setFoam(foamDur);
       spin = -Math.PI * 2;
       const start = performance.now(), D = 1600;
       (function tw(now) {
@@ -220,15 +291,16 @@ export async function mount(el, { model = 'assets/can/battery-can.glb', spray = 
     },
     // the climax: resolves when «Fullt ladet!» may come in (the hero turn carries on under it)
     openShow({ onHit } = {}) {
-      visible = true; angle = 0; vel = 0; spin = 0; held = true; setOpen(0); sprayFrame(-1);
+      visible = true; angle = 0; vel = 0; spin = 0; held = true; setOpen(0); setFoam(0); sprayFrame(-1);
       return new Promise((resolve) => { show = { start: performance.now(), onHit, resolve, hit: false, done: false }; kick(); });
     },
     // closed, front on, dark: ready to take over from the film
-    reset() { show = null; held = false; visible = false; angle = 0; vel = 0; spin = 0; energy = 0; setOpen(0); sprayFrame(-1); },
+    reset() { show = null; held = false; visible = false; angle = 0; vel = 0; spin = 0; energy = 0; setOpen(0); setFoam(0); sprayFrame(-1); },
     hide() { visible = false; sprayFrame(-1); },
     // a nudge from outside (the pointer, a fling): add angular velocity
     push(v) { vel += v; },
     open: setOpen,
     HIT_MS: HIT_AT * 1000,
+    SURGE_MS: OPEN_AT * 1000,
   };
 }
