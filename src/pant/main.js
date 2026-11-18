@@ -41,7 +41,7 @@ let chipDown = 0;
 chip.addEventListener('pointerdown', (e) => { S.unlock(); if (current === 'hold' && stage) { e.preventDefault(); chipDown = performance.now(); chip.setPointerCapture(e.pointerId); stage.hold(true); } });
 const chipUp = () => { if (current === 'hold' && stage) { stage.hold(false); if (performance.now() - chipDown < 280) stage.act(); } };
 chip.addEventListener('pointerup', chipUp); chip.addEventListener('pointercancel', chipUp);
-chip.addEventListener('click', (e) => { if (!stage) return; if (current === 'hold' && e.detail !== 0) return; stage.act(); });
+chip.addEventListener('click', (e) => { if (!stage) return; if (current === 'hold' && e.detail !== 0) return; S.ui(); stage.act(); });
 chip.addEventListener('contextmenu', (e) => e.preventDefault());
 
 addEventListener('keydown', (e) => {
@@ -65,7 +65,7 @@ addEventListener('keyup', (e) => { if (e.key === ' ' && current === 'hold' && st
 
 soundBtn.addEventListener('click', () => {
   S.unlock();
-  const on = !S.isOn(); S.setOn(on);
+  const on = !S.isOn(); S.setOn(on); S.ui();
   soundBtn.setAttribute('aria-pressed', String(on));
   soundBtn.title = on ? 'Slå av lyd (M)' : 'Slå på lyd (M)';
 });

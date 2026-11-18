@@ -1,0 +1,250 @@
+{
+  "made": "2026-11-18T14:33:57.511Z",
+  "chosen": 27,
+  "of": 27,
+  "selections": [
+    {
+      "sound": "pop",
+      "choice": "pop_3",
+      "file": "assets/sfx/_candidates/pop/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "fizz",
+      "choice": "fizz_3",
+      "file": "assets/sfx/_candidates/fizz/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "spray",
+      "choice": "spray_3",
+      "file": "assets/sfx/_candidates/spray/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "charge",
+      "choice": "charge_1",
+      "file": "assets/sfx/_candidates/charge/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "full",
+      "choice": "full_3",
+      "file": "assets/sfx/_candidates/full/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "powerDown",
+      "choice": "powerDown_2",
+      "file": "assets/sfx/_candidates/powerDown/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "hum",
+      "choice": "hum_3",
+      "file": "assets/sfx/_candidates/hum/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "crush",
+      "choice": "crush_3",
+      "file": "assets/sfx/_candidates/crush/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "reject",
+      "choice": "reject_3",
+      "file": "assets/sfx/_candidates/reject/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "accept",
+      "choice": "accept_1",
+      "file": "assets/sfx/_candidates/accept/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "scanBeep",
+      "choice": "scanBeep_3",
+      "file": "assets/sfx/_candidates/scanBeep/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "suck",
+      "choice": "suck_1",
+      "file": "assets/sfx/_candidates/suck/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "gulp",
+      "choice": "gulp_1",
+      "file": "assets/sfx/_candidates/gulp/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "rollers",
+      "choice": "rollers_2",
+      "file": "assets/sfx/_candidates/rollers/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "lock",
+      "choice": "lock_3",
+      "file": "assets/sfx/_candidates/lock/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "click",
+      "choice": "click_2",
+      "file": "assets/sfx/_candidates/click/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "printer",
+      "choice": "printer_1",
+      "file": "assets/sfx/_candidates/printer/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "rumble",
+      "choice": "rumble_2",
+      "file": "assets/sfx/_candidates/rumble/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "rattle",
+      "choice": "rattle_1",
+      "file": "assets/sfx/_candidates/rattle/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "clank",
+      "choice": "clank_1",
+      "file": "assets/sfx/_candidates/clank/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "thud",
+      "choice": "thud_2",
+      "file": "assets/sfx/_candidates/thud/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "drop",
+      "choice": "drop_1",
+      "file": "assets/sfx/_candidates/drop/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "whoosh",
+      "choice": "whoosh_3",
+      "file": "assets/sfx/_candidates/whoosh/elevenlabs_3.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "tick",
+      "choice": "tick_1",
+      "file": "assets/sfx/_candidates/tick/elevenlabs_1.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "grab",
+      "choice": "grab_2",
+      "file": "assets/sfx/_candidates/grab/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "ui",
+      "choice": "ui_2",
+      "file": "assets/sfx/_candidates/ui/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    },
+    {
+      "sound": "room",
+      "choice": "room_2",
+      "file": "assets/sfx/_candidates/room/elevenlabs_2.mp3",
+      "source": "elevenlabs",
+      "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+      "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+      "note": ""
+    }
+  ]
+}

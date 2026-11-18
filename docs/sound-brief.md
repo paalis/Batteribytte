@@ -1,5 +1,7 @@
 # Batteribytte: lydbrief
 
+> **Status:** Ferdig. Alle 27 lydene er valgt og lagt inn i `assets/sfx/` (steg 6). Se `CREDITS.md` og `docs/sound-review.md`.
+
 Alle lydene lages i dag syntetisk i nettleseren (oscillator og støy i `src/pant/sound.js`). De skal byttes med ekte opptak som låter rikt og fysisk, som i en reklamefilm, ikke som 8-bit. De syntetiske lydene blir liggende som reserve hvis en fil ikke lastes.
 
 **Merk:** Oppgaven nevner `app.js` (tilstandene ask, charging, yes, draining og no, hendelsene `charge`, `pop`, `no` og `ask`, og `BB.level`) og `lib/can3d.js`. Begge forsvant da konsept B («Pantemaskinen») erstattet filmsiden. Listen under bygger derfor på den faktiske koden:

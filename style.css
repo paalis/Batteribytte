@@ -99,6 +99,10 @@ button { font: inherit; color: inherit; }
 
 .toast { position: absolute; left: 50%; bottom: calc(max(18px, env(safe-area-inset-bottom)) + 70px); translate: -50% 0; margin: 0;
   padding: .6rem 1rem; border-radius: 10px; background: var(--ink); color: #0b0b0e; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }
+/* the sound credit: small, under the brand, out of the thumb's way */
+.credits { position: absolute; left: var(--gutter); top: calc(max(12px, env(safe-area-inset-top)) + 34px); font-size: .68rem; color: var(--muted); opacity: .75; }
+.credits a { color: inherit; text-decoration: none; }
+.credits a:hover, .credits a:focus-visible { text-decoration: underline; }
 .noscript { position: absolute; bottom: 20%; width: 100%; text-align: center; font-family: var(--display); }
 
 @media (min-width: 900px) {
