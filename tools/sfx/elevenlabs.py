@@ -4,7 +4,8 @@
 Docs read first: https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert
   POST https://api.elevenlabs.io/v1/sound-generation?output_format=mp3_44100_128
   body: text, duration_seconds (0.5–30), prompt_influence (0–1, default 0.3), loop (bool)
-  cost: 40 credits per second when duration_seconds is given
+  cost: the docs say 40 credits per second with duration_seconds; the response header Character-Cost said 10 for
+        0.5 s (20 per second) on this account, so the plan is priced at 20 and every call logs what it really cost
   key: the `xi-api-key` header. Locally: ELEVENLABS_API_KEY (from the environment or .env, never committed).
   In the cloud session the network proxy adds the header, so the variable can be absent.
 
@@ -23,7 +24,7 @@ import json, os, sys, time, pathlib, urllib.request, urllib.error
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / 'tools/sfx/candidates.json'
 CAND = ROOT / 'assets/sfx/_candidates'
-CREDITS_PER_S = 40
+CREDITS_PER_S = 20
 LICENSE = 'ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd'
 VARIANTS = 3
 
@@ -73,6 +74,7 @@ def generate(text, dur, loop, path):
                                  headers={'xi-api-key': key(), 'Content-Type': 'application/json'}, method='POST')
     with urllib.request.urlopen(req, timeout=120) as r:
         path.write_bytes(r.read())
+        return int(r.headers.get('Character-Cost') or 0)
 
 def main():
     args = sys.argv[1:]
@@ -88,14 +90,20 @@ def main():
     if not go:
         sys.exit('plan only (add --go to generate)')
     data = json.loads(OUT.read_text()) if OUT.exists() else {}
+    spent = [0]
     for n in names:
         dur, loop, text = PLAN[n]
         d = CAND / n; d.mkdir(parents=True, exist_ok=True)
         entry = data.setdefault(n, {'candidates': []})
         for i in range(1, VARIANTS + 1):
             p = d / f'elevenlabs_{i}.mp3'
+            if p.exists() and any(c['source'] == 'elevenlabs' and c['id'] == f'{n}_{i}' for c in entry['candidates']):
+                continue                                            # made already
             try:
-                generate(text, dur, loop, p)
+                cost_real = generate(text, dur, loop, p)
+                spent[0] += cost_real
+                if spent[0] > budget:
+                    sys.exit(f'spent {spent[0]} > budget {budget}: stopped')
             except urllib.error.HTTPError as e:
                 sys.exit(f'{n} #{i}: HTTP {e.code} {e.read()[:300]!r}: stopped')
             entry['candidates'] = [c for c in entry['candidates'] if not (c['source'] == 'elevenlabs' and c['id'] == f'{n}_{i}')]
@@ -103,12 +111,12 @@ def main():
                 source='elevenlabs', id=f'{n}_{i}', title=f'{n} (generated #{i})', creator='ElevenLabs (generated)',
                 license=LICENSE, commercial_ok=False, attribution_required=True,
                 attribution='Lyd generert med ElevenLabs (elevenlabs.io)', duration=dur, loop=loop, prompt=text,
-                prompt_influence=0.5, model='eleven_text_to_sound_v2 (default)', credits=dur * CREDITS_PER_S,
+                prompt_influence=0.5, model='eleven_text_to_sound_v2 (default)', credits=cost_real,
                 tags=[], downloads=None, rating=None, source_url='https://elevenlabs.io/sound-effects', preview_url=None,
                 file=str(p.relative_to(ROOT)),
             ))
             OUT.write_text(json.dumps(data, indent=1, ensure_ascii=False))
-            print(f'  {n} #{i}: {p.stat().st_size // 1024} kB')
+            print(f'  {n} #{i}: {p.stat().st_size // 1024} kB, {cost_real} credits (total {spent[0]})')
             time.sleep(0.5)
 
 if __name__ == '__main__':
