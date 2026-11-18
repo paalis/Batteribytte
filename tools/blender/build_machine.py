@@ -156,8 +156,8 @@ def build():
         cyl(f'Tube{i + 1}', 0.016, 1.0, (x, D + 0.0, 2.35), rot=(0, math.radians(90), 0), material=tube_m, verts=16)
 
     # ---- cabinet
-    body = box('Body', -W / 2, W / 2, 0.02, D, 0, H, graphite, bevel=0.02)
-    front = box('Front', -W / 2 + 0.05, W / 2 - 0.05, -0.012, 0.03, 0.5, 1.58, steel, bevel=0.008)
+    body = box('Body', -W / 2, W / 2, 0.02, D, 0, H, graphite)
+    front = box('Front', -W / 2 + 0.05, W / 2 - 0.05, -0.012, 0.03, 0.5, 1.58, steel)   # no bevel: a flat face reflects cleanly
     hole_cut = cyl('cut', HOLE_R, 0.3, (0, 0, HOLE_Z), rot=(math.radians(90), 0, 0))
     cut(front, hole_cut)
     hole_cut2 = cyl('cut2', HOLE_R, 0.2, (0, 0.05, HOLE_Z), rot=(math.radians(90), 0, 0))

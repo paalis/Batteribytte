@@ -1,107 +1,76 @@
-# Batteribytte — interaksjonsspesifikasjon
+# Batteribytte: interaksjonsspesifikasjon (konsept B, «Pantemaskinen»)
 
-Mål: et morsomt varsel til kolleger om at det er tid for å kjøpe energidrikk. Siden er en ladestasjon du
-bruker selv, ikke en film du ser på. Alt som beveger seg har en årsak: ditt trykk, pekeren din, eller
-batterinivået.
+Konsept, vurdering og valg står i `docs/concept.md`.
 
-Grunnlag: `interaction-design` (Norman, Tognazzini, Nielsens responstider), `ui-ux-pro-max` (stil «Dark Mode
-(OLED)»: dypt svart, sparsom glød, synlig fokus, redusert bevegelse; tegnvis inngang på kort overskrift) og
-`find-animation-opportunities` (porten frekvens → formål → fart → funksjon, felles kurver).
+**Idé:** Batteribytte på norsk. Du panter det flate batteriet og får et fullt tilbake. Alt skjer i én 3D-verden: en nattlig pantemaskin under skiltet «BATTERIBYTTE», bygget i Blender og kjørt i sanntid. Det er ingen film og ingen paneler. All tekst står på maskinens skjerm og på pantelappen.
 
-Dette er den eneste versjonen av siden: `/film/` og `/v1/` sendes videre til forsiden.
+## Flyt (sju handlinger, ulik type hver gang)
 
-## Én tidslinje: scrolling er ladingen (journey.js)
-
-Alt som beveger seg leser én verdi, fremdriften `p` (0–1). Scrolling flytter den (Lenis gir myk treghet, GSAP
-ScrollTrigger kobler scrollen til hovedtidslinjen), «Ja» flytter den (å holde inne scroller siden for deg), og
-tastaturet flytter den. Filmen, batteriet, tekstene, lyset på «Ja», bloom-lyset og lyden leses av samme `p` i samme bilde.
-
-- **Filmen er en bildesekvens**, ikke video: `frames/720` eller `frames/540` (telefon, datasparing, treg linje), 494 bilder
-  på 24 fps, tegnet på canvas. Hvert bilde er nøyaktig begge veier i alle nettlesere. Mellom to bilder blandes det neste inn,
-  så sakte scrolling glir. Bildene lastes grovt først (hvert 32., så hvert 8.), så hele filmen kan skrubbes tidlig.
-- **Lasting er den første ladingen:** batteriet fyller seg 0 → 6 % mens første runde med bilder kommer inn («Lader inn filmen …»).
-- **Fart er uskarphet:** filmtiden følger `p` med en kritisk dempet fjær (løst eksakt, stabil på alle bildefrekvenser).
-  Jo raskere tiden går, jo mer uskarpt og lyst blir bildet. Spolingen tilbake til makroen blir dermed en «whoosh» av seg selv.
-- **Bred skjerm:** filmen beholder sin egen form til høyre, med myke kanter. Tekstene står til venstre.
-
-| p | Filmen | Batteri | Tekst |
-|---|---|---|---|
-| 0 | boksen i tåka, puster mellom 15,75 og 16,46 s (pekeren flytter bildet) | 6 % | «Det er tid for Batteribytte!», «Er du klar?», scroll-hint |
-| 0–0,06 | spoler tilbake til makroen av lokket (uskarp, blits) | | overskriften løftes bort |
-| 0,06–1 | 0 → 16,5 s skrubbes av scrollen | 6 → 100 % | fem linjer som følger filmen (dråpe, bobler, trykk, strøm, nesten full) |
-| 1 | `T_POP`: boksen venter, «Ja» blir «Åpne!» | 100 % | «Scroll videre / sveip opp – eller trykk Åpne!» |
-
-- **Du åpner selv:** en ny scroll nedover (ikke farten fra scrollen som brakte deg dit), sveip opp, «Åpne!», J, Enter eller Mellomrom.
-- **Klimakset er levende 3D** (`lib/can3d.js`): filmen blir stående på den lukkede boksen, og Blender-boksen
-  (`assets/can/battery-can.glb`) legger seg nøyaktig over den. Så, på 1,9 s:
-  1. **0–0,6 s, ladingen:** lynårene (bakt i Blender, `energy`) blusser opp og flimrer stadig raskere, boksen dirrer, og en ekte
-     glød (bloom i 3D-lerretet: bare det som lyser sterkere enn hvitt, lagt til som lys over filmen) vokser rundt dem.
-     Med lyd på: en sagtann som klatrer to oktaver gjennom et filter som åpner seg, med sus og en tremolo som går fortere, til smellet.
-  2. **0,6 s, åpningen:** tappen smeller opp (modellens egen animasjon «open»), spruten skyter opp i sakte film
-     (`assets/can/spray.webp`: en partikkelsprut rendret med Cycles fra nøyaktig dette kameraet). Ved 0,9 s: blits, smell og vibrasjon.
-  3. **Etterpå:** skummet velter opp av åpningen og renner nedover boksen (2 s: en krone som veller over kanten og to striper
-     som følger boksens profil; formnøkler fra Blender), filmen trer tilbake (mørkere, uskarp), energien dør ut til et svakt flimmer, og boksen tar én heltesving
-     med et lysstreif over etiketten. «Fullt ladet!» kommer inn ved 1,9 s mens svingen går. Så kan du dra og snu boksen selv.
-  Er 3D-boksen ikke klar (den lastes når batteriet er fullt), spilles filmen til siste bilde som før, og boksen trer ut etterpå.
-- **3D-boksen og effektene lages i Blender** (Blender 5.3 som Python-modul, `pip install bpy`): `tools/blender/build_can.py`
-  (modellen: 500 ml-form, etiketten fra produktfotoet, kondensdråper, lynårer, tapp på hengsel, skum; `--foam` gir et
-  nærbilde av skummet i `tools/blender/foam.png`), `render_spray.py` (spruten)
-  og `render_og.py` (delingsbildet `assets/og.jpg`: den ladede boksen med frosset sprut, tåke og tittelen).
-- **Hold Ja:** scroller mot slutten på 8 s for hele veien. Slipper du for tidlig, faller den tilbake (2,4 s for hele veien).
-  Kort trykk, Enter eller J lader av seg selv. Scroller du selv underveis, tar du over.
-- **Scroll tilbake** fra «Åpne!» gjør den til «Ja» igjen. Helt til toppen er spørsmålet tilbake.
-- **Nei** låser scrollen, tømmer batteriet og slukker lyset. «Prøv igjen» låser opp.
-- **Lad igjen:** scrollen går til toppen, og filmen spoler fram til boksen i tåka igjen.
-- **Overganger mellom panelene** bruker View Transitions der nettleseren har det (det gamle synker, det nye stiger fram), ellers CSS.
-- **Reserve:** med redusert bevegelse, eller hvis bibliotekene eller bildene ikke kan lastes (ingen heltebilde etter 20 s),
-  er siden én skjerm uten scroll, og fotoboksen lades med knappen (gnister, glød, risting).
-- **Lyd:** summingen stiger med `p`, en riser kommer fra `p` ≈ 0,4 til 100 %, og smellet ved åpning. Alt er av til «Lyd» trykkes.
-
-## Flyt
-
-```
-Åpne siden (batteriet fylles 0→6 % mens filmen lastes, blinker rødt, filmen puster i bakgrunnen)
-   └─ «Er du klar?»
-        ├─ Scroll ned → lader 6→100 % (filmen spoler tilbake og skrubbes av scrollen, tekstene følger filmen)
-        ├─ Ja: hold inne → scroller for deg, 6→100 % på 8 s (i fotoreserven: gnister, glød, risting, summing)
-        │      slipp for tidlig → nivået synker tilbake, «Hold inne til 100 %»
-        │      trykk kort / Enter / J → lader av seg selv
-        │      100 % → «Åpne!» → filmen spilles til slutt → 3D-boksen → «Fullt ladet!»
-        │              (fotoreserven: pop med blits, ring, gnister og dråper, boksen hopper)
-        │                → Varsle kollegaene (deling / kopier lenke) · Lad igjen
-        └─ Nei / N → tømmes til 0 % på 1,1 s, lyset går → «Lavt batteri…» → Prøv igjen
-Med film: bildet følger pekeren. Uten film (reserve): boksen vipper mot pekeren og bruser når du trykker på den.
-```
-
-## Tilstander
-
-| Element | Standard | Hover (kun mus) | Fokus | Trykket | Låst | Fremdrift |
-|---|---|---|---|---|---|---|
-| Ja | Gull pille | Lysere gull | 3 px hvit ring | Skala .97, glød | Under lading | Lys fyll sveiper over knappen |
-| Nei | Hvit kant | Lys bakgrunn | Ring | Skala .97 | 30 % under lading | — |
-| Lyd | Ikon + «Lyd», av | Lysere | Ring | Skala .97 | — | — |
-| Batteri (HUD) | Rødt under 20 %, blinker | — | — | — | — | Fyll og prosent følger nivået |
-
-## Bevegelse (kurver: `--ease-out` 0.23,1,0.32,1 · `--ease-expo` 0.16,1,0.3,1)
-
-| Hva | Formål | Frekvens | Varighet | Redusert bevegelse |
+| # | Handling (mobil · mus) | Tastatur | Hva som skjer | Overraskelsen |
 |---|---|---|---|---|
-| Trykk på knapp | Tilbakemelding | Hver gang | 160 ms ease-out | ingen skala |
-| Lading (fyll, glød, risting, gnister) | Tydelig tilstand | Én gang per besøk | Følger nivået | bare fyll og tall |
-| Pop ved 100 % | Glede | Én gang per besøk | 550–750 ms | hopper rett til resultat |
-| Nei: lys ut, boksen synker | Tydelig tilstand | Én gang per besøk | 1,1 s ease-in | bare dimming |
-| Overskrift tegn for tegn | Glede | Ved åpning | 600 ms, 18 ms forsinkelse per tegn | vises direkte |
-| Panel inn | Unngå brå endring | Per steg | 250 ms ease-out | vises direkte |
-| Toast ut | Romlig sammenheng | Av og til | 150 ms ease-in, samme vei som inn | toning |
-| Boksen vipper etter pekeren | Direkte manipulasjon | Kontinuerlig | Fjær | av |
+| 0 | | | Maskinen våkner: neon og skjerm flimrer på, og den lyser «FLATT BATTERI? SETT INN HER». Du holder en grå, flat Battery-boks. | Logoens siste strek blinker rødt. |
+| 1 | **Dra** boksen mot hullet | Enter | Boksen følger fingeren, legger seg ned og forsvinner inn i hullet. Maskinen suger den inn. | **Kameraet dykker etter, inn i maskinen.** |
+| 2 | | | I skannekammeret spinner boksen på rullene under røde laserstreker, stopper, og **AVVIST** («STREKKODEN VISES IKKE»). | Den kjente irritasjonen fra pantemaskinen. |
+| 3 | **Rull** boksen (dra opp og ned, med treghet) | Pil opp og ned | Når strekkoden vender mot skanneren: grønt pip og **GODKJENT**. | |
+| 4 | | | Pressen knuser boksen i sakte film: **KNAS**. Skjermen rister, og telleren sier «BATTERIER BYTTET I DAG: n». Kameraet trekker seg ut av maskinen. | |
+| 5 | **Trykk** på den grønne PANT-knappen | Enter | Knappen går inn, og pantelappen skrives ut i rykk. Så buldrer maskinen: «FEIL 0xBATT · BATTERIET SITTER FAST». | Den nye boksen sitter fast i luka. |
+| 6 | **Rist** telefonen, eller dra fram og tilbake over skjermen | R eller Mellomrom flere ganger | Maskinen rister, og en måler på skjermen fylles. Etter seks rist faller boksen, luka slår, og boksen svever opp foran deg mens den snurrer. | |
+| 7 | **Hold** på boksen | Hold Mellomrom (Enter lader av seg selv) | **Logoens «+ ‖» fylles nedenfra som en batterimåler.** Lynårene vokser, en tone stiger, boksen dirrer, og kameraet skyver seg innover. Ved 100 %: «DRA FLIKEN OPP». | Logoen *er* batteriet. |
+| 8 | **Flikk** fliken opp (sveip opp, eller trykk på boksen) | Pil opp eller Enter | Smell, blits, sprut i sakte film (Cycles-sprite), skum som renner ned, lynene topper. Kameraet trekker seg ut til heltebildet: maskinen, boksen som snurrer, og lappen som henger ut. | |
+| 9 | **Del** pantelappen, eller «Bytt igjen» | Tab, Enter | Pantelappen kommer fram og kan deles som bilde (Web Share med fil) eller som lenke, som kopieres. | Premien er en gjenstand: «PANTELAPP · 1 × BATTERI, FLATT · PANTET · 1 × BATTERY FRESH · LADET · DIN TUR?» |
 
-Forkastet: animasjon på lydknappen (hyppig, tastatur), sprett i resultatteksten (popen eier feiringen),
-pulserende «Hopp over» (finnes ikke lenger).
+**Handlingsknappen** nederst sier alltid hva neste handling er («Dra batteriet inn», «Rull boksen», «Trykk PANT», «Rist maskinen», «Hold for å lade», «Åpne»).
+- Trykker du på den, gjøres handlingen for deg. Det er alternativet til bevegelser og presisjon (WCAG 2.5.1 og 2.5.7).
+- I hold-steget holder du den som boksen. Et kort trykk lader av seg selv.
+- Fokus flyttes til knappen ved hvert nytt steg.
+
+## Kamera (én rigg, ett kamera, myke overganger)
+
+Stasjonene er felles for siden og Blender-stillbildene: `src/pant/world.js` (`ST`) og `tools/blender/render_stills.py` (`STATIONS`).
+
+| Stasjon | Når |
+|---|---|
+| start | Maskinen forfra, boksen i hånda di |
+| (dykk) | Gjennom hullet, i 1,6 s |
+| inside | Skannekammeret ovenfra |
+| button | PANT-knappen og lappesporet |
+| hatch | Luka |
+| hero | Boksen som svever foran maskinen |
+| finale | Heltebildet |
+
+Pekeren gir litt parallakse (bare med mus). Kameraet rister ved knaset, smellet og fallet.
+
+## Lyd og haptikk (`src/pant/sound.js`)
+- **Lyden lages i nettleseren.** Den starter på første trykk, er på som standard, og «Lyd» (eller M) slår den av.
+- **Alt går gjennom én kompressor,** så alle effektene får samme lydstyrke.
+- **Lydene:** maskinens summing, sug, ruller, skannepip, avvisning (lav summer), godkjent (to toner), knas (slag, knitring og dunk), klikk, skriver, bulder, skrangling, dunk, ladetone som stiger, «full» (akkord) og smell med brus.
+- **Vibrasjon** (`navigator.vibrate`, bare Android) på hvert mekanisk steg.
+- **Risting med telefonen** bruker `devicemotion`. iOS ber om tillatelse ved første trykk.
+
+## Lett reserve (`src/pant/lite.js`)
+Ved **prefers-reduced-motion**, **uten WebGL**, eller hvis 3D-lastingen feiler:
+- Samme historie fortelles i sju stillbilder fra Cycles (`assets/pant/stills/*.webp`, rendret fra de samme kamerastasjonene).
+- Teksten fra maskinens skjerm vises som bildetekst.
+- Hvert steg er ett trykk på handlingsknappen (eller tasten).
+- Ingen bevegelse og ingen risting.
+- Pantelappen og delingen er de samme.
 
 ## Tilgjengelighet
+- `h1` (skjult) med sidens navn.
+- Et live-område forteller hva som skjer i hvert steg. Teksten står i `STEPS` i `src/pant/main.js`.
+- Alle handlinger kan gjøres med tastatur og med handlingsknappen.
+- Pantelappen har en beskrivende alt-tekst.
 
-- Hold-for-å-lade har alltid et alternativ: kort trykk, Enter eller J lader av seg selv (WCAG 2.5.1/2.5.7).
-- Mellomrom kan holdes på fokusert «Ja».
-- Batteriet er `role="meter"` med verdi i tiere. Start og resultat leses opp i en `aria-live`-region.
-- Fokus flyttes til neste handling etter hvert resultat.
-- Uten JavaScript vises spørsmålet og bildet av boksen.
+## Nettvekt (det som faktisk lastes)
+Se tabellen i README. Store filer lastes i bakgrunnen etter første opptegning. Plakaten (stillbildet av åpningen) vises med en gang, og 3D-scenen toner inn over den når den er klar.
+
+## Filer
+- **`index.html`, `style.css`:** siden. **`lib/pant/`:** bygget med `tools/build-pant.sh` fra `src/pant/`.
+  - `main.js` velger 3D eller reserve og styrer ord, taster og lapp.
+  - `world.js` er three.js-scenen og historien.
+  - `lite.js`, `sound.js`, `receipt.js` og `bloom.js`.
+- **Blender** (`tools/blender/`, Blender som Python-modul: `pip install bpy==5.3.0 pillow`):
+  - `build_machine.py` → `assets/pant/machine.glb` (maskin og rom)
+  - `build_can.py` → `assets/can/battery-can.glb` (boksen: etikett, midlertidig strekkode bak, lyn, tapp og skum) og `assets/pant/meter.webp` (logoen som måler)
+  - `render_spray.py` → `assets/can/spray.webp`
+  - `render_stills.py` → `assets/pant/stills/`

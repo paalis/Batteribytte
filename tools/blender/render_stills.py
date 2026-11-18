@@ -32,6 +32,7 @@ STATIONS = {
     'hatch':   ((0.0, 0.62, 1.05), (0.0, 0.33, 0.0), 48),
     'hero':    ((0.0, 0.98, 1.05), (0.0, 0.95, 0.45), 40),
     'finale':  ((0.35, 1.05, 1.9), (0.0, 0.95, 0.2), 48),
+    'og':      ((0.62, 1.12, 1.6), (0.12, 1.02, 0.2), 30),
 }
 
 
@@ -100,28 +101,54 @@ def camera(station):
     return cam
 
 
-def render(name, station, cans=()):
+# name: (camera station, cans [(name, position in page coords, Blender rotation, flat?)], objects to hide, extras)
+LIE = (-math.pi / 2, 0, 0)                       # lying in the chamber, top into the machine
+SHOTS = {
+    'start':  ('start', [('Flat', (-0.1, 0.84, 1.2), (0.12, 0.2, math.radians(-12)), True)], ['Receipt', 'Laser1', 'Laser2', 'Laser3'], {}),
+    'inside': ('inside', [('Flat', (0, 1.011, -0.33), LIE, True)], ['Receipt'], {'chamber': True}),
+    'button': ('button', [], [], {}),
+    'hatch':  ('hatch', [('Fresh', (0.04, 0.33, -0.1), (0, -1.15, 0.3), False)], [], {}),
+    'hero':   ('hero', [('Fresh', (0, 0.95, 0.45), (0, 0, 0), False)], [], {'glow': 1.2}),
+    'finale': ('finale', [('Fresh', (0, 0.95, 0.45), (0, 0, 0.4), False)], [], {'glow': 0.6}),
+    # the share image (assets/og.jpg): the machine at night and the fresh, charged can in front of it
+    'og':     ('og', [('Fresh', (0.05, 0.95, 0.55), (0, 0, 0.5), False)], [], {'glow': 1.0, 'size': (1200, 630), 'out': 'og'}),
+}
+
+
+def render_shot(name):
+    station, cans, hide, extra = SHOTS[name]
     bm.build()
     for c in cans:
         import_can(*c)
+    for n in hide:
+        if n in bpy.data.objects:
+            bpy.data.objects[n].hide_render = True
+    if extra.get('chamber'):                       # inside the machine: the lasers' red and a little fill
+        for nm, loc, power, col in (('ChamberRed', (0, 0.32, 1.2), 0.6, (1, 0.15, 0.1)), ('ChamberFill', (0.12, 0.2, 1.18), 0.15, (1, 0.95, 0.9))):
+            l = bpy.data.lights.new(nm, 'POINT'); l.energy, l.color, l.shadow_soft_size = power, col, 0.02
+            ob = bpy.data.objects.new(nm, l); bpy.context.collection.objects.link(ob); ob.location = loc
+    if 'glow' in extra:                            # the charged can: its lightning veins lit
+        for m in bpy.data.materials:
+            if m.use_nodes and 'Principled BSDF' in m.node_tree.nodes and m.name.startswith('Label'):
+                m.node_tree.nodes['Principled BSDF'].inputs['Emission Strength'].default_value = extra['glow']
     setup_render()
+    if 'size' in extra:
+        bpy.context.scene.render.resolution_x, bpy.context.scene.render.resolution_y = extra['size']
+        bpy.context.scene.cycles.samples = 128
     camera(station)
     os.makedirs(OUT, exist_ok=True)
     png = os.path.join(OUT, name + '.png')
     bpy.context.scene.render.filepath = png
     bpy.ops.render.render(write_still=True)
     from PIL import Image
-    Image.open(png).convert('RGB').save(os.path.join(OUT, name + '.webp'), 'WEBP', quality=78, method=6)
+    if extra.get('out') == 'og':
+        Image.open(png).convert('RGB').save(os.path.join(bm.ROOT, 'assets', 'og.jpg'), 'JPEG', quality=86)
+    else:
+        Image.open(png).convert('RGB').save(os.path.join(OUT, name + '.webp'), 'WEBP', quality=76, method=6)
     os.remove(png)
     print('wrote', name)
 
 
-SHOTS = {
-    'start': ('start', [('Flat', (-0.16, 0.86, 1.1), (0, 0, math.radians(-15)), True)]),
-}
-
 if __name__ == '__main__':
-    names = sys.argv[1:] or list(SHOTS)
-    for n in names:
-        st, cans = SHOTS[n]
-        render(n, st, cans)
+    for n in (sys.argv[1:] or list(SHOTS)):
+        render_shot(n)
