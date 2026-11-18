@@ -10,6 +10,8 @@ som en ekte 3D-boks du kan snu. Nei slukker lyset. Lyd lages i nettleseren (Web 
 - `frames/720/` og `frames/540/` — filmen som bildesekvens (494 WebP-bilder, 24 fps), tegnet på canvas.
   Lages fra `assets/journey2-720.mp4` med `tools/make-frames.sh`. `assets/base-poster.jpg` vises før de er lastet.
 - `lib/` — GSAP + ScrollTrigger, Lenis og `can3d.js` (three.js + `src/can3d.js`, bygges med `tools/build-can3d.sh`). Se `lib/README.md`.
+- `assets/can/battery-can.glb` — 3D-boksen i finalen, modellert i Blender med `tools/blender/build_can.py`
+  (Blender som Python-modul, ingen installasjon: `pip install bpy==5.3.0`; `--render` lager `tools/blender/preview.png` med Cycles).
 - `assets/battery-fresh.webp` (produktfoto, også kilden til 3D-boksen), `assets/og.jpg` (delingsbilde), `favicon.svg`,
   `fonts/` (Archivo Black, SIL OFL, se `fonts/OFL.txt`).
 - Respekterer «redusert bevegelse» (ingen scroll-film, fotoboksen lades med knappen) og fungerer med tastatur og skjermleser.
