@@ -1,0 +1,3053 @@
+[
+ {
+  "id": "pop",
+  "kind": "E",
+  "length": [
+   0.3,
+   1.0
+  ],
+  "n": 1,
+  "when": "Flikk (steg 8): fliken går opp, `popAndFinale`",
+  "what": "Metallisk «tsst-klikk» fra en aluminiumsboks: klikket i fliken og trykket som slipper. Tørt og nært.",
+  "prio": 1,
+  "top": [
+   {
+    "id": "pop_1",
+    "source": "elevenlabs",
+    "title": "pop (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up of an ice-cold aluminium energy drink can being opened: crisp metallic tab click and a sharp pressurised tsst, studio quality, commercial",
+    "file": "assets/sfx/_candidates/pop/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.2,
+     "total": 8.84
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -18.4,
+     "peak": 0.0,
+     "tp": 0.0,
+     "lead": 0.0,
+     "tail": 0.491,
+     "centroid": 5676,
+     "snr": 49.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "pop_3",
+    "source": "elevenlabs",
+    "title": "pop (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up of an ice-cold aluminium energy drink can being opened: crisp metallic tab click and a sharp pressurised tsst, studio quality, commercial",
+    "file": "assets/sfx/_candidates/pop/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.6,
+     "total": 8.73
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -17.1,
+     "peak": -1.4,
+     "tp": -1.3,
+     "lead": 0.156,
+     "tail": 0.357,
+     "centroid": 8694,
+     "snr": 44.8,
+     "loop": null
+    }
+   },
+   {
+    "id": "pop_2",
+    "source": "elevenlabs",
+    "title": "pop (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up of an ice-cold aluminium energy drink can being opened: crisp metallic tab click and a sharp pressurised tsst, studio quality, commercial",
+    "file": "assets/sfx/_candidates/pop/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.0,
+     "total": 8.59
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -16.1,
+     "peak": -0.0,
+     "tp": 0.0,
+     "lead": 0.13,
+     "tail": 0.312,
+     "centroid": 5084,
+     "snr": 51.7,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 4,
+  "found": 12
+ },
+ {
+  "id": "fizz",
+  "kind": "L",
+  "length": [
+   2,
+   4
+  ],
+  "n": 2,
+  "when": "Rett etter `pop`, tones ut over finalen",
+  "what": "Kullsyre som bobler og knitrer i boksen, tett og fin, uten tydelige enkelthendelser (loopbar)",
+  "prio": 1,
+  "top": [
+   {
+    "id": "fizz_1",
+    "source": "elevenlabs",
+    "title": "fizz (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up fizzing carbonated soda in an open aluminium can, dense fine bubbles crackling, seamless loop, no music",
+    "file": "assets/sfx/_candidates/fizz/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 6.4,
+     "mix": 9.8,
+     "total": 9.0
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -24.6,
+     "peak": -4.87,
+     "tp": -4.8,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 9252,
+     "snr": 8.3,
+     "loop": {
+      "seam_db": 1.29,
+      "seam_cent": 0.075,
+      "seam_jump": 0.0027,
+      "steady": 0.9,
+      "loop_s": 3.0
+     }
+    }
+   },
+   {
+    "id": "fizz_3",
+    "source": "elevenlabs",
+    "title": "fizz (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up fizzing carbonated soda in an open aluminium can, dense fine bubbles crackling, seamless loop, no music",
+    "file": "assets/sfx/_candidates/fizz/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 6.8,
+     "mix": 6.8,
+     "total": 8.44
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -17.4,
+     "peak": -0.49,
+     "tp": -0.3,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 9177,
+     "snr": 9.9,
+     "loop": {
+      "seam_db": 0.05,
+      "seam_cent": 0.004,
+      "seam_jump": 0.1018,
+      "steady": 1.6,
+      "loop_s": 3.0
+     }
+    }
+   },
+   {
+    "id": "fizz_2",
+    "source": "elevenlabs",
+    "title": "fizz (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Close-up fizzing carbonated soda in an open aluminium can, dense fine bubbles crackling, seamless loop, no music",
+    "file": "assets/sfx/_candidates/fizz/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 4.6,
+     "mix": 6.1,
+     "total": 8.07
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -12.2,
+     "peak": -4.24,
+     "tp": -4.0,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 8905,
+     "snr": 5.2,
+     "loop": {
+      "seam_db": 1.97,
+      "seam_cent": 0.012,
+      "seam_jump": 0.0099,
+      "steady": 1.79,
+      "loop_s": 3.0
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "spray",
+  "kind": "E",
+  "length": [
+   0.5,
+   2
+  ],
+  "n": 3,
+  "when": "Samtidig med `pop` (sprutet i sakte film)",
+  "what": "Skumutbrudd: et vått «pssssjjj» med sprut",
+  "prio": 1,
+  "top": [
+   {
+    "id": "spray_2",
+    "source": "elevenlabs",
+    "title": "spray (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Shaken soda can bursting open, wet foamy spray gushing out, splashy and energetic, commercial sound design",
+    "file": "assets/sfx/_candidates/spray/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.1,
+     "total": 8.83
+    },
+    "m": {
+     "dur": 1.48,
+     "lufs": -23.6,
+     "peak": -0.94,
+     "tp": -0.2,
+     "lead": 0.006,
+     "tail": 0.283,
+     "centroid": 5934,
+     "snr": 61.1,
+     "loop": null
+    }
+   },
+   {
+    "id": "spray_3",
+    "source": "elevenlabs",
+    "title": "spray (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Shaken soda can bursting open, wet foamy spray gushing out, splashy and energetic, commercial sound design",
+    "file": "assets/sfx/_candidates/spray/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.6,
+     "total": 8.72
+    },
+    "m": {
+     "dur": 1.48,
+     "lufs": -19.2,
+     "peak": 0.0,
+     "tp": 0.3,
+     "lead": 0.0,
+     "tail": 0.177,
+     "centroid": 4712,
+     "snr": 65.0,
+     "loop": null
+    }
+   },
+   {
+    "id": "spray_1",
+    "source": "elevenlabs",
+    "title": "spray (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Shaken soda can bursting open, wet foamy spray gushing out, splashy and energetic, commercial sound design",
+    "file": "assets/sfx/_candidates/spray/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.9,
+     "total": 8.57
+    },
+    "m": {
+     "dur": 1.48,
+     "lufs": -14.6,
+     "peak": 0.0,
+     "tp": 0.7,
+     "lead": 0.0,
+     "tail": 0.242,
+     "centroid": 4154,
+     "snr": 59.3,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 10
+ },
+ {
+  "id": "charge",
+  "kind": "L",
+  "length": [
+   2,
+   6
+  ],
+  "n": 4,
+  "when": "Hold (steg 7), hele tiden mens du holder. Tonehøyde og filter følger `level` (0–1).",
+  "what": "Stigende elektrisk summing og spenning, gjerne et lavt og et høyt lag som mikses etter nivå",
+  "prio": 1,
+  "top": [
+   {
+    "id": "charge_2",
+    "source": "elevenlabs",
+    "title": "charge (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric energy charging up, warm rising hum with crackling electricity, sci-fi power build, seamless loop",
+    "file": "assets/sfx/_candidates/charge/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 9.1,
+     "mix": 6.3,
+     "total": 8.57
+    },
+    "m": {
+     "dur": 4.0,
+     "lufs": -10.9,
+     "peak": -2.97,
+     "tp": -1.8,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 7506,
+     "snr": 3.2,
+     "loop": {
+      "seam_db": 0.24,
+      "seam_cent": 0.009,
+      "seam_jump": 0.0094,
+      "steady": 0.8,
+      "loop_s": 4.0
+     }
+    }
+   },
+   {
+    "id": "charge_1",
+    "source": "elevenlabs",
+    "title": "charge (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric energy charging up, warm rising hum with crackling electricity, sci-fi power build, seamless loop",
+    "file": "assets/sfx/_candidates/charge/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 7.3,
+     "mix": 6.0,
+     "total": 8.33
+    },
+    "m": {
+     "dur": 4.0,
+     "lufs": -13.0,
+     "peak": -0.48,
+     "tp": -0.3,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 6481,
+     "snr": 4.1,
+     "loop": {
+      "seam_db": 0.09,
+      "seam_cent": 0.002,
+      "seam_jump": 0.0829,
+      "steady": 1.23,
+      "loop_s": 4.0
+     }
+    }
+   },
+   {
+    "id": "charge_3",
+    "source": "elevenlabs",
+    "title": "charge (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric energy charging up, warm rising hum with crackling electricity, sci-fi power build, seamless loop",
+    "file": "assets/sfx/_candidates/charge/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 9.3,
+     "tech": 9.0,
+     "license": 4,
+     "loop": 3.1,
+     "mix": 5.5,
+     "total": 7.3
+    },
+    "m": {
+     "dur": 4.0,
+     "lufs": -11.4,
+     "peak": -0.0,
+     "tp": 0.2,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 8984,
+     "snr": 5.4,
+     "loop": {
+      "seam_db": 1.19,
+      "seam_cent": 0.083,
+      "seam_jump": 0.1198,
+      "steady": 1.55,
+      "loop_s": 4.0
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 12
+ },
+ {
+  "id": "full",
+  "kind": "E",
+  "length": [
+   0.4,
+   1.5
+  ],
+  "n": 5,
+  "when": "100 % (steg 7)",
+  "what": "Kort og tilfredsstillende «ding» med «zap»",
+  "prio": 1,
+  "top": [
+   {
+    "id": "full_3",
+    "source": "elevenlabs",
+    "title": "full (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Satisfying fully charged stinger: bright electric zap followed by a clean shimmering ding, commercial",
+    "file": "assets/sfx/_candidates/full/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.8,
+     "total": 8.35
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -9.3,
+     "peak": 0.0,
+     "tp": 0.5,
+     "lead": 0.0,
+     "tail": 0.18,
+     "centroid": 2503,
+     "snr": 49.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "full_2",
+    "source": "elevenlabs",
+    "title": "full (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Satisfying fully charged stinger: bright electric zap followed by a clean shimmering ding, commercial",
+    "file": "assets/sfx/_candidates/full/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 7.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.2,
+     "total": 7.44
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -7.6,
+     "peak": 0.0,
+     "tp": 1.0,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 4517,
+     "snr": 30.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "full_1",
+    "source": "elevenlabs",
+    "title": "full (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Satisfying fully charged stinger: bright electric zap followed by a clean shimmering ding, commercial",
+    "file": "assets/sfx/_candidates/full/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 5.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.2,
+     "total": 6.84
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -10.6,
+     "peak": 0.0,
+     "tp": 0.3,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 4640,
+     "snr": 15.4,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "powerDown",
+  "kind": "E",
+  "length": [
+   0.3,
+   1.0
+  ],
+  "n": 6,
+  "when": "Hold: når du slipper før 100 %",
+  "what": "Nedadgående, deflaterende strøm som går av",
+  "prio": 2,
+  "top": [
+   {
+    "id": "powerDown_2",
+    "source": "elevenlabs",
+    "title": "powerDown (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric power down, energy draining away, descending deflating whine",
+    "file": "assets/sfx/_candidates/powerDown/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 8.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.8,
+     "total": 8.56
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -20.6,
+     "peak": -7.87,
+     "tp": -7.9,
+     "lead": 0.0,
+     "tail": 0.049,
+     "centroid": 4615,
+     "snr": 31.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "powerDown_3",
+    "source": "elevenlabs",
+    "title": "powerDown (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric power down, energy draining away, descending deflating whine",
+    "file": "assets/sfx/_candidates/powerDown/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 8.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.2,
+     "total": 8.25
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -14.7,
+     "peak": -4.74,
+     "tp": -4.7,
+     "lead": 0.0,
+     "tail": 0.056,
+     "centroid": 2536,
+     "snr": 24.8,
+     "loop": null
+    }
+   },
+   {
+    "id": "powerDown_1",
+    "source": "elevenlabs",
+    "title": "powerDown (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Electric power down, energy draining away, descending deflating whine",
+    "file": "assets/sfx/_candidates/powerDown/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 8.0,
+     "license": 4,
+     "loop": null,
+     "mix": 5.0,
+     "total": 7.6
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -7.9,
+     "peak": -0.61,
+     "tp": -0.3,
+     "lead": 0.0,
+     "tail": 0.089,
+     "centroid": 3012,
+     "snr": 33.3,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "hum",
+  "kind": "L",
+  "length": [
+   3,
+   10
+  ],
+  "n": 7,
+  "when": "Fra åpningen og hele veien (maskinen)",
+  "what": "Kjøleskap, automat eller neon som summer, lavt og varmt, uten tydelige hendelser",
+  "prio": 1,
+  "top": [
+   {
+    "id": "hum_3",
+    "source": "elevenlabs",
+    "title": "hum (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine and neon sign humming at night, low warm electrical hum with faint fan, seamless loop",
+    "file": "assets/sfx/_candidates/hum/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 8.5,
+     "mix": 8.9,
+     "total": 9.04
+    },
+    "m": {
+     "dur": 6.0,
+     "lufs": -30.8,
+     "peak": -18.86,
+     "tp": -18.8,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 244,
+     "snr": 4.8,
+     "loop": {
+      "seam_db": 0.18,
+      "seam_cent": 0.215,
+      "seam_jump": 0.0061,
+      "steady": 0.97,
+      "loop_s": 6.0
+     }
+    }
+   },
+   {
+    "id": "hum_2",
+    "source": "elevenlabs",
+    "title": "hum (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine and neon sign humming at night, low warm electrical hum with faint fan, seamless loop",
+    "file": "assets/sfx/_candidates/hum/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 8.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 4.0,
+     "mix": 8.8,
+     "total": 7.96
+    },
+    "m": {
+     "dur": 6.0,
+     "lufs": -30.3,
+     "peak": -16.56,
+     "tp": -16.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 85,
+     "snr": 14.2,
+     "loop": {
+      "seam_db": 1.71,
+      "seam_cent": 0.29,
+      "seam_jump": 0.0051,
+      "steady": 2.23,
+      "loop_s": 6.0
+     }
+    }
+   },
+   {
+    "id": "hum_1",
+    "source": "elevenlabs",
+    "title": "hum (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine and neon sign humming at night, low warm electrical hum with faint fan, seamless loop",
+    "file": "assets/sfx/_candidates/hum/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 0.4,
+     "mix": 6.6,
+     "total": 7.76
+    },
+    "m": {
+     "dur": 6.0,
+     "lufs": -23.9,
+     "peak": -16.62,
+     "tp": -16.6,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 141,
+     "snr": 5.8,
+     "loop": {
+      "seam_db": 3.17,
+      "seam_cent": 0.368,
+      "seam_jump": 0.0038,
+      "steady": 1.75,
+      "loop_s": 6.0
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "crush",
+  "kind": "E",
+  "length": [
+   0.5,
+   1.5
+  ],
+  "n": 8,
+  "when": "KNAS (steg 4)",
+  "what": "En aluminiumsboks som knuses av en presse: smell, krøll, knitring",
+  "prio": 1,
+  "top": [
+   {
+    "id": "crush_3",
+    "source": "elevenlabs",
+    "title": "crush (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hydraulic press crushing an empty aluminium can, loud metallic crunch and crackle, close-up, punchy",
+    "file": "assets/sfx/_candidates/crush/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.8,
+     "total": 8.56
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -13.4,
+     "peak": 0.0,
+     "tp": 0.2,
+     "lead": 0.0,
+     "tail": 0.377,
+     "centroid": 3105,
+     "snr": 56.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "crush_2",
+    "source": "elevenlabs",
+    "title": "crush (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hydraulic press crushing an empty aluminium can, loud metallic crunch and crackle, close-up, punchy",
+    "file": "assets/sfx/_candidates/crush/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.9,
+     "total": 8.39
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -17.2,
+     "peak": 0.0,
+     "tp": 0.2,
+     "lead": 0.0,
+     "tail": 0.37,
+     "centroid": 4136,
+     "snr": 62.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "crush_1",
+    "source": "elevenlabs",
+    "title": "crush (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hydraulic press crushing an empty aluminium can, loud metallic crunch and crackle, close-up, punchy",
+    "file": "assets/sfx/_candidates/crush/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 8.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.3,
+     "total": 7.86
+    },
+    "m": {
+     "dur": 1.0,
+     "lufs": -16.1,
+     "peak": 0.0,
+     "tp": 0.6,
+     "lead": 0.0,
+     "tail": 0.763,
+     "centroid": 3602,
+     "snr": 63.0,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "reject",
+  "kind": "E",
+  "length": [
+   0.3,
+   1.0
+  ],
+  "n": 9,
+  "when": "AVVIST (steg 2)",
+  "what": "Pantemaskinens kjente avvisningslyd: lav, irriterende summer",
+  "prio": 1,
+  "top": [
+   {
+    "id": "reject_3",
+    "source": "elevenlabs",
+    "title": "reject (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine rejecting an item: short low annoying error buzzer, two pulses",
+    "file": "assets/sfx/_candidates/reject/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.6,
+     "total": 9.32
+    },
+    "m": {
+     "dur": 0.68,
+     "lufs": -14.8,
+     "peak": -1.81,
+     "tp": -1.8,
+     "lead": 0.0,
+     "tail": 0.156,
+     "centroid": 2441,
+     "snr": 52.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "reject_1",
+    "source": "elevenlabs",
+    "title": "reject (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine rejecting an item: short low annoying error buzzer, two pulses",
+    "file": "assets/sfx/_candidates/reject/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 9.9,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.7,
+     "total": 9.11
+    },
+    "m": {
+     "dur": 0.68,
+     "lufs": -12.0,
+     "peak": -2.63,
+     "tp": -2.5,
+     "lead": 0.0,
+     "tail": 0.181,
+     "centroid": 3045,
+     "snr": 53.2,
+     "loop": null
+    }
+   },
+   {
+    "id": "reject_2",
+    "source": "elevenlabs",
+    "title": "reject (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine rejecting an item: short low annoying error buzzer, two pulses",
+    "file": "assets/sfx/_candidates/reject/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 9.4,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.0,
+     "total": 8.82
+    },
+    "m": {
+     "dur": 0.68,
+     "lufs": -12.9,
+     "peak": -0.23,
+     "tp": -0.0,
+     "lead": 0.0,
+     "tail": 0.165,
+     "centroid": 3325,
+     "snr": 58.2,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 11
+ },
+ {
+  "id": "accept",
+  "kind": "E",
+  "length": [
+   0.2,
+   0.8
+  ],
+  "n": 10,
+  "when": "GODKJENT (steg 3), og i den lette versjonen",
+  "what": "Kort, ren tototone eller pling",
+  "prio": 2,
+  "top": [
+   {
+    "id": "accept_1",
+    "source": "elevenlabs",
+    "title": "accept (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine accepting an item: short clean two-tone confirmation beep",
+    "file": "assets/sfx/_candidates/accept/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.4,
+     "total": 8.68
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -13.2,
+     "peak": -0.11,
+     "tp": -0.0,
+     "lead": 0.0,
+     "tail": 0.436,
+     "centroid": 1809,
+     "snr": 79.1,
+     "loop": null
+    }
+   },
+   {
+    "id": "accept_3",
+    "source": "elevenlabs",
+    "title": "accept (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine accepting an item: short clean two-tone confirmation beep",
+    "file": "assets/sfx/_candidates/accept/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -37.0,
+     "peak": -19.88,
+     "tp": -19.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 1070,
+     "snr": 57.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "accept_2",
+    "source": "elevenlabs",
+    "title": "accept (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Bottle return machine accepting an item: short clean two-tone confirmation beep",
+    "file": "assets/sfx/_candidates/accept/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.2,
+     "total": 8.23
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -12.5,
+     "peak": 0.0,
+     "tp": 0.1,
+     "lead": 0.0,
+     "tail": 0.401,
+     "centroid": 1920,
+     "snr": 76.8,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "scanBeep",
+  "kind": "E",
+  "length": [
+   0.05,
+   0.2
+  ],
+  "n": 11,
+  "when": "Laseren sveiper, og pip ved rulling (steg 2–3)",
+  "what": "Kort pip fra en strekkodeleser (tonehøyden justeres i koden)",
+  "prio": 2,
+  "top": [
+   {
+    "id": "scanBeep_2",
+    "source": "elevenlabs",
+    "title": "scanBeep (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short supermarket barcode scanner beep",
+    "file": "assets/sfx/_candidates/scanBeep/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.6,
+     "total": 8.72
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -12.8,
+     "peak": 0.0,
+     "tp": 0.0,
+     "lead": 0.0,
+     "tail": 0.246,
+     "centroid": 1760,
+     "snr": 62.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "scanBeep_3",
+    "source": "elevenlabs",
+    "title": "scanBeep (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short supermarket barcode scanner beep",
+    "file": "assets/sfx/_candidates/scanBeep/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 5.4,
+     "total": 8.49
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -9.3,
+     "peak": 0.0,
+     "tp": 0.0,
+     "lead": 0.0,
+     "tail": 0.256,
+     "centroid": 1873,
+     "snr": 75.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "scanBeep_1",
+    "source": "elevenlabs",
+    "title": "scanBeep (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short supermarket barcode scanner beep",
+    "file": "assets/sfx/_candidates/scanBeep/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 5.6,
+     "total": 8.11
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -9.7,
+     "peak": 0.0,
+     "tp": 0.1,
+     "lead": 0.0,
+     "tail": 0.273,
+     "centroid": 2048,
+     "snr": 75.2,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 12
+ },
+ {
+  "id": "suck",
+  "kind": "E",
+  "length": [
+   0.5,
+   1.0
+  ],
+  "n": 12,
+  "when": "Boksen slippes nær hullet og suges inn (steg 1)",
+  "what": "Pneumatisk sug, luft som trekkes inn",
+  "prio": 1,
+  "top": [
+   {
+    "id": "suck_1",
+    "source": "elevenlabs",
+    "title": "suck (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Pneumatic machine sucking an object in, strong air suction whoosh into a tube",
+    "file": "assets/sfx/_candidates/suck/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.7,
+     "total": 9.14
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -17.1,
+     "peak": -2.13,
+     "tp": -2.1,
+     "lead": 0.0,
+     "tail": 0.354,
+     "centroid": 3288,
+     "snr": 63.8,
+     "loop": null
+    }
+   },
+   {
+    "id": "suck_2",
+    "source": "elevenlabs",
+    "title": "suck (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Pneumatic machine sucking an object in, strong air suction whoosh into a tube",
+    "file": "assets/sfx/_candidates/suck/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 8.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.2,
+     "total": 8.44
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -12.5,
+     "peak": -1.57,
+     "tp": -1.1,
+     "lead": 0.0,
+     "tail": 0.279,
+     "centroid": 8441,
+     "snr": 66.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "suck_3",
+    "source": "elevenlabs",
+    "title": "suck (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Pneumatic machine sucking an object in, strong air suction whoosh into a tube",
+    "file": "assets/sfx/_candidates/suck/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.8,
+     "total": 8.35
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -11.3,
+     "peak": -0.0,
+     "tp": 0.4,
+     "lead": 0.0,
+     "tail": 0.129,
+     "centroid": 4453,
+     "snr": 51.0,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "gulp",
+  "kind": "E",
+  "length": [
+   0.3,
+   0.8
+  ],
+  "n": 13,
+  "when": "Ringen «svelger» boksen (steg 1)",
+  "what": "Dypt metallisk dunk inni maskinen",
+  "prio": 2,
+  "top": [
+   {
+    "id": "gulp_2",
+    "source": "elevenlabs",
+    "title": "gulp (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Can dropping deep inside a metal machine, hollow metallic thunk with short echo",
+    "file": "assets/sfx/_candidates/gulp/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.0,
+     "total": 9.19
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -21.1,
+     "peak": -3.99,
+     "tp": -3.9,
+     "lead": 0.0,
+     "tail": 0.181,
+     "centroid": 1540,
+     "snr": 53.1,
+     "loop": null
+    }
+   },
+   {
+    "id": "gulp_1",
+    "source": "elevenlabs",
+    "title": "gulp (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Can dropping deep inside a metal machine, hollow metallic thunk with short echo",
+    "file": "assets/sfx/_candidates/gulp/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.9,
+     "total": 8.79
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -27.2,
+     "peak": -9.6,
+     "tp": -9.4,
+     "lead": 0.0,
+     "tail": 0.159,
+     "centroid": 1670,
+     "snr": 51.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "gulp_3",
+    "source": "elevenlabs",
+    "title": "gulp (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Can dropping deep inside a metal machine, hollow metallic thunk with short echo",
+    "file": "assets/sfx/_candidates/gulp/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.3,
+     "total": 8.46
+    },
+    "m": {
+     "dur": 0.6,
+     "lufs": -15.9,
+     "peak": 0.0,
+     "tp": 0.1,
+     "lead": 0.0,
+     "tail": 0.361,
+     "centroid": 1579,
+     "snr": 73.6,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 12
+ },
+ {
+  "id": "rollers",
+  "kind": "L",
+  "length": [
+   1,
+   4
+  ],
+  "n": 14,
+  "when": "Skanning: boksen spinner på rullene (steg 2)",
+  "what": "Liten elektrisk motor og ruller som går",
+  "prio": 2,
+  "top": [
+   {
+    "id": "rollers_2",
+    "source": "elevenlabs",
+    "title": "rollers (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Small electric motor spinning rubber rollers inside a machine, steady mechanical whir, seamless loop",
+    "file": "assets/sfx/_candidates/rollers/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 3.9,
+     "mix": 7.9,
+     "total": 8.37
+    },
+    "m": {
+     "dur": 2.25,
+     "lufs": -19.7,
+     "peak": -10.37,
+     "tp": -10.4,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 3503,
+     "snr": 10.7,
+     "loop": {
+      "seam_db": 1.88,
+      "seam_cent": 0.106,
+      "seam_jump": 0.0268,
+      "steady": 1.82,
+      "loop_s": 2.25
+     }
+    }
+   },
+   {
+    "id": "rollers_3",
+    "source": "elevenlabs",
+    "title": "rollers (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Small electric motor spinning rubber rollers inside a machine, steady mechanical whir, seamless loop",
+    "file": "assets/sfx/_candidates/rollers/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 8.4,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 5.6,
+     "mix": 6.0,
+     "total": 7.68
+    },
+    "m": {
+     "dur": 2.25,
+     "lufs": -11.0,
+     "peak": -3.05,
+     "tp": -3.0,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 5274,
+     "snr": 3.3,
+     "loop": {
+      "seam_db": 1.03,
+      "seam_cent": 0.117,
+      "seam_jump": 0.0441,
+      "steady": 0.97,
+      "loop_s": 2.25
+     }
+    }
+   },
+   {
+    "id": "rollers_1",
+    "source": "elevenlabs",
+    "title": "rollers (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Small electric motor spinning rubber rollers inside a machine, steady mechanical whir, seamless loop",
+    "file": "assets/sfx/_candidates/rollers/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 7.4,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 5.4,
+     "mix": 6.0,
+     "total": 7.35
+    },
+    "m": {
+     "dur": 2.25,
+     "lufs": -12.3,
+     "peak": -3.73,
+     "tp": -3.6,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 6308,
+     "snr": 5.2,
+     "loop": {
+      "seam_db": 1.18,
+      "seam_cent": 0.069,
+      "seam_jump": 0.047,
+      "steady": 1.22,
+      "loop_s": 2.25
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "lock",
+  "kind": "E",
+  "length": [
+   0.1,
+   0.4
+  ],
+  "n": 15,
+  "when": "Boksen låser seg med strekkoden opp (steg 3)",
+  "what": "Magnetisk smekk eller lås",
+  "prio": 2,
+  "top": [
+   {
+    "id": "lock_3",
+    "source": "elevenlabs",
+    "title": "lock (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Magnetic latch snapping into place, solid mechanical click",
+    "file": "assets/sfx/_candidates/lock/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 8.6,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.2,
+     "total": 8.22
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -23.5,
+     "peak": -1.14,
+     "tp": -0.9,
+     "lead": 0.071,
+     "tail": 0.258,
+     "centroid": 7607,
+     "snr": 65.0,
+     "loop": null
+    }
+   },
+   {
+    "id": "lock_2",
+    "source": "elevenlabs",
+    "title": "lock (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Magnetic latch snapping into place, solid mechanical click",
+    "file": "assets/sfx/_candidates/lock/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 7.8,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.2,
+     "total": 8.18
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -23.5,
+     "peak": -1.41,
+     "tp": -1.2,
+     "lead": 0.0,
+     "tail": 0.399,
+     "centroid": 8771,
+     "snr": 66.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "lock_1",
+    "source": "elevenlabs",
+    "title": "lock (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Magnetic latch snapping into place, solid mechanical click",
+    "file": "assets/sfx/_candidates/lock/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 0.0,
+     "tech": 1,
+     "license": 4,
+     "loop": null,
+     "mix": 1,
+     "total": 1.0
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -70.0,
+     "peak": -58.49,
+     "tp": -58.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 46,
+     "snr": 6.9,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "click",
+  "kind": "E",
+  "length": [
+   0.05,
+   0.3
+  ],
+  "n": 16,
+  "when": "PANT-knappen (steg 5), og når fliken slippes for tidlig",
+  "what": "Stor, solid knapp med fysisk klikk",
+  "prio": 2,
+  "top": [
+   {
+    "id": "click_2",
+    "source": "elevenlabs",
+    "title": "click (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Big chunky arcade push button pressed, solid plastic click",
+    "file": "assets/sfx/_candidates/click/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.9,
+     "total": 8.98
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -26.3,
+     "peak": -3.7,
+     "tp": -3.3,
+     "lead": 0.0,
+     "tail": 0.29,
+     "centroid": 3390,
+     "snr": 65.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "click_3",
+    "source": "elevenlabs",
+    "title": "click (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Big chunky arcade push button pressed, solid plastic click",
+    "file": "assets/sfx/_candidates/click/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.6,
+     "total": 8.93
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -27.1,
+     "peak": -5.88,
+     "tp": -5.6,
+     "lead": 0.0,
+     "tail": 0.001,
+     "centroid": 5466,
+     "snr": 58.8,
+     "loop": null
+    }
+   },
+   {
+    "id": "click_1",
+    "source": "elevenlabs",
+    "title": "click (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Big chunky arcade push button pressed, solid plastic click",
+    "file": "assets/sfx/_candidates/click/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 9.2,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.3,
+     "total": 8.61
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -28.2,
+     "peak": -8.53,
+     "tp": -8.5,
+     "lead": 0.0,
+     "tail": 0.182,
+     "centroid": 8066,
+     "snr": 49.3,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "printer",
+  "kind": "E",
+  "length": [
+   1,
+   2
+  ],
+  "n": 17,
+  "when": "Pantelappen skrives ut (steg 5)",
+  "what": "Termisk kvitteringsskriver, gjerne med avriving",
+  "prio": 1,
+  "top": [
+   {
+    "id": "printer_3",
+    "source": "elevenlabs",
+    "title": "printer (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Thermal receipt printer printing a short receipt, fast rhythmic chatter, ending with paper tear",
+    "file": "assets/sfx/_candidates/printer/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 6.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.9,
+     "total": 7.79
+    },
+    "m": {
+     "dur": 1.6,
+     "lufs": -19.8,
+     "peak": -5.52,
+     "tp": -5.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 3106,
+     "snr": 14.9,
+     "loop": null
+    }
+   },
+   {
+    "id": "printer_1",
+    "source": "elevenlabs",
+    "title": "printer (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Thermal receipt printer printing a short receipt, fast rhythmic chatter, ending with paper tear",
+    "file": "assets/sfx/_candidates/printer/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 6.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.4,
+     "total": 7.69
+    },
+    "m": {
+     "dur": 1.6,
+     "lufs": -21.7,
+     "peak": -9.96,
+     "tp": -9.9,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 2309,
+     "snr": 10.3,
+     "loop": null
+    }
+   },
+   {
+    "id": "printer_2",
+    "source": "elevenlabs",
+    "title": "printer (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Thermal receipt printer printing a short receipt, fast rhythmic chatter, ending with paper tear",
+    "file": "assets/sfx/_candidates/printer/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 6.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.1,
+     "total": 7.62
+    },
+    "m": {
+     "dur": 1.6,
+     "lufs": -22.7,
+     "peak": -12.38,
+     "tp": -12.1,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 3416,
+     "snr": 14.5,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 12
+ },
+ {
+  "id": "rumble",
+  "kind": "L",
+  "length": [
+   2,
+   5
+  ],
+  "n": 18,
+  "when": "Maskinen kveles når boksen sitter fast (steg 5–6)",
+  "what": "Motor som sliter, bulder og risting",
+  "prio": 2,
+  "top": [
+   {
+    "id": "rumble_2",
+    "source": "elevenlabs",
+    "title": "rumble (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine jammed and struggling, motor grinding and rumbling, metal shaking, seamless loop",
+    "file": "assets/sfx/_candidates/rumble/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 8.7,
+     "mix": 8.5,
+     "total": 8.97
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -17.5,
+     "peak": -3.05,
+     "tp": -2.6,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 918,
+     "snr": 7.6,
+     "loop": {
+      "seam_db": 0.17,
+      "seam_cent": 0.141,
+      "seam_jump": 0.0114,
+      "steady": 1.46,
+      "loop_s": 3.0
+     }
+    }
+   },
+   {
+    "id": "rumble_3",
+    "source": "elevenlabs",
+    "title": "rumble (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine jammed and struggling, motor grinding and rumbling, metal shaking, seamless loop",
+    "file": "assets/sfx/_candidates/rumble/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 4.5,
+     "mix": 8.6,
+     "total": 8.57
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -17.8,
+     "peak": -5.16,
+     "tp": -5.0,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 973,
+     "snr": 7.1,
+     "loop": {
+      "seam_db": 2.11,
+      "seam_cent": 0.023,
+      "seam_jump": 0.0026,
+      "steady": 1.63,
+      "loop_s": 3.0
+     }
+    }
+   },
+   {
+    "id": "rumble_1",
+    "source": "elevenlabs",
+    "title": "rumble (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Vending machine jammed and struggling, motor grinding and rumbling, metal shaking, seamless loop",
+    "file": "assets/sfx/_candidates/rumble/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 5.2,
+     "mix": 7.9,
+     "total": 8.5
+    },
+    "m": {
+     "dur": 3.0,
+     "lufs": -15.6,
+     "peak": -3.19,
+     "tp": -3.1,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 988,
+     "snr": 8.6,
+     "loop": {
+      "seam_db": 1.22,
+      "seam_cent": 0.394,
+      "seam_jump": 0.0032,
+      "steady": 1.61,
+      "loop_s": 3.0
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "rattle",
+  "kind": "E",
+  "length": [
+   0.2,
+   0.6
+  ],
+  "n": 19,
+  "when": "Hvert rist (steg 6)",
+  "what": "Metallkasse som skrangler og rister",
+  "prio": 2,
+  "top": [
+   {
+    "id": "rattle_1",
+    "source": "elevenlabs",
+    "title": "rattle (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Heavy metal vending machine cabinet shaken once, rattling metal panels",
+    "file": "assets/sfx/_candidates/rattle/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.9,
+     "total": 9.39
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -18.2,
+     "peak": -4.41,
+     "tp": -4.3,
+     "lead": 0.0,
+     "tail": 0.132,
+     "centroid": 776,
+     "snr": 47.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "rattle_2",
+    "source": "elevenlabs",
+    "title": "rattle (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Heavy metal vending machine cabinet shaken once, rattling metal panels",
+    "file": "assets/sfx/_candidates/rattle/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -30.8,
+     "peak": -16.94,
+     "tp": -16.7,
+     "lead": 0.0,
+     "tail": 0.096,
+     "centroid": 506,
+     "snr": 49.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "rattle_3",
+    "source": "elevenlabs",
+    "title": "rattle (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Heavy metal vending machine cabinet shaken once, rattling metal panels",
+    "file": "assets/sfx/_candidates/rattle/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -32.2,
+     "peak": -16.76,
+     "tp": -16.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 603,
+     "snr": 52.1,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 9
+ },
+ {
+  "id": "clank",
+  "kind": "E",
+  "length": [
+   0.1,
+   0.5
+  ],
+  "n": 20,
+  "when": "Boksen treffer luka og sprett (steg 5–6)",
+  "what": "En boks som treffer metall",
+  "prio": 2,
+  "top": [
+   {
+    "id": "clank_1",
+    "source": "elevenlabs",
+    "title": "clank (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full aluminium drink can hitting a metal tray, short metallic clank",
+    "file": "assets/sfx/_candidates/clank/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -30.4,
+     "peak": -15.54,
+     "tp": -15.5,
+     "lead": 0.0,
+     "tail": 0.206,
+     "centroid": 1804,
+     "snr": 56.2,
+     "loop": null
+    }
+   },
+   {
+    "id": "clank_2",
+    "source": "elevenlabs",
+    "title": "clank (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full aluminium drink can hitting a metal tray, short metallic clank",
+    "file": "assets/sfx/_candidates/clank/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -40.0,
+     "peak": -23.92,
+     "tp": -23.9,
+     "lead": 0.0,
+     "tail": 0.205,
+     "centroid": 1271,
+     "snr": 53.8,
+     "loop": null
+    }
+   },
+   {
+    "id": "clank_3",
+    "source": "elevenlabs",
+    "title": "clank (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full aluminium drink can hitting a metal tray, short metallic clank",
+    "file": "assets/sfx/_candidates/clank/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 1,
+     "tech": 1,
+     "license": 4,
+     "loop": null,
+     "mix": 1,
+     "total": 1.3
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -53.8,
+     "peak": -38.1,
+     "tp": -38.1,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 1013,
+     "snr": 36.1,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "thud",
+  "kind": "E",
+  "length": [
+   0.2,
+   0.6
+  ],
+  "n": 21,
+  "when": "Boksen løsner og faller ned i luka (steg 6), og i den lette versjonen",
+  "what": "Tyngre dunk av en full boks",
+  "prio": 2,
+  "top": [
+   {
+    "id": "thud_2",
+    "source": "elevenlabs",
+    "title": "thud (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full drink can dropping onto a metal delivery tray, heavy dull thud",
+    "file": "assets/sfx/_candidates/thud/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.0,
+     "total": 8.6
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -43.8,
+     "peak": -26.92,
+     "tp": -26.9,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 976,
+     "snr": 49.7,
+     "loop": null
+    }
+   },
+   {
+    "id": "thud_1",
+    "source": "elevenlabs",
+    "title": "thud (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full drink can dropping onto a metal delivery tray, heavy dull thud",
+    "file": "assets/sfx/_candidates/thud/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 1,
+     "tech": 1,
+     "license": 4,
+     "loop": null,
+     "mix": 1,
+     "total": 1.3
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -53.4,
+     "peak": -39.63,
+     "tp": -39.5,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 310,
+     "snr": 38.9,
+     "loop": null
+    }
+   },
+   {
+    "id": "thud_3",
+    "source": "elevenlabs",
+    "title": "thud (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Full drink can dropping onto a metal delivery tray, heavy dull thud",
+    "file": "assets/sfx/_candidates/thud/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 1,
+     "tech": 1,
+     "license": 4,
+     "loop": null,
+     "mix": 1,
+     "total": 1.3
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -66.1,
+     "peak": -52.25,
+     "tp": -52.2,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 887,
+     "snr": 24.3,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "drop",
+  "kind": "E",
+  "length": [
+   0.1,
+   0.4
+  ],
+  "n": 22,
+  "when": "Boksen slippes langt unna hullet, og den flate boksen faller (steg 1 og 4)",
+  "what": "Lett tom boks som slår og spretter",
+  "prio": 3,
+  "top": [
+   {
+    "id": "drop_1",
+    "source": "elevenlabs",
+    "title": "drop (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Empty crushed aluminium can dropping and bouncing on metal, light tinny clatter",
+    "file": "assets/sfx/_candidates/drop/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.7,
+     "total": 8.93
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -27.0,
+     "peak": -9.01,
+     "tp": -9.0,
+     "lead": 0.0,
+     "tail": 0.174,
+     "centroid": 2448,
+     "snr": 45.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "drop_3",
+    "source": "elevenlabs",
+    "title": "drop (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Empty crushed aluminium can dropping and bouncing on metal, light tinny clatter",
+    "file": "assets/sfx/_candidates/drop/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.9,
+     "total": 8.77
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -29.4,
+     "peak": -12.15,
+     "tp": -12.1,
+     "lead": 0.0,
+     "tail": 0.179,
+     "centroid": 2485,
+     "snr": 40.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "drop_2",
+    "source": "elevenlabs",
+    "title": "drop (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Empty crushed aluminium can dropping and bouncing on metal, light tinny clatter",
+    "file": "assets/sfx/_candidates/drop/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.4,
+     "total": 8.69
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -30.7,
+     "peak": -11.67,
+     "tp": -11.7,
+     "lead": 0.0,
+     "tail": 0.173,
+     "centroid": 2163,
+     "snr": 47.2,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "whoosh",
+  "kind": "E",
+  "length": [
+   0.4,
+   1.0
+  ],
+  "n": 23,
+  "when": "Boksen svever opp fra luka (steg 6)",
+  "what": "Mykt og luftig sus",
+  "prio": 2,
+  "top": [
+   {
+    "id": "whoosh_3",
+    "source": "elevenlabs",
+    "title": "whoosh (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Soft airy magical whoosh of an object floating upward",
+    "file": "assets/sfx/_candidates/whoosh/elevenlabs_3.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.7,
+     "total": 8.73
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -16.0,
+     "peak": -0.48,
+     "tp": -0.4,
+     "lead": 0.0,
+     "tail": 0.326,
+     "centroid": 1034,
+     "snr": 61.6,
+     "loop": null
+    }
+   },
+   {
+    "id": "whoosh_1",
+    "source": "elevenlabs",
+    "title": "whoosh (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Soft airy magical whoosh of an object floating upward",
+    "file": "assets/sfx/_candidates/whoosh/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 5.9,
+     "total": 8.19
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -13.8,
+     "peak": 0.0,
+     "tp": 0.1,
+     "lead": 0.0,
+     "tail": 0.322,
+     "centroid": 564,
+     "snr": 75.7,
+     "loop": null
+    }
+   },
+   {
+    "id": "whoosh_2",
+    "source": "elevenlabs",
+    "title": "whoosh (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Soft airy magical whoosh of an object floating upward",
+    "file": "assets/sfx/_candidates/whoosh/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 7.9,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.9,
+     "total": 8.15
+    },
+    "m": {
+     "dur": 0.8,
+     "lufs": -13.8,
+     "peak": -0.58,
+     "tp": -0.6,
+     "lead": 0.0,
+     "tail": 0.282,
+     "centroid": 208,
+     "snr": 63.1,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "tick",
+  "kind": "E",
+  "length": [
+   0.05,
+   0.2
+  ],
+  "n": 24,
+  "when": "Hver del av logomåleren (steg 7) og telleren ved knaset",
+  "what": "Kort klikk med tone (tonehøyden justeres per del)",
+  "prio": 3,
+  "top": [
+   {
+    "id": "tick_1",
+    "source": "elevenlabs",
+    "title": "tick (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short electronic meter tick, crisp relay click with a tiny tone",
+    "file": "assets/sfx/_candidates/tick/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 7.9,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 9.6,
+     "total": 8.27
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -20.7,
+     "peak": -4.41,
+     "tp": -4.2,
+     "lead": 0.098,
+     "tail": 0.101,
+     "centroid": 8684,
+     "snr": 68.4,
+     "loop": null
+    }
+   },
+   {
+    "id": "tick_3",
+    "source": "elevenlabs",
+    "title": "tick (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short electronic meter tick, crisp relay click with a tiny tone",
+    "file": "assets/sfx/_candidates/tick/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 7.1,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.1,
+     "total": 7.95
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -30.7,
+     "peak": -7.94,
+     "tp": -7.9,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 9931,
+     "snr": 56.6,
+     "loop": null
+    }
+   },
+   {
+    "id": "tick_2",
+    "source": "elevenlabs",
+    "title": "tick (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Single short electronic meter tick, crisp relay click with a tiny tone",
+    "file": "assets/sfx/_candidates/tick/elevenlabs_2.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 1,
+     "tech": 1,
+     "license": 4,
+     "loop": null,
+     "mix": 1,
+     "total": 1.3
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -57.6,
+     "peak": -38.92,
+     "tp": -38.9,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 3328,
+     "snr": 23.2,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ },
+ {
+  "id": "grab",
+  "kind": "E",
+  "length": [
+   0.05,
+   0.2
+  ],
+  "n": 25,
+  "when": "Du griper boksen (steg 1)",
+  "what": "Lite grep og raslelyd",
+  "prio": 3,
+  "top": [
+   {
+    "id": "grab_1",
+    "source": "elevenlabs",
+    "title": "grab (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hand picking up an aluminium can, short grip and light metallic touch",
+    "file": "assets/sfx/_candidates/grab/elevenlabs_1.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 9.2,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.8,
+     "total": 8.93
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -20.5,
+     "peak": -5.24,
+     "tp": -4.8,
+     "lead": 0.0,
+     "tail": 0.205,
+     "centroid": 6890,
+     "snr": 60.7,
+     "loop": null
+    }
+   },
+   {
+    "id": "grab_2",
+    "source": "elevenlabs",
+    "title": "grab (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hand picking up an aluminium can, short grip and light metallic touch",
+    "file": "assets/sfx/_candidates/grab/elevenlabs_2.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 9.6,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 7.9,
+     "total": 8.87
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -30.4,
+     "peak": -14.33,
+     "tp": -14.0,
+     "lead": 0.0,
+     "tail": 0.188,
+     "centroid": 6376,
+     "snr": 57.5,
+     "loop": null
+    }
+   },
+   {
+    "id": "grab_3",
+    "source": "elevenlabs",
+    "title": "grab (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Hand picking up an aluminium can, short grip and light metallic touch",
+    "file": "assets/sfx/_candidates/grab/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.4,
+     "total": 8.67
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -34.9,
+     "peak": -15.69,
+     "tp": -15.5,
+     "lead": 0.0,
+     "tail": 0.16,
+     "centroid": 4077,
+     "snr": 46.2,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 10
+ },
+ {
+  "id": "ui",
+  "kind": "E",
+  "length": [
+   0.03,
+   0.15
+  ],
+  "n": 26,
+  "when": "Foreslått: handlingsknappen og lyd-chipen",
+  "what": "Svært kort og dempet",
+  "prio": 3,
+  "top": [
+   {
+    "id": "ui_2",
+    "source": "elevenlabs",
+    "title": "ui (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Very short soft muted user interface tap",
+    "file": "assets/sfx/_candidates/ui/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 6.2,
+     "total": 8.63
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -20.5,
+     "peak": -0.32,
+     "tp": -0.3,
+     "lead": 0.005,
+     "tail": 0.397,
+     "centroid": 3163,
+     "snr": 72.7,
+     "loop": null
+    }
+   },
+   {
+    "id": "ui_3",
+    "source": "elevenlabs",
+    "title": "ui (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Very short soft muted user interface tap",
+    "file": "assets/sfx/_candidates/ui/elevenlabs_3.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 9.0,
+     "license": 4,
+     "loop": null,
+     "mix": 5.9,
+     "total": 8.17
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -16.6,
+     "peak": -0.45,
+     "tp": -0.4,
+     "lead": 0.088,
+     "tail": 0.272,
+     "centroid": 1226,
+     "snr": 78.2,
+     "loop": null
+    }
+   },
+   {
+    "id": "ui_1",
+    "source": "elevenlabs",
+    "title": "ui (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Very short soft muted user interface tap",
+    "file": "assets/sfx/_candidates/ui/elevenlabs_1.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 4.8,
+     "tech": 10.0,
+     "license": 4,
+     "loop": null,
+     "mix": 8.1,
+     "total": 7.46
+    },
+    "m": {
+     "dur": 0.48,
+     "lufs": -20.2,
+     "peak": -7.81,
+     "tp": -7.8,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 326,
+     "snr": 42.6,
+     "loop": null
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 8
+ },
+ {
+  "id": "room",
+  "kind": "L",
+  "length": [
+   10,
+   30
+  ],
+  "n": 27,
+  "when": "Valgfri: under alt annet, svakt",
+  "what": "Natt utendørs ved butikken: fjern by eller vind",
+  "prio": 3,
+  "top": [
+   {
+    "id": "room_2",
+    "source": "elevenlabs",
+    "title": "room (generated #2)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Quiet night outside a convenience store, distant city traffic, soft wind, seamless loop",
+    "file": "assets/sfx/_candidates/room/elevenlabs_2.mp3",
+    "rank": 1,
+    "score": {
+     "fit": 8.2,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 4.8,
+     "mix": 9.6,
+     "total": 8.25
+    },
+    "m": {
+     "dur": 10.0,
+     "lufs": -39.3,
+     "peak": -24.38,
+     "tp": -24.4,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 73,
+     "snr": 10.6,
+     "loop": {
+      "seam_db": 1.41,
+      "seam_cent": 0.374,
+      "seam_jump": 0.0018,
+      "steady": 1.7,
+      "loop_s": 10.0
+     }
+    }
+   },
+   {
+    "id": "room_1",
+    "source": "elevenlabs",
+    "title": "room (generated #1)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Quiet night outside a convenience store, distant city traffic, soft wind, seamless loop",
+    "file": "assets/sfx/_candidates/room/elevenlabs_1.mp3",
+    "rank": 2,
+    "score": {
+     "fit": 10.0,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 0.0,
+     "mix": 9.1,
+     "total": 8.22
+    },
+    "m": {
+     "dur": 10.0,
+     "lufs": -35.3,
+     "peak": -22.01,
+     "tp": -22.0,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 106,
+     "snr": 9.7,
+     "loop": {
+      "seam_db": 3.12,
+      "seam_cent": 0.782,
+      "seam_jump": 0.0002,
+      "steady": 2.03,
+      "loop_s": 10.0
+     }
+    }
+   },
+   {
+    "id": "room_3",
+    "source": "elevenlabs",
+    "title": "room (generated #3)",
+    "creator": "ElevenLabs (generated)",
+    "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
+    "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
+    "commercial_ok": false,
+    "prompt": "Quiet night outside a convenience store, distant city traffic, soft wind, seamless loop",
+    "file": "assets/sfx/_candidates/room/elevenlabs_3.mp3",
+    "rank": 3,
+    "score": {
+     "fit": 7.7,
+     "tech": 10.0,
+     "license": 4,
+     "loop": 2.9,
+     "mix": 8.8,
+     "total": 7.76
+    },
+    "m": {
+     "dur": 10.0,
+     "lufs": -34.4,
+     "peak": -17.34,
+     "tp": -17.3,
+     "lead": 0.0,
+     "tail": 0.0,
+     "centroid": 67,
+     "snr": 12.6,
+     "loop": {
+      "seam_db": 1.48,
+      "seam_cent": 0.698,
+      "seam_jump": 0.0022,
+      "steady": 2.53,
+      "loop_s": 10.0
+     }
+    }
+   }
+  ],
+  "measured": 3,
+  "found": 13
+ }
+]

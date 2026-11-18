@@ -815,20 +815,60 @@ export async function createWorld(canvas, ui) {
     });
   }
 
+  // 8 · FLICK — the tab answers the finger before it gives: it lifts against a stiff spring as you swipe up and the can
+  // leans back; let go short and it snaps back down with a tick. Past the line it goes.
   function stepFlick() {
-    let y0 = null, tStart = 0;
+    let y0 = null, tStart = 0, lift = 0, lv = 0, goal = 0;
+    const rest = fresh.orient.rotation.x, baseY = fresh.holder.position.y;
+    const keep = frameHook;
+    frameHook = (dt, t) => {
+      if (keep) keep(dt, t);
+      const x = V(lift, 0, 0), v = V(lv, 0, 0);
+      spring(x, v, V(goal, 0, 0), 400, 18, dt); lift = x.x; lv = v.x;
+      setOpen(Math.max(0, lift) * 0.3);
+      fresh.orient.rotation.x = rest - 0.2 * Math.max(0, lift);
+      fresh.holder.position.y = baseY - 0.012 * Math.max(0, lift);   // it ducks under the pull
+    };
+    const finish = (self) => { y0 = null; frameHook = keep; self.done(lift); };
     return begin('flick', {
       down(e) { y0 = e.clientY; tStart = performance.now(); },
-      move(e) { if (y0 != null && y0 - e.clientY > 60 && performance.now() - tStart < 900) { y0 = null; this.done(); } },
-      up(e) { if (y0 != null && hits(e, fresh.holder)) { y0 = null; this.done(); } y0 = null; },
-      key(k) { if (k === 'up') this.done(); },
-      act() { this.done(); },
+      move(e) {
+        if (y0 == null) return;
+        const d = y0 - e.clientY;
+        goal = clamp(d / 90) * (1 - 0.35 * clamp(d / 90));          // resistance: it gets stiffer towards the line
+        if (d > 70 && performance.now() - tStart < 900) finish(this);
+      },
+      up(e) {
+        if (y0 != null && Math.abs(goal) < 0.05 && hits(e, fresh.holder)) { finish(this); return; }
+        if (goal > 0.05) S.click();
+        y0 = null; goal = 0;
+      },
+      key(k) { if (k === 'up') finish(this); },
+      act() { finish(this); },
     });
   }
 
-  async function popAndFinale() {
+  // 8b · POP — a beat of pressure first (the can squeezes, the tab digs in), then the bang: the can kicks down and springs
+  // back, the frame punches in, spray in slow motion, foam runs. The camera pulls out to the hero shot while the can
+  // turns once, overshoots a touch and settles into a slow hover, so the last picture behind the receipt is alive.
+  async function popAndFinale(lift = 0) {
     frameHook = null; if (tab) tab.material.emissiveIntensity = 0;
-    S.pop(); flashIt(true); shakeAmt = 0.025;
+    const base = fresh.holder.position.clone(), rest = fresh.orient.rotation.x + 0.2 * Math.max(0, lift);
+    base.y += 0.012 * Math.max(0, lift);
+    await tween(RM ? 0.01 : 0.12, (k) => {
+      fresh.crush.scale.set(1 + 0.03 * k, 1 - 0.04 * k, 1 + 0.03 * k);
+      setOpen(0.3 * Math.max(lift, k));
+      fresh.orient.rotation.x = rest - 0.2 * Math.max(lift, k);
+    }, easeIn);
+    S.pop(); flashIt(true); shakeAmt = 0.025; push = 3.5;
+    const rec = V(-0.018, 0, 0), recV = V(0, 0, 0), sq = V(-0.06, 0, 0), sqV = V(0, 0, 0), tilt = V(0.12, 0, 0), tiltV = V(0, 0, 0);
+    fxHook = (dt) => {                                             // recoil, stretch and lean, each on its own spring
+      spring(rec, recV, V(0, 0, 0), 220, 9, dt); spring(sq, sqV, V(0, 0, 0), 300, 8, dt); spring(tilt, tiltV, V(0, 0, 0), 90, 7, dt);
+      fresh.holder.position.y = base.y + rec.x;
+      fresh.crush.scale.set(1 - sq.x * 0.5, 1 + sq.x, 1 - sq.x * 0.5);
+      fresh.orient.rotation.x = rest - tilt.x;
+      push *= Math.exp(-dt * 3);
+    };
     energy = 3.2;
     const t0p = performance.now();
     const openDur = 0.75;
@@ -844,10 +884,22 @@ export async function createWorld(canvas, ui) {
     say('FULLT LADET', 'BATTERIET ER BYTTET', '#4dff8a');
     await wait(0.8);
     // the camera pulls back to the hero shot: the machine, the fresh can, the receipt hanging from the slot
-    const turn = tween(RM ? 0.01 : 3.0, (k) => { fresh.orient.rotation.y = TAU * easeInOut(k); });
+    const back = (t) => { const c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };   // ease-out-back
+    const turn = tween(RM ? 0.01 : 3.0, (k) => { fresh.orient.rotation.y = TAU * k; }, (t) => back(easeInOut(t)));
     await fly(ST.finale, RM ? 0.01 : 2.6);
     await turn;
+    // the hold: a slow hover and sway while the receipt comes up
+    fxHook = null;
+    const hb = fresh.holder.position.y, t1 = performance.now();
+    const keep = frameHook;
+    frameHook = (dt, t) => {
+      if (keep) keep(dt, t);
+      const s = (performance.now() - t1) / 1000, k = clamp(s / 1.2);
+      fresh.holder.position.y = hb + Math.sin(s * 1.4) * 0.01 * k;
+      fresh.orient.rotation.y = TAU + Math.sin(s * 0.6) * 0.22 * k;
+    };
     say('DIN TUR?', 'BATTERIBYTTE.VERCEL.APP', '#ffd27a');
+    await wait(1.1);                                                // let the hero shot land before the receipt covers it
     return receiptData;
   }
 
@@ -865,8 +917,8 @@ export async function createWorld(canvas, ui) {
       await stepShake();
       await dropOut();
       await stepHold();
-      await stepFlick();
-      return popAndFinale();
+      const lift = await stepFlick();
+      return popAndFinale(lift);
     },
     act() { if (step && step.act) step.act(); },
     key(k) { if (step && step.key) step.key(k); },
