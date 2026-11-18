@@ -1,22 +1,32 @@
 # Batteribytte ⚡
 
-En liten side for kolleger og venner: en kort produktfilm i svart studio (tre Battery Fresh-bokser, lys som
-sveiper over, makro av etiketten, kald røyk), og så spørsmålet «Er du klar?» med Ja / Nei.
-Du lader ved å **scrolle** (eller holde inne Ja, som scroller for deg): filmen, batteriet, tekstene og lyset følger
-én felles tidslinje. Ved 100 % åpner du boksen selv: da tar en ekte 3D-boks over fra filmen, lades med lyn, smeller opp med sprut
-og tar en heltesving du kan overta. Nei slukker lyset. Lyd lages i nettleseren (Web Audio) og starter ved første trykk.
+Reklamesiden for Battery Fresh, til kolleger og venner: **pant det flate batteriet, og få et fullt.** En nattlig pantemaskin under skiltet «BATTERIBYTTE», i ekte 3D:
+1. Du drar den flate boksen inn i hullet, og kameraet dykker etter.
+2. Maskinen avviser den («Strekkoden vises ikke»), så du ruller den til strekkoden vises.
+3. Pressen knuser den.
+4. Du trykker PANT, og lappen skrives ut.
+5. Den nye boksen sitter fast, så du rister den løs.
+6. Du holder den til logoens «+ ‖» er fylt som et batteri.
+7. Du flikker fliken opp.
 
-- `index.html`, `style.css`, `app.js` (tilstander, knapper, lyd, fotoreserven), `journey.js` (scroll, film, tidslinje) — uten byggesteg.
-- `frames/720/` og `frames/540/` — filmen som bildesekvens (494 WebP-bilder, 24 fps), tegnet på canvas.
-  Lages fra `assets/journey2-720.mp4` med `tools/make-frames.sh`. `assets/base-poster.jpg` vises før de er lastet.
-- `lib/` — GSAP + ScrollTrigger, Lenis og `can3d.js` (three.js + `src/can3d.js`, bygges med `tools/build-can3d.sh`). Se `lib/README.md`.
-- `assets/can/` — klimakset i 3D, laget i Blender (Blender som Python-modul, ingen installasjon: `pip install bpy==5.3.0 pillow`):
-  `battery-can.glb` (modellen med lynårer, skum og åpne-animasjon, `tools/blender/build_can.py`; `--render` gir `tools/blender/preview.png`, `--foam` et nærbilde av skummet)
-  og `spray.webp`/`spray.json` (spruten, `tools/blender/render_spray.py`). Delingsbildet `assets/og.jpg` er `tools/blender/render_og.py`.
-- `assets/battery-fresh.webp` (produktfoto, også kilden til 3D-boksen), `assets/og.jpg` (delingsbilde), `favicon.svg`,
-  `fonts/` (Archivo Black, SIL OFL, se `fonts/OFL.txt`).
-- Respekterer «redusert bevegelse» (ingen scroll-film, fotoboksen lades med knappen) og fungerer med tastatur og skjermleser.
-- Interaksjonsspesifikasjon: `docs/interaction-spec.md`.
+Til slutt får du pantelappen, som du kan dele. Konsept og vurdering står i `docs/concept.md`, og interaksjonene i `docs/interaction-spec.md`.
+
+- `index.html`, `style.css`: siden. `lib/pant/` er bygget fra `src/pant/` med `tools/build-pant.sh` (three.js 0.187, splittet slik at three.js lastes etter første opptegning).
+- `assets/pant/machine.glb` (maskinen og rommet), `assets/can/battery-can.glb` (boksen), `assets/can/spray.webp`, `assets/pant/meter.webp` og `assets/pant/stills/` (plakat og lett reserve) er laget i Blender som Python-modul (`pip install bpy==5.3.0 pillow`) med skriptene i `tools/blender/`.
+- Redusert bevegelse, manglende WebGL eller 3D-lasting som feiler gir samme historie som stillbilder, med én knapp per steg.
+- Alle handlinger kan gjøres med tastatur og med handlingsknappen. Et live-område forteller skjermleseren hva som skjer.
+
+## Nettvekt (målt i repoet; gzip i parentes)
+
+| Hva | Når | Størrelse |
+|---|---|---|
+| HTML, CSS, `lib/pant/main.js` og delbiter, font, plakat (`stills/start.webp`) | Første opptegning | ≈ 72 kB (≈ 57 kB) |
+| `lib/pant/world-*.js` (three.js, tree-shaket) | Rett etter | 664 kB (170 kB) |
+| `assets/pant/machine.glb` | Rett etter | 370 kB (95 kB) |
+| `assets/can/battery-can.glb` | Rett etter | 2,26 MB (1,14 MB) |
+| `assets/can/spray.webp`, `meter.webp`, `spray.json` | Rett etter | 465 kB |
+| **Totalt med 3D** | | **≈ 3,8 MB (≈ 2,0 MB over nettet)**, mot ≈ 15–17 MB i den gamle film-versjonen |
+| Lett reserve (redusert bevegelse eller ingen WebGL): første opptegning, `lite-*.js` og seks stillbilder | I stedet | ≈ 0,13 MB |
 
 ## Agent-verktøy
 
