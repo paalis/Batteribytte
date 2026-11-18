@@ -37,7 +37,7 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 // ---------- camera stations (shared with tools/blender/render_stills.py) ----------
 const ST = {
   start:  { pos: V(0.06, 1.2, 2.05), tgt: V(0, 1.12, 0), fov: 50 },
-  inside: { pos: V(0.13, 1.21, -0.19), tgt: V(0, 1.02, -0.33), fov: 62 },
+  inside: { pos: V(0.15, 1.235, -0.17), tgt: V(0, 1.01, -0.33), fov: 62 },   // above and beside the press's path
   button: { pos: V(0.32, 1.02, 0.62), tgt: V(0.22, 0.95, 0), fov: 46 },
   hatch:  { pos: V(0.0, 0.62, 1.05), tgt: V(0, 0.33, 0), fov: 48 },
   hero:   { pos: V(0.0, 0.98, 1.05), tgt: V(0, 0.95, 0.45), fov: 40 },
@@ -66,6 +66,7 @@ export async function createWorld(canvas, ui) {
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
+  renderer.localClippingEnabled = true;            // the receipt is cut off at the slot as it slides out
   const scene = new Scene();
   scene.background = new Color(0x040506);
   scene.fog = new FogExp2(0x05070a, 0.22);
@@ -76,8 +77,9 @@ export async function createWorld(canvas, ui) {
   const key = new DirectionalLight(0xd6e8ff, 0.9); key.position.set(-1.2, 2.6, 2.2); scene.add(key);
   const warm = new PointLight(0xffa860, 1.2, 5, 2); warm.position.set(1.4, 1.5, 0.9); scene.add(warm);
   const holeLight = new PointLight(0x4fd6c8, 0.25, 1.2, 2); holeLight.position.set(0, 1.05, 0.22); scene.add(holeLight);
-  const chamberRed = new PointLight(0xff2a1a, 0, 0.7, 2); chamberRed.position.set(0, 1.2, -0.3); scene.add(chamberRed);
-  const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.12, 1.18, -0.2); scene.add(chamberFill);
+  const chamberRed = new PointLight(0xff2a1a, 0, 0.7, 2); chamberRed.position.set(0, 1.13, -0.135); scene.add(chamberRed);
+  // (in front of the press path, behind the camera: the faces it lights head-on are never seen, so no hot spot as the press comes down)
+  const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.14, 1.12, -0.18); scene.add(chamberFill);
   const heroLight = new PointLight(0xfff0d8, 0, 2.0, 2); heroLight.position.set(-0.35, 1.25, 0.95); scene.add(heroLight);
 
   const camera = new PerspectiveCamera(50, 1, 0.01, 30);
@@ -139,7 +141,7 @@ export async function createWorld(canvas, ui) {
   const H = 0.168;
   meterTex.flipY = false;
   function prepare(root, { flat }) {
-    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 } };
+    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 }, uCrush: { value: 0 } };
     let label = null;
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
@@ -151,6 +153,11 @@ export async function createWorld(canvas, ui) {
         o.material.emissiveIntensity = 0;
         o.material.onBeforeCompile = (sh) => {
           Object.assign(sh.uniforms, u);
+          // crushed: the wall buckles into creases (the press squashes it; this crumples it)
+          sh.vertexShader = 'uniform float uCrush;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+            { float a = atan(position.x, position.z);
+              float c = sin(position.y * 170.0 + a * 3.0) * sin(a * 5.0 + position.y * 60.0) + 0.5 * sin(a * 11.0 - position.y * 240.0);
+              transformed += normal * uCrush * 0.0045 * c; }`);
           sh.fragmentShader = 'uniform sampler2D uMeter; uniform float uLevel; uniform vec3 uMeterColor; uniform float uMeterGain; uniform float uSat; uniform float uDim;\n' + sh.fragmentShader
             .replace('#include <map_fragment>', `#include <map_fragment>
               { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = mix(vec3(l), diffuseColor.rgb, uSat) * uDim; }`)
@@ -544,166 +551,259 @@ export async function createWorld(canvas, ui) {
     });
   }
 
+  // 4 · KNAS — the press comes down fast to the can and stops dead on it (a beat of hit-stop), then crushes it in slow
+  // motion: the can's top follows the press exactly, the wall crumples into creases, the camera punches in. Then the
+  // rollers part and the flat can drops between them into the bin, tumbling.
   async function crushIt() {
     fxHook = null;
     S.accept();
     say('GODKJENT', '1 × BATTERI (FLATT)', '#4dff8a');
     lasers.forEach((l) => l.material.emissive && l.material.emissive.setRGB(0.1, 1, 0.3));
-    chamberRed.color.setRGB(0.2, 1, 0.3);
-    await wait(0.7);
+    chamberRed.color.setRGB(0.2, 1, 0.3); chamberRed.intensity = 1.4;
+    await tween(0.5, (k) => { chamberRed.intensity = MathUtils.lerp(1.4, 0.5, k); }, easeOut);
+    await wait(0.2);
     lasers.forEach((l) => { l.visible = false; });
     chamberRed.color.setRGB(1, 0.16, 0.1); chamberRed.intensity = 0.4;
-    // the press: fast to the can, then slow through it
     const py = press ? press.position.y : 0;
-    const anchor = 0.993;                              // the top of the rollers: the can stays on them
+    const bottom0 = press ? press.position.y - 0.0175 : 1.19;      // the press plate's underside
+    const anchor = 0.993, R = 0.0331;                              // the rollers' top; the can's radius
+    const top0 = P_CHAMBER.y + R, flatTop = anchor + 0.016;
     flat.crush.position.y = anchor - P_CHAMBER.y; flat.orient.position.y = P_CHAMBER.y - anchor;   // squash toward the rollers
-    await tween(0.18, (k) => { if (press) press.position.y = py - 0.13 * k; }, easeIn);
-    S.crush(); flashIt(false); shakeAmt = 0.02;
-    await tween(RM ? 0.01 : 0.9, (k) => {
-      if (press) press.position.y = py - 0.13 - 0.045 * k;
-      flat.crush.scale.set(1 + 0.3 * k, 1 - 0.68 * k, 1 + 0.05 * k);
-      flat.crush.rotation.z = Math.sin(k * 9) * 0.04 * k;
+    // down to the can, accelerating
+    await tween(RM ? 0.01 : 0.22, (k) => { if (press) press.position.y = py - (bottom0 - top0) * k; }, easeIn);
+    S.crush(); flashIt(false); shakeAmt = 0.02; push = 4;
+    await wait(0.07);                                              // hit-stop: it holds, for a beat, on contact
+    // through the can, slowly: the can's top is wherever the plate is
+    await tween(RM ? 0.01 : 0.85, (k) => {
+      const plate = top0 - (top0 - flatTop) * k;
+      if (press) press.position.y = py - (bottom0 - plate);
+      const sy = (plate - anchor) / (2 * R);
+      flat.crush.scale.set(1 + 0.32 * (1 - sy), sy, 1 + 0.04 * (1 - sy));
+      flat.crush.rotation.z = Math.sin(k * 11) * 0.035 * k;
+      flat.u.uCrush.value = k;
+      push = 4 * (1 - k);
     }, easeOut);
+    push = 0;
     const count = 1 + (Number(localStorage.getItem('bb-count') || 0) || 0);
     try { localStorage.setItem('bb-count', String(count)); } catch (e) { /* private mode */ }
     receiptData.count = count;
-    say('KNAS!', `BATTERIER BYTTET I DAG: ${count}`, '#ffd27a');
-    await tween(0.4, (k) => { if (press) press.position.y = py - 0.175 * (1 - k); });
-    // it drops away into the bin
+    say('KNAS!', `BATTERIER BYTTET I DAG: ${count - 1}`, '#ffd27a');
+    setTimeout(() => { say('KNAS!', `BATTERIER BYTTET I DAG: ${count}`, '#ffd27a'); S.tick(2); }, RM ? 0 : 420);   // the counter ticks
+    await tween(RM ? 0.01 : 0.35, (k) => { if (press) press.position.y = py - (bottom0 - flatTop) * (1 - k); }, easeInOut);
+    // the rollers part, and it falls between them, tumbling
+    const rx = rollers.map((r) => r.position.x);
+    await tween(RM ? 0.01 : 0.18, (k) => rollers.forEach((r, n) => { r.position.x = rx[n] + Math.sign(rx[n]) * 0.03 * k; }), easeOut);
     const fy = flat.holder.position.y;
-    await tween(0.35, (k) => { flat.holder.position.y = fy - 0.25 * k; }, easeIn);
+    S.drop();
+    await tween(RM ? 0.01 : 0.42, (k) => { flat.holder.position.y = fy - 0.3 * k; flat.holder.rotation.x = k * 1.4; flat.holder.rotation.z = k * 0.6; }, easeIn);
     flat.holder.visible = false;
+    tween(0.25, (k) => rollers.forEach((r, n) => { r.position.x = rx[n] + Math.sign(rx[n]) * 0.03 * (1 - k); }));
   }
 
+  // out of the machine the way we came in: one curve, the tunnel rush, the light changing back on the way
   async function backOut() {
-    chamberFill.intensity = 0; chamberRed.intensity = 0;
-    await fly(ST.button, RM ? 0.01 : 1.5, [{ pos: V(0, 1.055, 0.02), tgt: V(0, 1.05, 0.4) }, { pos: V(0.05, 1.07, 0.5), tgt: V(0.1, 1.0, 0) }]);
-    scene.environmentIntensity = 0.1; scene.fog.density = 0.22;
+    const lights = tween(RM ? 0.01 : 1.4, (k) => {
+      const e = smooth(0.15, 0.65, k);
+      chamberFill.intensity = 0.12 * (1 - e); chamberRed.intensity = 0.4 * (1 - e);
+      scene.environmentIntensity = MathUtils.lerp(0.04, 0.1, e); scene.fog.density = MathUtils.lerp(0.6, 0.22, e);
+    }, (t) => t);
+    await fly(ST.button, RM ? 0.01 : 1.5, [{ pos: V(0, 1.055, 0.02), tgt: V(0, 1.05, 0.4) }, { pos: V(0.05, 1.07, 0.5), tgt: V(0.1, 1.0, 0) }], { fovPeak: 14, blur: 2.2 });
+    await lights;
     say('TRYKK PANT', 'FOR LAPP OG NYTT BATTERI', '#4dff8a', { blink: true });
   }
 
+  // 5 · PANT — a real button: it goes in under your finger and stays in while you hold it, flashes, and springs back
+  // when you let go. The machine answers on the press.
   function stepPress() {
-    let pulse = true;
+    let pulse = true, pressed = false, self;
+    const z0 = button.position.z, bump = 0.012;
     frameHook = (dt, t) => { if (pulse && button) button.material.emissiveIntensity = 1.6 * (0.6 + 0.8 * (0.5 + 0.5 * Math.sin(t * 5))); };
     const near = (e) => { const b = toScreen(button.getWorldPosition(new Vector3())); return b.distanceTo(new Vector2(e.clientX, e.clientY)) < Math.max(90, innerWidth * 0.18) || hits(e, button); };
-    const go = async (self) => {
-      pulse = false; frameHook = null;
+    const pushIn = () => {
+      pulse = false; frameHook = null; pressed = true;
       S.click();
-      const z = button.position.z;
-      await tween(0.08, (k) => { button.position.z = z - 0.012 * k; });
-      await tween(0.15, (k) => { button.position.z = z - 0.012 * (1 - k); });
-      self.done();
+      button.material.emissiveIntensity = 3.2;
+      tween(0.07, (k) => { button.position.z = z0 - bump * k; }, easeOut);
+    };
+    const letGo = () => {
+      tween(0.22, (k) => { button.position.z = z0 - bump * (1 - k) + Math.sin(k * Math.PI) * 0.002; button.material.emissiveIntensity = MathUtils.lerp(3.2, 1.6, k); }, easeOut);
     };
     return begin('press', {
-      down(e) { if (button && near(e)) go(this); },
-      act() { go(this); },
+      // the step is over at the press; the button's own release waits for your finger to lift
+      down(e) { if (button && !pressed && near(e)) { self = this; pushIn(); addEventListener('pointerup', letGo, { once: true }); self.done(); } },
+      act() { self = this; pushIn(); setTimeout(letGo, 160); self.done(); },
       key() {},
     });
   }
 
+  // the receipt slides out of the slot (cut off at the slot, so it is the paper that moves, not the print that
+  // squashes), in the stutters of a thermal printer, and sways as it hangs. Then the fresh can comes down the chute,
+  // clatters, and wedges itself in the hatch; the machine jolts and chokes.
   async function printAndJam() {
     say('SKRIVER UT …', '', '#4fd6c8');
     receiptData.time = new Date();
     drawReceipt(rc, receiptData); rTex.needsUpdate = true;
-    receipt.visible = true;
+    const slotY = receipt.position.y, L = 0.16;
+    receipt.scale.y = 1; receipt.visible = true;
+    receipt.material.clippingPlanes = [new Plane(V(0, -1, 0), slotY)];   // only what is below the slot shows
+    receipt.position.y = slotY + L;
     S.printer(1.6);
-    // the paper comes out in stutters, like a thermal printer
-    await tween(1.6, (k) => { receipt.scale.y = Math.max(0.001, Math.floor(k * 14) / 14); }, (t) => t);
+    await tween(RM ? 0.01 : 1.6, (k) => { receipt.position.y = slotY + L * (1 - Math.floor(k * 16) / 16); }, (t) => t);
+    receipt.position.y = slotY;
+    receipt.material.clippingPlanes = null;
+    let sway = 0;
+    fxHook = (dt, t) => { sway += dt; receipt.rotation.x = Math.sin(sway * 3.2) * 0.12 * Math.exp(-sway * 0.8) + Math.sin(t * 0.9) * 0.015; };
     say('GOD TUR!', 'UTLEVERER BATTERI …', '#4fd6c8');
-    await wait(0.6);
-    // … and the machine chokes on the fresh can
+    await wait(0.5);
+    // the fresh can comes down the chute and wedges itself, at an angle, behind the flap
+    fresh.holder.visible = true;
+    const stuckP = V(0.04, 0.33, -0.1), stuckE = new Euler(0.15, 0.3, 1.15);
+    fresh.orient.quaternion.setFromEuler(new Euler(0.1, 0.3, 1.5));
     S.rumble.start();
     say('FEIL 0xBATT', 'BATTERIET SITTER FAST', '#ff4b3e', { blink: true });
-    fresh.holder.visible = true;
-    fresh.holder.position.set(0.04, 0.33, -0.1);
-    fresh.orient.quaternion.setFromEuler(new Euler(0.15, 0.3, 1.15));
-    let jt = 0;
-    frameHook = (dt) => { jt += dt; shakeRig.position.x = Math.sin(jt * 60) * 0.0015; };
-    await fly(ST.hatch, RM ? 0.01 : 1.3, [{ pos: V(0.2, 0.85, 1.0), tgt: V(0.05, 0.5, 0) }]);
-    frameHook = null; shakeRig.position.set(0, 0, 0);
+    const flying = fly(ST.hatch, RM ? 0.01 : 1.3, [{ pos: V(0.2, 0.85, 1.0), tgt: V(0.05, 0.5, 0) }]);
+    await tween(RM ? 0.01 : 0.5, (k) => {
+      fresh.holder.position.set(stuckP.x, stuckP.y + 0.18 * (1 - k) - Math.sin(k * Math.PI * 2) * 0.012 * k, stuckP.z);
+      fresh.orient.quaternion.slerpQuaternions(new Quaternion().setFromEuler(new Euler(0.1, 0.3, 1.5)), new Quaternion().setFromEuler(stuckE), easeOut(k));
+    }, easeIn);
+    S.clank(1);
+    // the machine chokes: a few hard jolts, not a smooth wobble
+    let jt = 0, next = 0;
+    frameHook = (dt) => {
+      jt += dt;
+      if (jt > next) { next = jt + 0.25 + Math.random() * 0.3; shakeRig.userData.v = (Math.random() - 0.5) * 0.25; S.clank(0.5); }
+      const v = shakeRig.userData.v || 0;
+      shakeRig.userData.v = v - (shakeRig.position.x * 900 + v * 18) * dt;
+      shakeRig.position.x += shakeRig.userData.v * dt;
+    };
+    await flying;
+    frameHook = null; shakeRig.position.set(0, 0, 0); shakeRig.userData.v = 0;
     S.rumble.stop(0.2);
     say('RIST MASKINEN!', '', '#ffd27a', { bar: 0 });
   }
 
+  // 6 · SHAKE — the machine is heavy and springy: each shake shoves it the way you shook it, and it rocks back. The
+  // can inside lags behind the machine (secondary motion), and works itself loose bit by bit — it slips, tilts further,
+  // sinks — until it lets go.
   function stepShake() {
-    let energyS = 0, lastX = null, lastDir = 0, kick = 0;
+    let loose = 0, lastX = null, lastDir = 0, self;
     const NEED = 6;
-    const impulse = (self, k = 1) => {
-      if (energyS >= NEED) return;
-      energyS += k; kick = 1;
+    const x = V(0, 0, 0), v = V(0, 0, 0), zero = V(0, 0, 0);
+    let lagV = 0, lag = 0;
+    const base = fresh.holder.position.clone();
+    const impulse = (dir = (Math.random() < 0.5 ? -1 : 1), k = 1) => {
+      if (loose >= NEED) return;
+      loose += k;
+      v.x += dir * 0.22 * k;
       S.rattle(0.8 + 0.4 * Math.random());
-      scrState.bar = energyS / NEED;
-      if (energyS >= NEED) { onMotion = null; frameHook = null; shakeRig.position.set(0, 0, 0); shakeRig.rotation.z = 0; self.done(); }
+      if (Math.random() < 0.5) S.clank(0.6);
+      scrState.bar = loose / NEED;
+      shakeAmt = Math.max(shakeAmt, 0.004);
+      if (loose >= NEED) { onMotion = null; setTimeout(() => { frameHook = null; shakeRig.position.set(0, 0, 0); shakeRig.rotation.z = 0; self.done(); }, 120); }
     };
-    let self;
-    onMotion = () => { if (step && step.name === 'shake') impulse(step, 1); };
-    frameHook = (dt, t) => {
-      kick = Math.max(0, kick - dt * 3.5);
-      shakeRig.position.x = Math.sin(t * 70) * 0.012 * kick;
-      shakeRig.rotation.z = Math.sin(t * 55) * 0.012 * kick;
-      fresh.orient.rotation.z = 1.15 + Math.sin(t * 40) * 0.08 * kick;
+    onMotion = () => { if (step && step.name === 'shake') { self = step; impulse(); } };
+    frameHook = (dt) => {
+      spring(x, v, zero, 260, 6, dt);                               // heavy, springy, settles slowly
+      shakeRig.position.x = x.x;
+      shakeRig.rotation.z = -x.x * 0.6;
+      // the can lags behind the machine, and comes loose as the shakes add up
+      lagV += ((x.x - lag) * 180 - lagV * 10) * dt; lag += lagV * dt;
+      const f = loose / NEED;
+      fresh.orient.rotation.z = 1.15 + 0.3 * f + (lag - x.x) * -9;
+      fresh.holder.position.set(base.x + (lag - x.x) * 0.5, base.y - 0.04 * f * f, base.z);
     };
     return begin('shake', {
-      down(e) { self = this; lastX = e.clientX; lastDir = 0; impulse(this, 0.5); },
+      down(e) { self = this; lastX = e.clientX; lastDir = 0; },
       move(e) {
         self = this;
         if (lastX == null) return;
         const dx = e.clientX - lastX;
-        if (Math.abs(dx) > 18) { const dir = Math.sign(dx); if (dir !== lastDir) { impulse(this, 1); lastDir = dir; } lastX = e.clientX; }
+        if (Math.abs(dx) > 18) { const dir = Math.sign(dx); if (dir !== lastDir) { impulse(dir, 1); lastDir = dir; } lastX = e.clientX; }
       },
       up() { lastX = null; },
-      key(k) { if (k === 'shake') impulse(this, 1); },
-      act() { const s = this; (async () => { for (let i = 0; i < NEED; i++) { impulse(s, 1); await wait(0.22); } })(); },
+      key(k) { if (k === 'shake') { self = this; impulse(); } },
+      act() { self = this; (async () => { for (let i = 0; i < NEED; i++) { impulse(i % 2 ? 1 : -1, 1); await wait(0.24); } })(); },
     });
   }
 
+  // it lets go: it drops, bounces twice in the hatch, rests a beat — then lifts by itself, charged, pushes the flap
+  // open on its way out (the flap follows the can, then swings shut on a spring), and arcs up to float in front of
+  // you, turning once and settling with a small wobble.
   async function dropOut() {
     say('TA BATTERIET', '', '#4dff8a');
-    // it falls, lands, the flap swings, and up it comes
     const p0 = fresh.holder.position.clone(), q0 = fresh.orient.quaternion.clone();
+    const floorP = V(0.0, 0.185, -0.08);
     const qLand = new Quaternion().setFromEuler(new Euler(0, 0.2, Math.PI / 2));
-    await tween(0.32, (k) => { fresh.holder.position.lerpVectors(p0, V(0.0, 0.185, -0.08), k); fresh.orient.quaternion.slerpQuaternions(q0, qLand, k); }, easeIn);
+    await tween(RM ? 0.01 : 0.3, (k) => { fresh.holder.position.lerpVectors(p0, floorP, k); fresh.orient.quaternion.slerpQuaternions(q0, qLand, k); }, easeIn);
     S.thud(); shakeAmt = 0.012; flashIt(false);
-    await tween(0.25, (k) => { if (flap) flap.rotation.x = -0.9 * Math.sin(k * Math.PI); });
+    for (const [hgt, dur] of [[0.03, 0.22], [0.01, 0.14]]) {      // two bounces
+      await tween(RM ? 0.01 : dur, (k) => { fresh.holder.position.y = floorP.y + hgt * Math.sin(Math.PI * k); }, (t) => t);
+      S.clank(0.5);
+    }
+    await wait(0.35);
+    // it lifts by itself, crackling
+    S.whoosh(); energy = 0.6;
     const p1 = fresh.holder.position.clone(), q1 = fresh.orient.quaternion.clone();
     heroLight.intensity = 0.6;
     const flying = fly(ST.hero, RM ? 0.01 : 1.4);
-    await tween(1.3, (k) => {
+    await tween(RM ? 0.01 : 1.3, (k) => {
       const e = easeInOut(k);
       fresh.holder.position.lerpVectors(p1, P_HERO, e);
       fresh.holder.position.z += Math.sin(k * Math.PI) * 0.15;
       fresh.orient.quaternion.slerpQuaternions(q1, new Quaternion(), e);
       fresh.orient.rotateY(e * TAU);
+      if (flap) flap.rotation.x = -1.1 * smooth(0.02, 0.18, k) * (1 - smooth(0.3, 0.45, k));   // pushed open as it passes
+      energy = 0.6 * (1 - k) + 0.15;
     });
     fresh.orient.quaternion.identity();
+    // the flap swings shut on a spring
+    if (flap) { const fv = V(0, 0, 0), fx = V(flap.rotation.x, 0, 0); fxHook = (dt) => { spring(fx, fv, V(0, 0, 0), 120, 5, dt); flap.rotation.x = fx.x; }; }
+    await tween(RM ? 0.01 : 0.5, (k) => { fresh.orient.rotation.z = Math.sin(k * Math.PI * 3) * 0.06 * (1 - k); }, (t) => t);   // settle
     await flying;
     say('LAD OPP', 'HOLD PÅ BATTERIET', '#ffd27a', { bar: 0 });
   }
 
+  // 7 · HOLD — charging. The logo's «+ ‖» fills from the bottom like a battery gauge; each part of it (the two bars,
+  // the stem and the arms of the plus) lands with a tick and a pulse. The can hums rather than jitters (a smooth
+  // tremble that grows), the ring behind it lights up, the camera leans in and slowly round. Let go and it powers down
+  // audibly and drains a little; full, it hops, flashes and its tab glints.
   function stepHold() {
-    let level = 0, holding = false, auto = false, armed = false;
+    let level = 0, holding = false, auto = false, armed = false, was = false, seg = 0, pulse = 0, orbit = 0;
     const base = fresh.holder.position.clone();
+    const SEGS = [0.22, 0.42, 0.68, 0.92];                         // bars, bar, stem, arms (gauge height bands)
+    const camBase = ST.hero.pos.clone();
     S.charge.start();
     let self;
     frameHook = (dt, t) => {
-      if (!armed) {
-        level = clamp(level + (holding || auto ? dt / 2.4 : -dt / 7));
-        fresh.u.uLevel.value = level;
-        meterGlow = 0.6 + 2.6 * level;
-        energy = 0.15 + 2.2 * level * level;
-        S.chargeLevel(level);
-        scrState.bar = level; scrState.sub = `${Math.round(level * 100)} %`;
-        const tr = (holding || auto) ? 0.0015 + 0.004 * level * level : 0;
-        fresh.holder.position.set(base.x + (Math.random() - 0.5) * tr, base.y + Math.sin(t * 1.6) * 0.006 + (Math.random() - 0.5) * tr, base.z);
-        push = 6 * easeInOut(level);
-        if (level >= 1) {
-          armed = true; holding = auto = false;
-          S.charge.stop(); S.full(); flashIt(false);
-          say('100 %', 'DRA FLIKEN OPP', '#4dff8a', { blink: true });
-          energy = 0.9;
-          frameHook = (d, tt) => { if (tab) tab.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(tt * 6); fresh.holder.position.y = base.y + Math.sin(tt * 1.6) * 0.006; };
-          self.done();
-        }
+      if (armed) return;
+      const on = holding || auto;
+      if (was && !on && level > 0.05 && level < 1) S.powerDown();
+      was = on;
+      level = clamp(level + (on ? dt / 2.4 * (0.8 + 0.5 * level) : -dt / 7));
+      while (seg < SEGS.length && level >= SEGS[seg]) { S.tick(seg); pulse = 1; seg++; }
+      if (seg > 0 && level < SEGS[seg - 1] - 0.03) seg--;
+      pulse = Math.max(0, pulse - dt * 4);
+      fresh.u.uLevel.value = level;
+      meterGlow = 0.5 + 1.8 * level + 1.5 * pulse;
+      energy = 0.15 + 2.2 * level * level + 0.6 * pulse;
+      S.chargeLevel(level);
+      scrState.bar = level; scrState.sub = `${Math.round(level * 100)} %`;
+      if (ring) ring.material.emissiveIntensity = ringBase * (1 + 2.5 * level + 1.5 * pulse);
+      // a hum, not a jitter: two fast sines whose amplitude grows with the charge
+      const a = on ? 0.0008 + 0.0035 * level * level : 0;
+      fresh.holder.position.set(base.x + Math.sin(t * 61) * a, base.y + Math.sin(t * 1.6) * 0.006 + Math.sin(t * 47 + 1) * a, base.z);
+      fresh.crush.scale.setScalar(1 + 0.03 * pulse);
+      push = 6 * easeInOut(level);
+      orbit += ((on ? 0.18 * level : 0) - orbit) * Math.min(1, dt * 2);   // the camera leans in and slowly round
+      cam.pos.set(P_HERO.x + Math.sin(orbit) * (camBase.z - P_HERO.z), camBase.y, P_HERO.z + Math.cos(orbit) * (camBase.z - P_HERO.z));
+      if (level >= 1) {
+        armed = true; holding = auto = false;
+        S.charge.stop(); S.full(); flashIt(false);
+        say('100 %', 'DRA FLIKEN OPP', '#4dff8a', { blink: true });
+        energy = 0.9; meterGlow = 2.3;
+        tween(RM ? 0.01 : 0.45, (k) => { fresh.holder.position.y = base.y + Math.sin(Math.PI * k) * 0.03; }, easeOut);   // a hop
+        frameHook = (d, tt) => { if (tab) tab.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(tt * 6); fresh.holder.position.y = base.y + Math.sin(tt * 1.6) * 0.006; };
+        self.done();
       }
     };
     return begin('hold', {

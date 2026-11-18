@@ -113,6 +113,10 @@ export const rumble = loop(() => {                    // the machine choking on 
   return { out, srcs: [n, lfo] };
 });
 export function rattle(k = 1) { if (!ok()) return; noise(0.12, 'bandpass', 700 + 900 * Math.random(), null, 0.25 * k, 0, 2); tone(90 + 40 * Math.random(), 0.12, 0.12 * k, 'square'); buzz(25); }
+export function tick(i = 0) { if (!ok()) return; tone(660 * Math.pow(1.26, i), 0.12, 0.08, 'triangle'); buzz(12); }   // a gauge segment fills
+export function whoosh() { if (!ok()) return; noise(0.6, 'bandpass', 400, 3200, 0.35, 0, 0.8); }
+export function clank(k = 1) { if (!ok()) return; tone(420 + 200 * Math.random(), 0.18, 0.12 * k, 'triangle', 300); noise(0.08, 'bandpass', 2600, null, 0.25 * k, 0, 4); buzz(15); }
+export function powerDown() { if (!ok()) return; tone(520, 0.35, 0.05, 'sawtooth', 120); }
 export function thud() { if (!ok()) return; tone(110, 0.35, 0.4, 'sine', 45); noise(0.2, 'lowpass', 600, 150, 0.5); buzz([40, 20, 60]); }
 export const charge = loop(() => {                    // charging: a hum that climbs, a riser that comes in late
   const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), out = ctx.createGain();
