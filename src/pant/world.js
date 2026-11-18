@@ -15,7 +15,7 @@
 import {
   WebGLRenderer, Scene, PerspectiveCamera, Group, DirectionalLight, PointLight, HemisphereLight, PMREMGenerator,
   SRGBColorSpace, NeutralToneMapping, AnimationMixer, LoopOnce, Vector3, Vector2, Quaternion, Euler, Color, FogExp2,
-  CanvasTexture, TextureLoader, MeshStandardMaterial, Sprite, SpriteMaterial, Raycaster, MathUtils,
+  CanvasTexture, TextureLoader, MeshStandardMaterial, Sprite, SpriteMaterial, Raycaster, MathUtils, Plane, CatmullRomCurve3,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -221,15 +221,20 @@ export async function createWorld(canvas, ui) {
   // ---------- the camera rig ----------
   const cam = { pos: ST.start.pos.clone(), tgt: ST.start.tgt.clone(), fov: ST.start.fov };
   let shakeAmt = 0, push = 0;
-  function fly(to, dur = 1.4, via = []) {
-    const p0 = cam.pos.clone(), t0 = cam.tgt.clone(), f0 = cam.fov;
-    const pts = [p0, ...via.map((v) => v.pos), to.pos], tgs = [t0, ...via.map((v) => v.tgt || to.tgt), to.tgt];
+  // the camera flies along one smooth curve through the waypoints (no corners), the target along its own; the field
+  // of view can open up on the way (fovPeak: a tunnel rush through the hole) and the picture smears with speed (blur)
+  function fly(to, dur = 1.4, via = [], { fovPeak = 0, blur = 0, ease = easeInOut } = {}) {
+    const f0 = cam.fov;
+    const path = new CatmullRomCurve3([cam.pos.clone(), ...via.map((v) => v.pos), to.pos], false, 'centripetal');
+    const aims = new CatmullRomCurve3([cam.tgt.clone(), ...via.map((v) => v.tgt || to.tgt), to.tgt], false, 'centripetal');
     return tween(dur, (k) => {
-      const seg = Math.min(pts.length - 2, Math.floor(k * (pts.length - 1))), lk = k * (pts.length - 1) - seg;
-      cam.pos.lerpVectors(pts[seg], pts[seg + 1], lk);
-      cam.tgt.lerpVectors(tgs[seg], tgs[seg + 1], lk);
-      cam.fov = MathUtils.lerp(f0, to.fov, k);
-    });
+      path.getPointAt(k, cam.pos);
+      aims.getPointAt(k, cam.tgt);
+      const bump = Math.sin(Math.PI * k);
+      cam.fov = MathUtils.lerp(f0, to.fov, k) + fovPeak * bump * bump;
+      if (blur && !RM) canvas.style.filter = bump > 0.05 ? `blur(${(blur * Math.pow(bump, 3)).toFixed(2)}px)` : '';
+      if (k >= 1) canvas.style.filter = '';
+    }, ease);
   }
   let pointerPar = new Vector2();
   addEventListener('pointermove', (e) => { if (!COARSE) pointerPar.set(e.clientX / innerWidth - 0.5, e.clientY / innerHeight - 0.5); }, { passive: true });
@@ -262,7 +267,8 @@ export async function createWorld(canvas, ui) {
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   function begin(name, handlers) {
     return new Promise((resolve) => {
-      step = { name, ...handlers, done: (v) => { if (step && step.name === name) { step = null; resolve(v); } } };
+      // when a step is done the chip goes away until the next one asks for something (ui.step('wait'))
+      step = { name, ...handlers, done: (v) => { if (step && step.name === name) { step = null; ui.step('wait'); resolve(v); } } };
       ui.step(name);
     });
   }
@@ -314,10 +320,11 @@ export async function createWorld(canvas, ui) {
     camera.lookAt(cam.tgt);
     if ((scrT += dt) > 0.06) { scrT = 0; drawScreen(t); }
     if (frameHook) frameHook(dt, t);
+    if (fxHook) fxHook(dt, t);
     renderer.render(scene, camera);
     bloom.render(scene, camera, 0.35 + 0.45 * clamp(energy / 2));
   });
-  let frameHook = null, ringPulse = false, dragging = false;
+  let frameHook = null, fxHook = null, ringPulse = false, dragging = false;
 
   // ---------- poses ----------
   const qUp = new Quaternion().setFromEuler(new Euler(0.12, 0.35, -0.22));          // held out, a little tipped
@@ -336,85 +343,209 @@ export async function createWorld(canvas, ui) {
     ringPulse = true;
   }
 
+  // a spring (critically damped or bouncy, by k and d) that eases a vector toward a goal: x, v updated in place
+  const spring = (x, v, goal, k, d, dt) => {
+    const n = Math.ceil(dt / 0.008), h = dt / n;                 // small steps: stable at any frame rate
+    for (let i = 0; i < n; i++) for (const a of ['x', 'y', 'z']) { v[a] += ((goal[a] - x[a]) * k - v[a] * d) * h; x[a] += v[a] * h; }
+  };
+  const ndc = (e) => new Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+
+  // 1 · DRAG — the can follows your finger in 3D. Picked up, it lifts toward you and grows a touch; it leans into the
+  // direction you move it; nearing the hole it lies down and the hole starts pulling (a magnet that grows with
+  // closeness). Let go far away and it springs back with a small bounce; let go close and the machine takes it.
   function stepDrag() {
-    let p = 0, start = null, h = null;
-    const apply = () => {
-      const e = smooth(0, 1, p);
-      flat.holder.position.lerpVectors(P_START, P_HOLE, e);
-      flat.orient.quaternion.slerpQuaternions(qUp, qLie, smooth(0.35, 0.95, p));
-      if (ring) ring.material.emissiveIntensity = ringBase * (1 + 2.5 * p);
+    idleBob = false;
+    const x = P_START.clone(), v = V(0, 0, 0), goal = P_START.clone();
+    const plane = new Plane(), hit = new Vector3();
+    const span = P_START.distanceTo(P_HOLE);
+    let grabbed = false, lift = 0, leanX = 0, leanY = 0, released = false, auto = 0;
+    const closeness = () => clamp(1 - x.distanceTo(P_HOLE) / span);
+    const follow = (e) => {
+      // where the finger is in the world: on a plane that moves from the can's depth to the hole's as it gets closer
+      const a = toScreen(P_START), b = toScreen(P_HOLE), f = new Vector2(e.clientX, e.clientY);
+      const pS = clamp(1 - f.distanceTo(b) / a.distanceTo(b));
+      plane.set(V(0, 0, 1), -MathUtils.lerp(P_START.z, P_HOLE.z, smooth(0, 1, pS)));
+      ray.setFromCamera(ndc(e), camera);
+      if (ray.ray.intersectPlane(plane, hit)) goal.lerpVectors(hit, P_HOLE, smooth(0.55, 0.95, pS));   // the hole pulls
+    };
+    let self;
+    frameHook = (dt, t) => {
+      if (released) return;
+      if (auto) {                                  // the action chip / Enter: it flies in by itself along the same path
+        auto = Math.min(1, auto + dt / 0.9);
+        goal.lerpVectors(P_START, P_HOLE, easeInOut(auto));
+        goal.y += Math.sin(auto * Math.PI) * 0.06;
+        if (auto >= 1 && closeness() > 0.97) { release(); return; }
+      }
+      const g = grabbed || auto ? goal : V(P_START.x, P_START.y + Math.sin(t * 1.6) * 0.008, P_START.z);
+      // held: tight and quick; let go: a softer spring that overshoots a little on the way home
+      spring(x, v, g, grabbed || auto ? 420 : 140, grabbed || auto ? 40 : 11, dt);
+      lift += ((grabbed ? 1 : 0) - lift) * (1 - Math.exp(-dt * 12));
+      const c = closeness();
+      flat.holder.position.copy(x);
+      flat.holder.position.z += 0.05 * lift * (1 - c);                  // picked up: toward you …
+      flat.holder.scale.setScalar(1 + 0.05 * lift * (1 - c));           // … and a touch bigger
+      leanX += (clamp(-v.x * 1.6, -0.45, 0.45) - leanX) * (1 - Math.exp(-dt * 10));
+      leanY += (clamp(v.y * 1.2, -0.35, 0.35) - leanY) * (1 - Math.exp(-dt * 10));
+      const pose = qUp.clone().slerp(qLie, smooth(0.45, 0.92, c));
+      flat.orient.quaternion.copy(new Quaternion().setFromEuler(new Euler(leanY, 0, leanX)).multiply(pose));
+      if (ring) { ring.material.emissiveIntensity = ringBase * (1 + 2.8 * c * c); ring.scale.setScalar(1 + 0.08 * c * c); }
+      holeLight.intensity = 0.25 + 1.2 * c * c;
+    };
+    const release = () => {
+      if (released) return;
+      if (closeness() > 0.62) { released = true; frameHook = null; self.done(flat.holder.position.clone()); }
+      else { grabbed = false; S.drop(); }
     };
     return begin('drag', {
-      down(e) { dragging = true; start = new Vector2(e.clientX, e.clientY); const a = toScreen(P_START), b = toScreen(P_HOLE); h = b.sub(a); },
-      move(e) { if (!start) return; const d = new Vector2(e.clientX, e.clientY).sub(start); p = clamp(d.dot(h) / h.lengthSq()); apply(); },
-      up() {
-        if (!start) return; start = null; dragging = false;
-        if (p > 0.5) { const p0 = p; tween(0.25, (k) => { p = p0 + (1 - p0) * k; apply(); }).then(() => this.done()); }
-        else { const p0 = p; tween(0.45, (k) => { p = p0 * (1 - k); apply(); }, easeOut); }
-      },
-      act() { const p0 = p; tween(0.9, (k) => { p = p0 + (1 - p0) * k; apply(); }).then(() => this.done()); },
+      down() { self = this; grabbed = true; dragging = true; S.grab(); },
+      move(e) { if (grabbed) follow(e); },
+      up() { if (!grabbed) return; dragging = false; release(); if (!released) grabbed = false; },
+      act() { self = this; auto = auto || 0.001; },
       key() {},
     });
   }
 
-  async function dive() {
+  // the machine swallows it: a short pull that speeds up, a spin as it goes, the ring gulps — and the camera dives
+  // after it on one smooth curve, the field of view opening as it passes through the hole, the light changing on the way
+  async function dive(from) {
     ringPulse = false; flatBlink = false; idleBob = false;
     say('SKANNER …', '', '#4fd6c8');
     S.suck();
-    const from = flat.holder.position.clone();
-    tween(0.5, (k) => { flat.holder.position.lerpVectors(from, V(0, 1.03, -0.06), k); }, easeIn)
-      .then(() => tween(0.55, (k) => { flat.holder.position.lerpVectors(V(0, 1.03, -0.06), P_CHAMBER, k); }, easeOut));
-    // the camera follows it in, through the hole
-    await fly(ST.inside, RM ? 0.01 : 1.6, [{ pos: V(0, 1.06, 0.55), tgt: V(0, 1.05, -0.3) }, { pos: V(0, 1.055, 0.02), tgt: V(0, 1.03, -0.3) }]);
-    scene.environmentIntensity = 0.04; chamberFill.intensity = 0.12; chamberRed.intensity = 0.35; scene.fog.density = 0.6;
+    const q0 = flat.orient.quaternion.clone(), s0 = flat.holder.scale.x;
+    const inTube = V(0, 1.03, -0.06);
+    const swallow = tween(0.42, (k) => {
+      flat.holder.position.lerpVectors(from, inTube, k);
+      flat.holder.scale.setScalar(MathUtils.lerp(s0, 1, k));
+      flat.orient.quaternion.copy(q0).slerp(rollQ(k * TAU), easeOut(k));
+      if (ring) ring.scale.setScalar(1.08 + 0.18 * Math.sin(Math.PI * k));      // the gulp
+    }, easeIn).then(() => {
+      S.gulp();
+      if (ring) { ring.scale.setScalar(1); ring.material.emissiveIntensity = ringBase * 3.5; }
+      return tween(0.5, (k) => { flat.holder.position.lerpVectors(inTube, P_CHAMBER, k); flat.orient.quaternion.copy(rollQ(TAU + k * Math.PI)); }, easeOut);
+    });
+    // the light goes from the street to the chamber while we pass through the hole, not after
+    const lights = tween(1.5, (k) => {
+      const e = smooth(0.35, 0.85, k);
+      scene.environmentIntensity = MathUtils.lerp(0.1, 0.04, e);
+      scene.fog.density = MathUtils.lerp(0.22, 0.6, e);
+      chamberFill.intensity = 0.12 * e; chamberRed.intensity = 0.35 * e;
+      holeLight.intensity = MathUtils.lerp(1.45, 0.25, e);
+    }, (t) => t);
+    await fly(ST.inside, RM ? 0.01 : 1.5,
+      [{ pos: V(0.02, 1.08, 0.75), tgt: V(0, 1.05, -0.1) }, { pos: V(0, 1.055, 0.03), tgt: V(0, 1.03, -0.3) }],
+      { fovPeak: 18, blur: 2.6 });
+    await swallow; await lights;
     lasers.forEach((l) => { l.visible = true; });
-    // it spins under the lasers … and stops the wrong way round
+    // the scan: the laser fan sweeps up and down the can while the rollers spin it, fast, then slowing — and it comes
+    // to rest the wrong way round, wobbles, and is rejected
     S.rollers.start();
-    let th = 0;
-    frameHook = (dt, t) => { lasers.forEach((l, i) => { l.material.opacity = 0.6 + 0.4 * Math.sin(t * 30 + i); }); };
-    await tween(1.8, (k) => { th = k * TAU * 2.5; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8); if (Math.random() < 0.08) S.scanBeep(); }, easeInOut);
+    const laserZ = lasers.map((l) => l.position.z);
+    fxHook = (dt, t) => lasers.forEach((l, i) => {
+      l.position.z = laserZ[i] + Math.sin(t * 3.2 + i * 0.9) * 0.05;
+      l.material.opacity = 0.55 + 0.45 * Math.abs(Math.sin(t * 24 + i));
+    });
+    const th0 = TAU + Math.PI, th1 = 3 * TAU;         // ends with the barcode facing down (≡ 0)
+    let beepAt = 0;
+    await tween(RM ? 0.01 : 1.9, (k) => {
+      const th = th0 + (th1 - th0) * k;
+      flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8);
+      if (k > beepAt) { S.scanBeep(1800); beepAt = k + 0.06 + 0.25 * k; }
+    }, easeOut);
     S.rollers.stop();
-    flat.orient.quaternion.copy(rollQ(0));
+    await tween(RM ? 0.01 : 0.35, (k) => {                       // it settles: a small damped rock
+      const th = th1 + Math.sin(k * Math.PI * 3) * 0.14 * (1 - k);
+      flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8);
+    }, (t) => t);
+    // AVVIST: a buzz, the chamber flashes red, the can twitches «no» on the rollers, the camera flinches
     S.reject();
     say('AVVIST', 'STREKKODEN VISES IKKE', '#ff4b3e');
-    chamberRed.intensity = 1.2; setTimeout(() => { chamberRed.intensity = 0.35; }, 260);
-    lasers.forEach((l) => l.material.color && l.material.emissive.setRGB(1, 0.08, 0.06));
-    shakeAmt = 0.004;
+    lasers.forEach((l) => l.material.emissive && l.material.emissive.setRGB(1, 0.08, 0.06));
+    shakeAmt = 0.004; push = -2.5;
+    await tween(RM ? 0.01 : 0.5, (k) => {
+      const th = Math.sin(k * Math.PI * 6) * 0.09 * (1 - k);
+      flat.orient.quaternion.copy(rollQ(th));
+      chamberRed.intensity = 0.35 + 1.1 * (1 - k) * (Math.sin(k * Math.PI * 4) > 0 ? 1 : 0.3);
+      push = -2.5 * (1 - k);
+    }, (t) => t);
+    push = 0; chamberRed.intensity = 0.35;
     receiptData.tries = 2;
     return 0;
   }
 
+  // 3 · ROLL — the can's surface follows your finger one to one: the drag is turned into rotation using where the
+  // can's near side actually moves on screen. The scanner answers as the barcode comes round: the lasers warm from red
+  // to amber, the beeps quicken, and when it faces the scanner it locks (a magnet snap, a click, a green flash).
+  // Left alone, the can rocks a little on its rollers to show that it can be rolled.
   function stepRoll(th0) {
-    let th = th0, vel = 0, drag = null, lastY = 0, lastT = 0, accepted = false;
-    const setTh = (v) => { th = v; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8); };
-    const check = (self) => {
+    let th = th0, vel = 0, dragging2 = false, last = null, lastT = 0, accepted = false, idleT = 0, touched = false;
+    const ACCEPT = 0.24;
+    const setTh = (val) => { th = val; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8); };
+    const off = () => Math.abs(wrap(th - Math.PI));                    // 0 = barcode facing the scanner
+    // screen pixels per radian, and the direction the can's near side moves for +θ
+    const tangent = () => {
+      const C = P_CHAMBER.clone(), toCam = camera.position.clone().sub(C); toCam.z = 0; toCam.normalize();
+      const Pn = C.clone().addScaledVector(toCam, 0.033);
+      const T = V(0, 0, 1).cross(toCam).multiplyScalar(0.033 * 0.1);   // the surface moved by 0.1 rad
+      const a = toScreen(Pn), b = toScreen(Pn.clone().add(T));
+      return b.sub(a).multiplyScalar(10);                            // px per radian
+    };
+    let dir = null, beepAt = 0, self;
+    const lockIn = () => {
       if (accepted) return;
-      if (Math.abs(wrap(th - Math.PI)) < 0.3) {
-        accepted = true; frameHook = null;
-        const from = th, to = th + wrap(Math.PI - th);
-        tween(0.25, (k) => setTh(from + (to - from) * k)).then(() => self.done());
+      accepted = true; frameHook = null; dragging2 = false;
+      const from = th, to = th + wrap(Math.PI - th);
+      S.lock();
+      tween(0.18, (k) => setTh(from + (to - from) * k), easeOut)
+        .then(() => tween(0.28, (k) => { flat.crush.scale.setScalar(1 + 0.05 * Math.sin(Math.PI * k)); }, (t) => t))
+        .then(() => self.done());
+    };
+    // the scanner's answer, every frame of this step
+    fxHook = (dt, t) => {
+      lasers.forEach((l, i) => { l.material.opacity = 0.55 + 0.45 * Math.abs(Math.sin(t * 24 + i)); });
+      if (accepted) return;
+      const o = off(), warm = 1 - clamp((o - ACCEPT) / 1.2);           // 0 far … 1 nearly there
+      lasers.forEach((l) => l.material.emissive && l.material.emissive.setRGB(1, 0.08 + 0.55 * warm, 0.06));
+      chamberRed.color.setRGB(1, 0.16 + 0.5 * warm, 0.1);
+      if ((dragging2 || Math.abs(vel) > 0.5) && t > beepAt) { S.scanBeep(1500 + 900 * warm); beepAt = t + 0.32 - 0.24 * warm; }
+      if (o < ACCEPT && (dragging2 || Math.abs(vel) < 6)) lockIn();
+      // a hint when left alone: it rocks on its rollers
+      if (!touched && !dragging2 && Math.abs(vel) < 0.01) {
+        idleT += dt;
+        if (idleT > 2.2) { const k = (idleT - 2.2) / 0.9; setTh(Math.sin(Math.min(1, k) * Math.PI * 2) * 0.22 * Math.sin(Math.min(1, k) * Math.PI)); if (k >= 1) idleT = 0; }
       }
     };
     return begin('roll', {
-      down(e) { drag = { y: e.clientY, x: e.clientX }; lastY = e.clientY; lastT = performance.now(); vel = 0; },
+      down(e) { self = this; touched = true; dragging2 = true; last = new Vector2(e.clientX, e.clientY); lastT = performance.now(); vel = 0; frameHook = null; dir = tangent(); },
       move(e) {
-        if (!drag) return;
-        const now = performance.now(), d = (e.clientY - lastY) + (e.clientX - drag.x) * 0.5;
-        drag.x = e.clientX; lastY = e.clientY;
-        setTh(th + d * 0.012); vel = (d * 0.012) / Math.max(0.008, (now - lastT) / 1000); lastT = now;
-        if (Math.random() < 0.05) S.scanBeep();
+        if (!dragging2 || accepted) return;
+        const now = performance.now(), f = new Vector2(e.clientX, e.clientY), d = f.clone().sub(last);
+        last = f;
+        const dth = d.dot(dir) / dir.lengthSq();                     // the surface under the finger moves with it
+        setTh(th + dth);
+        vel = dth / Math.max(0.008, (now - lastT) / 1000); lastT = now;
       },
       up() {
-        if (!drag) return; drag = null;
-        const self = this;
-        frameHook = (dt) => { if (accepted) return; setTh(th + vel * dt); vel *= Math.exp(-3 * dt); if (Math.abs(vel) < 0.3) { frameHook = null; check(self); } else check(self); };
+        if (!dragging2) return; dragging2 = false;
+        self = this;
+        frameHook = (dt) => {                                         // it keeps rolling, and slows
+          if (accepted) return;
+          setTh(th + vel * dt); vel *= Math.exp(-3.2 * dt);
+          if (Math.abs(vel) < 0.2) { vel = 0; frameHook = null; if (off() < ACCEPT + 0.12) lockIn(); }
+        };
       },
-      key(k) { if (k === 'up' || k === 'down') { const self = this; const from = th, to = th + (k === 'up' ? -0.45 : 0.45); tween(0.18, (q) => setTh(from + (to - from) * q)).then(() => check(self)); } },
-      act() { const self = this; const from = th, to = th + wrap(Math.PI - th); tween(0.7, (q) => setTh(from + (to - from) * q)).then(() => check(self)); },
+      key(k) {
+        if (k !== 'up' && k !== 'down') return;
+        self = this; touched = true;
+        const from = th, to = th + (k === 'up' ? -0.45 : 0.45);
+        tween(0.18, (q) => setTh(from + (to - from) * q), easeOut).then(() => { if (off() < ACCEPT + 0.12) lockIn(); });
+      },
+      act() { self = this; touched = true; const from = th, to = th + wrap(Math.PI - th); tween(0.8, (q) => setTh(from + (to - from) * q)).then(lockIn); },
     });
   }
 
   async function crushIt() {
+    fxHook = null;
     S.accept();
     say('GODKJENT', '1 × BATTERI (FLATT)', '#4dff8a');
     lasers.forEach((l) => l.material.emissive && l.material.emissive.setRGB(0.1, 1, 0.3));
@@ -624,8 +755,8 @@ export async function createWorld(canvas, ui) {
   return {
     async run() {
       await intro();
-      await stepDrag();
-      const th = await dive();
+      const at = await stepDrag();
+      const th = await dive(at);
       await stepRoll(th);
       await crushIt();
       await backOut();

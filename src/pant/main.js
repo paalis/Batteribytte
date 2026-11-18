@@ -7,6 +7,7 @@ import { drawReceipt, receiptFonts, shareReceipt } from './receipt.js';
 // every step: what the chip says, a short hint, what a screen reader hears, and how the keyboard does it
 const STEPS = {
   intro: { verb: '', say: 'Batteribytte. En pantemaskin for flate batterier våkner i mørket.' },
+  wait:  { verb: '' },                                   // between steps: the machine is busy, nothing to do
   drag:  { verb: 'Dra batteriet inn', hint: 'Dra den flate boksen inn i hullet', say: 'Du holder en flat, grå Battery-boks. Siste strek blinker rødt. Dra den inn i hullet på pantemaskinen, eller trykk Enter.' },
   roll:  { verb: 'Rull boksen', hint: 'Rull boksen til strekkoden vender opp', say: 'Avvist: strekkoden vises ikke. Rull boksen med piltastene, dra opp og ned, eller trykk Enter.' },
   press: { verb: 'Trykk PANT', hint: 'Trykk på den grønne knappen', say: 'Godkjent, og knust. Trykk på den grønne PANT-knappen, eller trykk Enter.' },
