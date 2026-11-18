@@ -79,7 +79,8 @@ async function done(data) {
   const lapp = $('#lapp');
   $('#lapp-img').src = c.toDataURL('image/png');
   lapp.hidden = false;
-  requestAnimationFrame(() => lapp.classList.add('in'));
+  void lapp.offsetWidth;                 // the hidden-to-shown start state must be styled once, or nothing transitions
+  lapp.classList.add('in');
   $('#share').focus({ preventScroll: true });
   $('#share').onclick = async () => {
     const r = await shareReceipt(c, location.href.split('#')[0]);
