@@ -41,11 +41,23 @@ Stasjonene er felles for siden og Blender-stillbildene: `src/pant/world.js` (`ST
 Pekeren gir litt parallakse (bare med mus). Kameraet rister ved knaset, smellet og fallet.
 
 ## Lyd og haptikk (`src/pant/sound.js`)
-- **Lyden lages i nettleseren.** Den starter på første trykk, er på som standard, og «Lyd» (eller M) slår den av.
-- **Alt går gjennom én kompressor,** så alle effektene får samme lydstyrke.
-- **Lydene:** maskinens summing, sug, ruller, skannepip, avvisning (lav summer), godkjent (to toner), knas (slag, knitring og dunk), klikk, skriver, bulder, skrangling, dunk, ladetone som stiger, «full» (akkord) og smell med brus.
+- **Lydene er opptak av reklamefilmkvalitet:** 27 lydeffekter fra ElevenLabs, valgt ved lytting (`tools/sfx/selection.json`, kreditering i `CREDITS.md` og «Lyd: ElevenLabs» under logoen).
+- **Filformat:** De ligger i `assets/sfx/` som .ogg (Vorbis) og .m4a (AAC, for Safari og iPhone). Nettleseren henter bare ett av formatene.
+- **Lasting:** Lyden låses opp ved første trykk, tast eller berøring. iOS får en stille buffer i samme gest. Filene hentes og dekodes rett etter, med lydene til første steg først.
+- **Avspilling:**
+  - Korte lyder spilles som AudioBuffer med litt tilfeldig tonehøyde (±3 %) og nivå (±1,5 dB) hver gang.
+  - Loopene (`hum`, `room`, `rollers`, `rumble`, `charge`, `fizz`) går over sin nøyaktige lengde. Skjøten er bakt inn med 40 ms overtoning.
+  - Ladelyden følger nivået: den går fortere og blir lysere og sterkere.
+- **Miks i lag:**
+  - Smellet er fliken, spruten og en dyp dunk, og så fresingen som dør ut over et par sekunder.
+  - Knaset har en dyp dunk under seg.
+  - Maskinsummingen har natten utenfor under seg.
+- **Alt går gjennom én lett kompressor** (−14 dB, 3:1).
+- **Reserve:** Hver lyd beholder den gamle syntesen (oscillator og støy). Den spiller til filen er lastet, eller hvis filen ikke kan lastes. En loop som går på syntese, bytter over til filen når den kommer.
+- **Lyd av og på:** Lyden er på som standard, og «Lyd» (eller M) slår den av. Knappene gir et dempet klikk.
 - **Vibrasjon** (`navigator.vibrate`, bare Android) på hvert mekanisk steg.
 - **Risting med telefonen** bruker `devicemotion`. iOS ber om tillatelse ved første trykk.
+- **Verktøyene** bak utvalget ligger i `tools/sfx/`: søk, generering, måling, poeng, lytteside og `prepare.py`, som kutter, normaliserer og koder. Vurderingen står i `docs/sound-review.md`.
 
 ## Lett reserve (`src/pant/lite.js`)
 Ved **prefers-reduced-motion**, **uten WebGL**, eller hvis 3D-lastingen feiler:
@@ -71,7 +83,8 @@ Plakaten (stillbildet av åpningen) vises med en gang, med ≈ 72 kB totalt. thr
 | `assets/pant/machine.glb` | Rett etter | 370 kB (95 kB) |
 | `assets/can/battery-can.glb` | Rett etter | 2,26 MB (1,14 MB) |
 | `assets/can/spray.webp`, `meter.webp`, `spray.json` | Rett etter | 465 kB |
-| **Totalt med 3D** | | **≈ 3,8 MB (≈ 2,0 MB over nettet)**, mot ≈ 15–17 MB i den gamle film-versjonen |
+| `assets/sfx/*.ogg` (eller `*.m4a` i Safari), 27 lyder | Etter første trykk | 538 kB (Safari: 414 kB) |
+| **Totalt med 3D** | | **≈ 4,3 MB (≈ 2,5 MB over nettet), med lyd**, mot ≈ 15–17 MB i den gamle film-versjonen |
 | Lett reserve (redusert bevegelse eller ingen WebGL): første opptegning, `lite-*.js` og seks stillbilder | I stedet | ≈ 0,13 MB |
 
 
