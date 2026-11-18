@@ -181,6 +181,42 @@ def build_label(tw=2048, th=1656):
     return out
 
 
+def add_barcode(out):
+    """The back of the can, which no photo shows yet: a white EAN-style barcode panel centred on the back (u = 0),
+    like the real can. Temporary until a 360° label is stitched from photos of a real can (docs/concept.md)."""
+    th, tw = out.shape[:2]
+    rng = np.random.default_rng(13)
+    w = int(tw * 0.15)                           # ~31 mm of the 208 mm circumference
+    h = int(th * 0.15)
+    y0 = int(th * 0.22)                          # rows run bottom → top in the texture
+    panel = np.full((h, w, 3), 246.0, np.float32)
+    x = int(w * 0.09)
+    bars = [1, 0, 1] + list(rng.integers(0, 2, 84)) + [0, 1, 0, 1, 0] + list(rng.integers(0, 2, 84)) + [1, 0, 1]
+    unit = (w * 0.82) / len(bars)
+    for i, b in enumerate(bars):
+        if b:
+            xa, xb = int(x + i * unit), int(x + (i + 1) * unit)
+            guard = i < 3 or 87 <= i < 92 or i >= len(bars) - 3
+            panel[int(h * (0.08 if guard else 0.2)):int(h * 0.9), xa:max(xb, xa + 1)] = 20.0
+    cols = (np.arange(w) - w // 2) % tw
+    out[y0:y0 + h][:, cols] = panel
+    return out
+
+
+def meter_mask(label, path, size=(512, 414)):
+    """The logo's «+ ‖» as a battery gauge: a mask of the black logo graphics on the front (left of «BATTERY»).
+    The page fills it from the bottom up as the can charges (src/pant.js). Grey PNG → WebP."""
+    th, tw = label.shape[:2]
+    dark = label.sum(2) < 170
+    u = np.arange(tw) / tw
+    v = np.arange(th) / (th - 1)
+    m = dark & ((u > 0.25) & (u < 0.585))[None, :] & ((v > 0.44) & (v < 0.83))[:, None]
+    img = (m * 255).astype(np.uint8)[::-1]       # top-down for the image file
+    from PIL import Image
+    Image.fromarray(img).resize(size, Image.BILINEAR).save(path, 'WEBP', quality=80)
+    print('wrote', path)
+
+
 def droplets(tw=2048, th=1656, seed=7):
     """A height field of condensation droplets → tangent-space normal map. Denser and bigger toward the bottom."""
     rng = np.random.default_rng(seed)
@@ -580,7 +616,9 @@ def build():
     scene.render.fps = 24
 
     print('label …')
-    label = build_label()
+    label = add_barcode(build_label())
+    os.makedirs(os.path.join(ROOT, 'assets', 'pant'), exist_ok=True)
+    meter_mask(label, os.path.join(ROOT, 'assets', 'pant', 'meter.webp'))
     nrm, rough = droplets()
     label_img = to_image('label', label / 255.0)
     nrm_img = to_image('droplets_normal', nrm, non_color=True)
