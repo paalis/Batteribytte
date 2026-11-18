@@ -62,7 +62,18 @@ Ved **prefers-reduced-motion**, **uten WebGL**, eller hvis 3D-lastingen feiler:
 - Pantelappen har en beskrivende alt-tekst.
 
 ## Nettvekt (det som faktisk lastes)
-Se tabellen i README. Store filer lastes i bakgrunnen etter første opptegning. Plakaten (stillbildet av åpningen) vises med en gang, og 3D-scenen toner inn over den når den er klar.
+Plakaten (stillbildet av åpningen) vises med en gang, med ≈ 72 kB totalt. three.js-delen og GLB-filene lastes rett etter, og 3D-scenen toner inn over plakaten når den er klar.
+
+| Hva | Når | Størrelse |
+|---|---|---|
+| HTML, CSS, `lib/pant/main.js` og delbiter, font, plakat (`stills/start.webp`) | Første opptegning | ≈ 72 kB (≈ 57 kB) |
+| `lib/pant/world-*.js` (three.js, tree-shaket) | Rett etter | 664 kB (170 kB) |
+| `assets/pant/machine.glb` | Rett etter | 370 kB (95 kB) |
+| `assets/can/battery-can.glb` | Rett etter | 2,26 MB (1,14 MB) |
+| `assets/can/spray.webp`, `meter.webp`, `spray.json` | Rett etter | 465 kB |
+| **Totalt med 3D** | | **≈ 3,8 MB (≈ 2,0 MB over nettet)**, mot ≈ 15–17 MB i den gamle film-versjonen |
+| Lett reserve (redusert bevegelse eller ingen WebGL): første opptegning, `lite-*.js` og seks stillbilder | I stedet | ≈ 0,13 MB |
+
 
 ## Filer
 - **`index.html`, `style.css`:** siden. **`lib/pant/`:** bygget med `tools/build-pant.sh` fra `src/pant/`.

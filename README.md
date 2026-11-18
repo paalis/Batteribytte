@@ -16,6 +16,18 @@ Til slutt får du pantelappen, som du kan dele. Konsept og vurdering står i `do
 - Redusert bevegelse, manglende WebGL eller 3D-lasting som feiler gir samme historie som stillbilder, med én knapp per steg.
 - Alle handlinger kan gjøres med tastatur og med handlingsknappen. Et live-område forteller skjermleseren hva som skjer.
 
+## Nettvekt (målt i repoet; gzip i parentes)
+
+| Hva | Når | Størrelse |
+|---|---|---|
+| HTML, CSS, `lib/pant/main.js` og delbiter, font, plakat (`stills/start.webp`) | Første opptegning | ≈ 72 kB (≈ 57 kB) |
+| `lib/pant/world-*.js` (three.js, tree-shaket) | Rett etter | 664 kB (170 kB) |
+| `assets/pant/machine.glb` | Rett etter | 370 kB (95 kB) |
+| `assets/can/battery-can.glb` | Rett etter | 2,26 MB (1,14 MB) |
+| `assets/can/spray.webp`, `meter.webp`, `spray.json` | Rett etter | 465 kB |
+| **Totalt med 3D** | | **≈ 3,8 MB (≈ 2,0 MB over nettet)**, mot ≈ 15–17 MB i den gamle film-versjonen |
+| Lett reserve (redusert bevegelse eller ingen WebGL): første opptegning, `lite-*.js` og seks stillbilder | I stedet | ≈ 0,13 MB |
+
 ## Agent-verktøy
 
 - `huashu-motion` ligger som git-submodul i `vendor/huashu-motion`, låst til v0.3.1
