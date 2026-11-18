@@ -42,7 +42,8 @@
     "source_url": "https://freesound.org/people/Anthousai/sounds/398987",
     "preview_url": "https://cdn.freesound.org/previews/398/398987_5923045-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -77,7 +78,8 @@
     "source_url": "https://freesound.org/people/Alexsani/sounds/240218",
     "preview_url": "https://cdn.freesound.org/previews/240/240218_1440889-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -108,7 +110,8 @@
     "source_url": "https://freesound.org/people/freddybob951/sounds/617630",
     "preview_url": "https://cdn.freesound.org/previews/617/617630_6114047-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -140,7 +143,8 @@
     "source_url": "https://freesound.org/people/michorvath/sounds/386887",
     "preview_url": "https://cdn.freesound.org/previews/386/386887_3094998-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -178,7 +182,8 @@
     "source_url": "https://freesound.org/people/Geoff-Bremner-Audio/sounds/652683",
     "preview_url": "https://cdn.freesound.org/previews/652/652683_10643461-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -206,7 +211,8 @@
     "source_url": "https://freesound.org/people/bsumusictech/sounds/81877",
     "preview_url": "https://cdn.freesound.org/previews/81/81877_791247-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -238,7 +244,8 @@
     "source_url": "https://freesound.org/people/WavJunction.com/sounds/512682",
     "preview_url": "https://cdn.freesound.org/previews/512/512682_9514571-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "openverse",
@@ -268,7 +275,8 @@
     "source_url": "https://freesound.org/people/itinerantmonk108/sounds/700612",
     "preview_url": "https://cdn.freesound.org/previews/700/700612_2397507-hq.mp3",
     "filetype": "mp3",
-    "query": "can opening pop tab"
+    "query": "can opening pop tab",
+    "m_error": "HTTP Error 403: Forbidden"
    },
    {
     "source": "elevenlabs",
@@ -290,7 +298,25 @@
     "rating": null,
     "source_url": "https://elevenlabs.io/sound-effects",
     "preview_url": null,
-    "file": "assets/sfx/_candidates/pop/elevenlabs_test.mp3"
+    "file": "assets/sfx/_candidates/pop/elevenlabs_test.mp3",
+    "local": "assets/sfx/_candidates/pop/elevenlabs_test.mp3",
+    "wav": "assets/sfx/_candidates/pop/elevenlabs_test.wav",
+    "m": {
+     "dur": 0.6,
+     "ch": 2,
+     "sr0": 44100,
+     "peak_db": 0.0,
+     "tp_db": 0.8,
+     "rms_db": -19.39,
+     "lufs": -17.2,
+     "clip": 0,
+     "lead": 0.004,
+     "tail": 0.428,
+     "floor_db": -62.8,
+     "snr_db": 51.4,
+     "centroid": 6462,
+     "bright": 0.762
+    }
    }
   ]
  },
