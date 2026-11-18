@@ -32,7 +32,7 @@ STATIONS = {
     'hatch':   ((0.0, 0.62, 1.05), (0.0, 0.33, 0.0), 48),
     'hero':    ((0.0, 0.98, 1.05), (0.0, 0.95, 0.45), 40),
     'finale':  ((0.35, 1.05, 1.9), (0.0, 0.95, 0.2), 48),
-    'og':      ((0.62, 1.12, 1.6), (0.12, 1.02, 0.2), 30),
+    'og':      ((0.95, 1.3, 2.7), (0.1, 1.12, 0.2), 34),
 }
 
 
@@ -111,7 +111,7 @@ SHOTS = {
     'hero':   ('hero', [('Fresh', (0, 0.95, 0.45), (0, 0, 0), False)], [], {'glow': 1.2}),
     'finale': ('finale', [('Fresh', (0, 0.95, 0.45), (0, 0, 0.4), False)], [], {'glow': 0.6}),
     # the share image (assets/og.jpg): the machine at night and the fresh, charged can in front of it
-    'og':     ('og', [('Fresh', (0.05, 0.95, 0.55), (0, 0, 0.5), False)], [], {'glow': 1.0, 'size': (1200, 630), 'out': 'og'}),
+    'og':     ('og', [('Fresh', (0.42, 1.0, 1.25), (0, 0, 0.6), False)], [], {'glow': 1.0, 'size': (1200, 630), 'out': 'og'}),
 }
 
 
@@ -124,7 +124,7 @@ def render_shot(name):
         if n in bpy.data.objects:
             bpy.data.objects[n].hide_render = True
     if extra.get('chamber'):                       # inside the machine: the lasers' red and a little fill
-        for nm, loc, power, col in (('ChamberRed', (0, 0.32, 1.2), 0.6, (1, 0.15, 0.1)), ('ChamberFill', (0.12, 0.2, 1.18), 0.15, (1, 0.95, 0.9))):
+        for nm, loc, power, col in (('ChamberRed', (0, 0.32, 1.2), 3.0, (1, 0.15, 0.1)), ('ChamberFill', (0.12, 0.2, 1.18), 0.8, (1, 0.95, 0.9))):
             l = bpy.data.lights.new(nm, 'POINT'); l.energy, l.color, l.shadow_soft_size = power, col, 0.02
             ob = bpy.data.objects.new(nm, l); bpy.context.collection.objects.link(ob); ob.location = loc
     if 'glow' in extra:                            # the charged can: its lightning veins lit
