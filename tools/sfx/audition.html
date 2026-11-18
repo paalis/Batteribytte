@@ -1,0 +1,262 @@
+<meta charset="utf-8">
+<title>Batteribytte lydvalg</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column of sound cards in the brief's order, a sticky bar with progress and export.
+   The pant machine at night: dark steel, teal neon for play, green for chosen, amber for warnings. */
+:root {
+  --bg: #0b0e10; --panel: #13181b; --line: #263036; --ink: #e8ece9; --muted: #8fa19c;
+  --teal: #4fd6c8; --green: #4dff8a; --amber: #f4a64a; --red: #ff6b5e; --chip: #1b2226;
+  --display: "Archivo Black", "Arial Black", Impact, sans-serif;
+  --body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #eef2f0; --panel: #ffffff; --line: #d3dcd8; --ink: #11171a; --muted: #5a6b66;
+  --teal: #0f8a7e; --green: #138a41; --amber: #a8620b; --red: #c1392b; --chip: #e5ecea; color-scheme: light } }
+:root[data-theme="light"] {
+  --bg: #eef2f0; --panel: #ffffff; --line: #d3dcd8; --ink: #11171a; --muted: #5a6b66;
+  --teal: #0f8a7e; --green: #138a41; --amber: #a8620b; --red: #c1392b; --chip: #e5ecea; color-scheme: light }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 880px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+h1 { font: 400 clamp(1.6rem, 5vw, 2.3rem)/1.1 var(--display); letter-spacing: .01em; margin: 28px 0 8px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--amber); }
+.lede { color: var(--muted); max-width: 65ch; margin: 0 0 18px; }
+.lede b { color: var(--ink); font-weight: 600; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding-block: 12px; }
+.progress { font: 600 .9rem var(--mono); font-variant-numeric: tabular-nums; }
+.progress .n { color: var(--green); }
+.meter { flex: 1 1 120px; height: 6px; background: var(--chip); border-radius: 3px; overflow: hidden; min-width: 80px; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+button, .btn { font: 600 .85rem var(--body); color: var(--ink); background: var(--chip); border: 1px solid var(--line); border-radius: 8px;
+  padding: .5em .9em; min-height: 38px; cursor: pointer; }
+button:hover { border-color: var(--teal); }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+label.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--muted); cursor: pointer; }
+
+.sound { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-top: 16px; overflow: hidden; }
+.sound.done { border-color: color-mix(in srgb, var(--green) 55%, var(--line)); }
+.head { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px 16px 10px; }
+.head h2 { margin: 0; font: 400 1.15rem var(--display); letter-spacing: .02em; }
+.head h2 small { font: 500 .78rem var(--mono); color: var(--muted); margin-left: 8px; letter-spacing: 0; }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: start; }
+.tag { font: 600 .7rem var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: .25em .6em; border-radius: 99px; background: var(--chip); color: var(--muted); }
+.tag.loop { color: var(--teal); }
+.tag.p1 { color: var(--amber); }
+.desc { grid-column: 1 / -1; color: var(--muted); font-size: .88rem; min-width: 0; }
+.desc b { color: var(--ink); font-weight: 600; }
+.desc code { font: .8rem var(--mono); }
+
+.cands { display: grid; }
+.cand { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.cand.chosen { background: color-mix(in srgb, var(--green) 9%, transparent); }
+.play { width: 46px; height: 46px; border-radius: 50%; padding: 0; display: grid; place-items: center; border-color: var(--teal); color: var(--teal); }
+.play svg { width: 18px; height: 18px; fill: currentColor; }
+.play[aria-pressed="true"] { background: var(--teal); color: var(--bg); }
+.info { min-width: 0; display: grid; gap: 4px; }
+.name { font-weight: 600; }
+.name .rank { font: 600 .75rem var(--mono); color: var(--muted); margin-right: 6px; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px 10px; font: .76rem var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.facts .warn { color: var(--amber); }
+.scores { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.sc { display: inline-flex; align-items: center; gap: 5px; font: .72rem var(--mono); color: var(--muted); }
+.sc i { width: 38px; height: 5px; background: var(--chip); border-radius: 3px; position: relative; overflow: hidden; }
+.sc i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); background: var(--teal); }
+.lic { font-size: .78rem; color: var(--muted); }
+details { font-size: .8rem; color: var(--muted); }
+details summary { cursor: pointer; }
+.total { text-align: right; display: grid; gap: 6px; justify-items: end; }
+.total b { font: 600 1.25rem var(--mono); font-variant-numeric: tabular-nums; }
+.pick { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; font-size: .85rem; cursor: pointer; padding: .35em .7em; border: 1px solid var(--line); border-radius: 8px; }
+.pick:has(input:checked) { border-color: var(--green); color: var(--green); }
+.pick input { accent-color: var(--green); margin: 0; }
+.foot { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+.foot input[type=text] { flex: 1 1 200px; min-width: 0; font: inherit; font-size: .85rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .45em .7em; }
+
+.export { margin-top: 28px; display: grid; gap: 8px; }
+.export textarea { width: 100%; min-height: 160px; font: .75rem/1.4 var(--mono); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.note { font-size: .82rem; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); translate: -50% 0; background: var(--ink); color: var(--bg); padding: .55em 1em; border-radius: 8px; font-weight: 600; font-size: .85rem; }
+@media (max-width: 560px) {
+  .cand { grid-template-columns: auto 1fr; }
+  .total { grid-column: 1 / -1; grid-template-columns: auto 1fr; justify-items: start; align-items: center; text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+<div class="wrap">
+  <h1>Batteribytte <em>lydvalg</em></h1>
+  <p class="lede">27 lyder til pantemaskinen, tre kandidater hver, rangert etter <b>målinger</b> (passer lyden, teknisk kvalitet, miks, loopskjøt og lisens). Ingen har lyttet ennå: det er det du gjør her. Spill av, velg én per lyd eller «Ingen passer», og kopier <b>selection.json</b> til slutt.</p>
+
+  <div class="bar" role="region" aria-label="Fremdrift og eksport">
+    <span class="progress"><span class="n" id="n">0</span> / <span id="of">27</span> valgt</span>
+    <span class="meter" aria-hidden="true"><i id="meter"></i></span>
+    <div class="actions">
+      <label class="toggle"><input type="checkbox" id="only-open"> Bare de som mangler valg</label>
+      <button type="button" id="copy">Kopier selection.json</button>
+    </div>
+  </div>
+
+  <main id="list"><p class="note">Laster kandidater …</p></main>
+
+  <section class="export" aria-labelledby="exp-h">
+    <h2 id="exp-h" style="font:400 1rem var(--display);margin:0">selection.json</h2>
+    <p class="note">Kopier teksten og lim den inn i chatten, eller lagre den som <code>tools/sfx/selection.json</code>. Åpnet lokalt fra repoet har siden også en «Last ned»-knapp.</p>
+    <textarea id="json" readonly aria-label="selection.json"></textarea>
+    <div class="actions"><button type="button" id="copy2">Kopier</button><button type="button" id="dl" hidden>Last ned</button></div>
+  </section>
+</div>
+<p class="toast" id="toast" role="status" hidden></p>
+
+<script>
+(() => {
+  // the page lives at tools/sfx/audition.html in the repo, and at the root when published with its files
+  const BASE = location.pathname.includes('/tools/sfx/') ? '../../' : '';
+  const KEY = 'batteribytte-lydvalg';
+  const $ = (s) => document.querySelector(s);
+  let sounds = [], sel = {};
+  try { sel = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { sel = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(sel)); } catch (e) { /* private mode */ } };
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+  const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>';
+  const STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>';
+  const bar = (label, v) => v == null ? '' : `<span class="sc" title="${label} ${v}/10">${label}<i style="--v:${v * 10}%"></i>${v}</span>`;
+
+  // one sound plays at a time; loops loop, so the seam can be heard
+  let audio = null, playingBtn = null;
+  function stop() {
+    if (audio) { audio.pause(); audio = null; }
+    if (playingBtn) { playingBtn.setAttribute('aria-pressed', 'false'); playingBtn.innerHTML = PLAY; playingBtn = null; }
+  }
+  function play(btn, file, loop) {
+    const again = playingBtn === btn;
+    stop();
+    if (again) return;
+    audio = new Audio(BASE + file); audio.loop = loop;
+    audio.addEventListener('ended', stop);
+    audio.play().catch(() => toast('Kunne ikke spille av filen'));
+    playingBtn = btn; btn.setAttribute('aria-pressed', 'true'); btn.innerHTML = STOP;
+  }
+
+  function facts(m, kind) {
+    const f = [];
+    f.push(`${m.dur.toFixed(2)} s`);
+    f.push(m.lufs == null ? 'LUFS –' : `${m.lufs.toFixed(1)} LUFS`);
+    f.push(`<span class="${(m.tp ?? -99) > 0 ? 'warn' : ''}">topp ${m.peak.toFixed(1)} dBFS${(m.tp ?? -99) > 0 ? ` · TP +${m.tp.toFixed(1)}` : ''}</span>`);
+    f.push(`${Math.round(m.centroid)} Hz`);
+    if (m.tail > 0.25) f.push(`<span class="warn">${m.tail.toFixed(2)} s stille til slutt</span>`);
+    if (m.lead > 0.05) f.push(`<span class="warn">${m.lead.toFixed(2)} s før start</span>`);
+    if (m.lufs != null && m.lufs < -45) f.push('<span class="warn">nesten stille</span>');
+    if (kind === 'L' && m.loop) f.push(`skjøt ${m.loop.seam_db} dB`);
+    return f.join('<span aria-hidden="true">·</span>');
+  }
+
+  function render() {
+    const only = $('#only-open').checked;
+    $('#list').innerHTML = sounds.map((s) => {
+      const c = sel[s.id] || {};
+      const hide = only && c.choice;
+      const cands = s.top.map((t) => `
+        <div class="cand${c.choice === t.id ? ' chosen' : ''}">
+          <button type="button" class="play" aria-pressed="false" data-file="${esc(t.file)}" data-loop="${s.kind === 'L'}"
+            aria-label="Spill ${esc(s.id)} variant ${esc(t.id.split('_').pop())}${s.kind === 'L' ? ' i loop' : ''}">${PLAY}</button>
+          <div class="info">
+            <div class="name"><span class="rank">#${t.rank}</span>${esc(t.title)}</div>
+            <div class="facts">${facts(t.m, s.kind)}</div>
+            <div class="scores">${bar('passer', t.score.fit)}${bar('teknisk', t.score.tech)}${bar('miks', t.score.mix)}${bar('loop', t.score.loop)}${bar('lisens', t.score.license)}</div>
+            <div class="lic">${esc(t.license)} · ${esc(t.creator)}</div>
+            ${t.prompt ? `<details><summary>Prompt</summary>${esc(t.prompt)}</details>` : ''}
+          </div>
+          <div class="total"><b title="Samlet poeng av 10">${t.score.total.toFixed(1)}</b>
+            <label class="pick"><input type="radio" name="pick-${esc(s.id)}" value="${esc(t.id)}" ${c.choice === t.id ? 'checked' : ''}> Velg</label>
+          </div>
+        </div>`).join('');
+      return `<section class="sound${c.choice ? ' done' : ''}" id="s-${esc(s.id)}" ${hide ? 'hidden' : ''} aria-labelledby="h-${esc(s.id)}">
+        <div class="head">
+          <h2 id="h-${esc(s.id)}">${esc(s.id)}<small>#${s.n ?? ''} · ${s.measured} målt</small></h2>
+          <div class="tags"><span class="tag${s.kind === 'L' ? ' loop' : ''}">${s.kind === 'L' ? 'Loop' : 'Engang'}</span><span class="tag p${s.prio}">Prio ${s.prio}</span></div>
+          <div class="desc"><b>Når:</b> ${md(s.when)}<br><b>Ser etter:</b> ${md(s.what)}</div>
+        </div>
+        <div class="cands">${cands || '<p class="note" style="padding:0 16px 12px">Ingen målte kandidater ennå.</p>'}</div>
+        <div class="foot">
+          <label class="pick"><input type="radio" name="pick-${esc(s.id)}" value="none" ${c.choice === 'none' ? 'checked' : ''}> Ingen passer</label>
+          <input type="text" id="note-${esc(s.id)}" data-note="${esc(s.id)}" placeholder="Kommentar (f.eks. «for tynn», «lag ny med mer bass»)" value="${esc(c.note || '')}" aria-label="Kommentar til ${esc(s.id)}">
+        </div>
+      </section>`;
+    }).join('');
+    update();
+  }
+
+  function selection() {
+    const out = [];
+    for (const s of sounds) {
+      const c = sel[s.id];
+      if (!c || (!c.choice && !c.note)) continue;
+      const t = s.top.find((x) => x.id === c.choice);
+      out.push({ sound: s.id, choice: c.choice || null, file: t ? t.file : null, source: t ? t.source : null,
+        license: t ? t.license : null, attribution: t ? t.attribution : null, note: c.note || '' });
+    }
+    return { made: new Date().toISOString(), chosen: out.filter((x) => x.choice && x.choice !== 'none').length, of: sounds.length, selections: out };
+  }
+  function update() {
+    const n = sounds.filter((s) => sel[s.id] && sel[s.id].choice).length;
+    $('#n').textContent = n; $('#of').textContent = sounds.length;
+    $('#meter').style.width = (sounds.length ? (100 * n / sounds.length) : 0) + '%';
+    $('#json').value = JSON.stringify(selection(), null, 2);
+  }
+
+  let tT = 0;
+  function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(tT); tT = setTimeout(() => { t.hidden = true; }, 2200); }
+  async function copy() {
+    update();
+    try { await navigator.clipboard.writeText($('#json').value); toast('selection.json er kopiert'); }
+    catch (e) { const a = $('#json'); a.focus(); a.select(); toast('Merket teksten: kopier med Ctrl/Cmd + C'); }
+  }
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.play');
+    if (b) play(b, b.dataset.file, b.dataset.loop === 'true');
+  });
+  document.addEventListener('change', (e) => {
+    const r = e.target;
+    if (r.type === 'radio' && r.name.startsWith('pick-')) {
+      const id = r.name.slice(5);
+      sel[id] = { ...(sel[id] || {}), choice: r.value }; save();
+      const sec = document.getElementById('s-' + id);
+      sec.classList.add('done');
+      sec.querySelectorAll('.cand').forEach((el) => el.classList.toggle('chosen', !!el.querySelector(`input[value="${CSS.escape(r.value)}"]:checked`)));
+      update();
+    }
+    if (r.id === 'only-open') render();
+  });
+  document.addEventListener('input', (e) => {
+    const id = e.target.dataset && e.target.dataset.note;
+    if (id) { sel[id] = { ...(sel[id] || {}), note: e.target.value }; save(); update(); }
+  });
+  if (BASE) $('#dl').hidden = false;                 // a file save only works when the page is opened locally
+  $('#copy').addEventListener('click', copy);
+  $('#copy2').addEventListener('click', copy);
+  $('#dl').addEventListener('click', () => {
+    update();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([$('#json').value], { type: 'application/json' }));
+    a.download = 'selection.json'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Lagrer selection.json (virker når siden er åpnet lokalt)');
+  });
+
+  fetch(BASE + 'tools/sfx/audition.json').then((r) => r.json()).then((d) => { sounds = d; render(); })
+    .catch(() => { $('#list').innerHTML = '<p class="note">Fant ikke tools/sfx/audition.json. Åpne siden via en lokal server fra repoets rot (se tools/sfx/README).</p>'; });
+})();
+</script>
