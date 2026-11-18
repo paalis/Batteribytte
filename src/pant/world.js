@@ -346,7 +346,7 @@ export async function createWorld(canvas, ui) {
     };
     return begin('drag', {
       down(e) { dragging = true; start = new Vector2(e.clientX, e.clientY); const a = toScreen(P_START), b = toScreen(P_HOLE); h = b.sub(a); },
-      move(e) { if (!start) return; const d = new Vector2(e.clientX, e.clientY).sub(start); p = clamp(d.dot(h) / h.lengthSq()); apply(); if (window.__bb) window.__bb.p = p; },
+      move(e) { if (!start) return; const d = new Vector2(e.clientX, e.clientY).sub(start); p = clamp(d.dot(h) / h.lengthSq()); apply(); },
       up() {
         if (!start) return; start = null; dragging = false;
         if (p > 0.5) { const p0 = p; tween(0.25, (k) => { p = p0 + (1 - p0) * k; apply(); }).then(() => this.done()); }
@@ -618,15 +618,6 @@ export async function createWorld(canvas, ui) {
     await turn;
     say('DIN TUR?', 'BATTERIBYTTE.VERCEL.APP', '#ffd27a');
     return receiptData;
-  }
-
-  // test hooks (only with ?debug): where things are on screen, and the drag's progress
-  if (/[?&]debug\b/.test(location.search)) {
-    window.__bb = {
-      at: (n) => { const o = n === 'flat' ? flat.holder : n === 'fresh' ? fresh.holder : M(n); return o ? toScreen(o.getWorldPosition(new Vector3())) : null; },
-      hole: () => toScreen(P_HOLE), start: () => toScreen(P_START),
-      get step() { return step ? step.name : null; },
-    };
   }
 
   // ---------- public: run the story; the page's chip and keys reach the current step through these ----------
