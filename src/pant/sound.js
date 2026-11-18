@@ -80,7 +80,11 @@ export const rollers = loop(() => {                  // the rollers spinning the
   o.connect(f); n.connect(ng).connect(f); f.connect(out).connect(master); o.start(); n.start();
   return { out, srcs: [o, n] };
 });
-export function scanBeep() { if (!ok()) return; tone(1800, 0.06, 0.05, 'square'); }
+export function scanBeep(f = 1800) { if (!ok()) return; tone(f, 0.05, 0.045, 'square'); }
+export function grab() { if (!ok()) return; noise(0.05, 'bandpass', 1400, null, 0.18, 0, 2); tone(320, 0.06, 0.05, 'sine', 420); buzz(8); }
+export function drop() { if (!ok()) return; noise(0.06, 'bandpass', 900, null, 0.12, 0, 2); buzz(6); }
+export function lock() { if (!ok()) return; noise(0.05, 'highpass', 2500, null, 0.3); tone(180, 0.12, 0.2, 'sine', 90); buzz(25); }
+export function gulp() { if (!ok()) return; tone(160, 0.25, 0.25, 'sine', 55, 0.05); noise(0.3, 'lowpass', 500, 120, 0.4, 0.05); buzz([20, 30, 40]); }
 export function reject() {                            // the dreaded buzz
   if (!ok()) return;
   [0, 0.22].forEach((at) => tone(140, 0.18, 0.18, 'square', 120, at));
