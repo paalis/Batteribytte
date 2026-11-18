@@ -267,7 +267,8 @@ export async function createWorld(canvas, ui) {
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   function begin(name, handlers) {
     return new Promise((resolve) => {
-      step = { name, ...handlers, done: (v) => { if (step && step.name === name) { step = null; resolve(v); } } };
+      // when a step is done the chip goes away until the next one asks for something (ui.step('wait'))
+      step = { name, ...handlers, done: (v) => { if (step && step.name === name) { step = null; ui.step('wait'); resolve(v); } } };
       ui.step(name);
     });
   }
