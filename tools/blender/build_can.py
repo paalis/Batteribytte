@@ -10,7 +10,9 @@ What it makes (units: metres, Blender Z up → glTF Y up, the label's front face
   - the label unwrapped from the product photo (assets/battery-fresh.webp): a column at angle φ is the photo column
     at x = sin φ; the back, which no photo shows, gets the label's own gradient row by row;
   - condensation: a normal map of droplets, denser toward the cold bottom of the can;
-  - a stay-on tab on a hinge and the opening under it, with an animation «open» (tab lifts, opening appears).
+  - a stay-on tab on a hinge and the opening under it, with an animation «open» (tab lifts, opening appears);
+  - «energy»: lightning veins baked from Blender's own procedural nodes (warped Voronoi edges) into an emissive map
+    on the label. The web page keeps its intensity at 0 and makes it surge and flicker as the can charges and opens.
 """
 import math
 import os
@@ -228,6 +230,85 @@ def principled(name):
     return m, m.node_tree.nodes['Principled BSDF'], m.node_tree
 
 
+def bake_energy(wall, size=(2048, 1656)):
+    """Lightning veins over the label: Voronoi cell edges in object space, warped by noise so they run crooked like
+    arcs, stretched upward, two scales (trunks and fine branches). Baked through the label's UVs into an image."""
+    img = bpy.data.images.new('energy', size[0], size[1], alpha=False)
+    m = bpy.data.materials.new('EnergyBake')
+    m.use_nodes = True
+    nt = m.node_tree
+    nodes, links = nt.nodes, nt.links
+    for n in list(nodes):
+        nodes.remove(n)
+    out = nodes.new('ShaderNodeOutputMaterial')
+    em = nodes.new('ShaderNodeEmission')
+    tc = nodes.new('ShaderNodeTexCoord')
+
+    def veins(scale, warp, width, seed):
+        sc = nodes.new('ShaderNodeVectorMath'); sc.operation = 'MULTIPLY'
+        sc.inputs[1].default_value = (scale, scale, scale * 0.45)        # stretched upward
+        links.new(tc.outputs['Object'], sc.inputs[0])
+        off = nodes.new('ShaderNodeVectorMath'); off.operation = 'ADD'
+        off.inputs[1].default_value = (seed, seed * 1.7, seed * 0.3)
+        links.new(sc.outputs['Vector'], off.inputs[0])
+        nz = nodes.new('ShaderNodeTexNoise')
+        nz.inputs['Scale'].default_value = 1.6
+        nz.inputs['Detail'].default_value = 6
+        links.new(off.outputs['Vector'], nz.inputs['Vector'])
+        cen = nodes.new('ShaderNodeVectorMath'); cen.operation = 'SUBTRACT'
+        cen.inputs[1].default_value = (0.5, 0.5, 0.5)
+        links.new(nz.outputs['Color'], cen.inputs[0])
+        amt = nodes.new('ShaderNodeVectorMath'); amt.operation = 'SCALE'
+        amt.inputs['Scale'].default_value = warp
+        links.new(cen.outputs['Vector'], amt.inputs[0])
+        add = nodes.new('ShaderNodeVectorMath'); add.operation = 'ADD'
+        links.new(off.outputs['Vector'], add.inputs[0]); links.new(amt.outputs['Vector'], add.inputs[1])
+        vor = nodes.new('ShaderNodeTexVoronoi'); vor.feature = 'DISTANCE_TO_EDGE'
+        vor.inputs['Scale'].default_value = 1.0
+        links.new(add.outputs['Vector'], vor.inputs['Vector'])
+        ramp = nodes.new('ShaderNodeValToRGB')
+        ramp.color_ramp.elements[0].position = 0.0
+        ramp.color_ramp.elements[0].color = (1, 1, 1, 1)
+        ramp.color_ramp.elements[1].position = width
+        ramp.color_ramp.elements[1].color = (0, 0, 0, 1)
+        ramp.color_ramp.interpolation = 'EASE'
+        links.new(vor.outputs['Distance'], ramp.inputs['Fac'])
+        return ramp
+
+    trunks = veins(20.0, 0.9, 0.022, 3.1)
+    twigs = veins(52.0, 0.7, 0.012, 7.7)
+    tw = nodes.new('ShaderNodeMath'); tw.operation = "MULTIPLY"; tw.inputs[1].default_value = 0.4
+    links.new(twigs.outputs['Color'], tw.inputs[0])
+    mx = nodes.new('ShaderNodeMath'); mx.operation = 'MAXIMUM'
+    links.new(trunks.outputs['Color'], mx.inputs[0]); links.new(tw.outputs['Value'], mx.inputs[1])
+    tint = nodes.new('ShaderNodeMix'); tint.data_type = 'RGBA'; tint.blend_type = 'MULTIPLY'
+    tint.inputs['Factor'].default_value = 1.0
+    links.new(mx.outputs['Value'], tint.inputs['A'])
+    tint.inputs['B'].default_value = (0.55, 1.0, 0.95, 1)                # teal-white, the film's lightning
+    links.new(tint.outputs['Result'], em.inputs['Color'])
+    links.new(em.outputs['Emission'], out.inputs['Surface'])
+    target = nodes.new('ShaderNodeTexImage'); target.image = img
+    nodes.active = target
+
+    keep = list(wall.data.materials)
+    wall.data.materials.clear()
+    wall.data.materials.append(m)
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.samples = 4
+    scene.render.bake.margin = 4
+    for ob in bpy.context.view_layer.objects:
+        ob.select_set(False)
+    wall.select_set(True)
+    bpy.context.view_layer.objects.active = wall
+    bpy.ops.object.bake(type='EMIT')
+    wall.data.materials.clear()
+    for mm in keep:
+        wall.data.materials.append(mm)
+    img.pack()
+    return img
+
+
 def label_material(label_img, nrm_img, rough_img):
     m, p, nt = principled('Label')
     tex = nt.nodes.new('ShaderNodeTexImage')
@@ -249,6 +330,15 @@ def label_material(label_img, nrm_img, rough_img):
     p.inputs['Coat Weight'].default_value = 0.35
     p.inputs['Coat Roughness'].default_value = 0.25
     return m
+
+
+def add_energy(m, energy_img, strength=1.0):
+    nt = m.node_tree
+    p = nt.nodes['Principled BSDF']
+    et = nt.nodes.new('ShaderNodeTexImage')
+    et.image = energy_img
+    nt.links.new(et.outputs['Color'], p.inputs['Emission Color'])
+    p.inputs['Emission Strength'].default_value = strength
 
 
 def metal_material(name, color, rough):
@@ -333,6 +423,8 @@ def build():
     base.data.materials.append(m_base)
     for ob in (wall, lid, base):
         ob.parent = root
+    print('energy …')
+    add_energy(m_label, bake_energy(wall))
 
     # the opening: a dark tear under the nose of the tab, scaled from 0 when the can opens
     bpy.ops.mesh.primitive_circle_add(vertices=40, radius=1, fill_type='NGON', location=(0, -11.5 * MM, 164.55 * MM))

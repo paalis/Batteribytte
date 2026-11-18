@@ -92,6 +92,9 @@ a { color: var(--muted); }
 .can3d { position: absolute; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .6s var(--ease-out); }
 .can3d canvas { display: block; width: 100%; height: 100%; }
 .finale .can3d { opacity: 1; pointer-events: auto; cursor: grab; }
+/* the live show: the 3D can takes over from the film at once, in the same place; its glow follows the surge */
+.live3d .can3d { opacity: 1; transition: opacity .12s linear; }
+.can3d canvas { filter: drop-shadow(0 0 calc(var(--surge, 0) * 7px) rgba(79, 214, 200, calc(var(--surge, 0) * .22))); }
 .finale .can3d:active { cursor: grabbing; }
 .finale .frames { filter: brightness(.38) blur(5px) saturate(.8); transition: filter 1s var(--ease-out); }
 .finale .film { pointer-events: auto; }

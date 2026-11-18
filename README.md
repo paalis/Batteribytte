@@ -3,15 +3,16 @@
 En liten side for kolleger og venner: en kort produktfilm i svart studio (tre Battery Fresh-bokser, lys som
 sveiper over, makro av etiketten, kald røyk), og så spørsmålet «Er du klar?» med Ja / Nei.
 Du lader ved å **scrolle** (eller holde inne Ja, som scroller for deg): filmen, batteriet, tekstene og lyset følger
-én felles tidslinje. Ved 100 % åpner du boksen selv, filmen spilles til slutt, og boksen trer ut av filmen
-som en ekte 3D-boks du kan snu. Nei slukker lyset. Lyd lages i nettleseren (Web Audio) og starter ved første trykk.
+én felles tidslinje. Ved 100 % åpner du boksen selv: da tar en ekte 3D-boks over fra filmen, lades med lyn, smeller opp med sprut
+og tar en heltesving du kan overta. Nei slukker lyset. Lyd lages i nettleseren (Web Audio) og starter ved første trykk.
 
 - `index.html`, `style.css`, `app.js` (tilstander, knapper, lyd, fotoreserven), `journey.js` (scroll, film, tidslinje) — uten byggesteg.
 - `frames/720/` og `frames/540/` — filmen som bildesekvens (494 WebP-bilder, 24 fps), tegnet på canvas.
   Lages fra `assets/journey2-720.mp4` med `tools/make-frames.sh`. `assets/base-poster.jpg` vises før de er lastet.
 - `lib/` — GSAP + ScrollTrigger, Lenis og `can3d.js` (three.js + `src/can3d.js`, bygges med `tools/build-can3d.sh`). Se `lib/README.md`.
-- `assets/can/battery-can.glb` — 3D-boksen i finalen, modellert i Blender med `tools/blender/build_can.py`
-  (Blender som Python-modul, ingen installasjon: `pip install bpy==5.3.0`; `--render` lager `tools/blender/preview.png` med Cycles).
+- `assets/can/` — klimakset i 3D, laget i Blender (Blender som Python-modul, ingen installasjon: `pip install bpy==5.3.0 pillow`):
+  `battery-can.glb` (modellen med lynårer og åpne-animasjon, `tools/blender/build_can.py`; `--render` gir `tools/blender/preview.png`)
+  og `spray.webp`/`spray.json` (spruten, `tools/blender/render_spray.py`). Delingsbildet `assets/og.jpg` er `tools/blender/render_og.py`.
 - `assets/battery-fresh.webp` (produktfoto, også kilden til 3D-boksen), `assets/og.jpg` (delingsbilde), `favicon.svg`,
   `fonts/` (Archivo Black, SIL OFL, se `fonts/OFL.txt`).
 - Respekterer «redusert bevegelse» (ingen scroll-film, fotoboksen lades med knappen) og fungerer med tastatur og skjermleser.
