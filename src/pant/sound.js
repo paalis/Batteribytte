@@ -13,35 +13,51 @@ export function unlock() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    // iOS 17+: «playback» lets Web Audio sound with the ring/silent switch on silent (the default «auto» mutes it)
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* ignore */ }
     ctx = new AC();
     const comp = ctx.createDynamicsCompressor();                     // light: glue, not squash
     comp.threshold.value = -14; comp.knee.value = 10; comp.ratio.value = 3; comp.attack.value = 0.004; comp.release.value = 0.2;
     master = ctx.createGain(); master.gain.value = on ? 0.9 : 0;
     master.connect(comp).connect(ctx.destination);
-    // iOS: a silent buffer started inside the gesture opens the audio route for good
-    try { const b = ctx.createBufferSource(); b.buffer = ctx.createBuffer(1, 1, 22050); b.connect(ctx.destination); b.start(0); } catch (e) { /* ignore */ }
     preload();
     LOOPS.forEach((l) => l.wake());
   }
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  if (ctx.state !== 'running') {
+    // iOS: only a gesture that counts (touchend, click, keydown; not pointerdown) may start audio, so every such
+    // event tries again until it runs: resume, plus a silent buffer inside the gesture, which opens the route.
+    // «interrupted» (a call, the app in the background) needs the same.
+    try { const b = ctx.createBufferSource(); b.buffer = ctx.createBuffer(1, 1, 22050); b.connect(ctx.destination); b.start(0); } catch (e) { /* ignore */ }
+    ctx.resume().catch(() => {});
+  }
 }
-if (typeof window !== 'undefined') ['pointerdown', 'touchend', 'keydown'].forEach((t) => addEventListener(t, unlock, { capture: true, passive: true }));
+if (typeof window !== 'undefined') ['pointerdown', 'touchend', 'click', 'keydown'].forEach((t) => addEventListener(t, unlock, { capture: true, passive: true }));
 
 // ---------- the samples ----------
 const BUF = {};
-const FMT = (() => { try { return document.createElement('audio').canPlayType('audio/ogg; codecs="vorbis"') ? 'ogg' : 'm4a'; } catch (e) { return 'm4a'; } })();
+// Ogg first only where the browser is sure of it (Chrome, Firefox say «probably»); Safari gets AAC first: some
+// versions say «maybe» to Ogg and then fail or stall decoding it
+const FMT = (() => { try { return document.createElement('audio').canPlayType('audio/ogg; codecs="vorbis"') === 'probably' ? 'ogg' : 'm4a'; } catch (e) { return 'm4a'; } })();
 const FIRST = ['room', 'hum', 'grab', 'suck', 'gulp', 'drop', 'ui'];  // the first step's sounds load first (room before hum: the hum carries it)
 let loading = null;
-function decode(data) { return new Promise((res, rej) => { const p = ctx.decodeAudioData(data, res, rej); if (p && p.catch) p.catch(rej); }); }
+// decode, giving up after 8 s (a decoder that never answers must not hold up the rest of the queue)
+function decode(data) {
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error('decode timeout')), 8000);
+    const ok = (b) => { clearTimeout(t); res(b); }, no = (e) => { clearTimeout(t); rej(e); };
+    try { const p = ctx.decodeAudioData(data, ok, no); if (p && p.catch) p.catch(no); } catch (e) { no(e); }
+  });
+}
+const ERR = [];
 async function fetchOne(id) {
-  for (const f of FMT === 'ogg' ? ['ogg', 'm4a'] : ['m4a']) {      // a browser that says «maybe» to Ogg but can't: try AAC
+  for (const f of FMT === 'ogg' ? ['ogg', 'm4a'] : ['m4a', 'ogg']) {
     try {
       const r = await fetch(`assets/sfx/${id}.${f}`);
       if (!r.ok) throw new Error(r.status);
       BUF[id] = await decode(await r.arrayBuffer());
       LOOPS.forEach((l) => { if (l.id === id) l.upgrade(); });
       return;
-    } catch (e) { /* next format, or the synth stays */ }
+    } catch (e) { ERR.push(`${id}.${f}: ${e && (e.message || e.name || e)}`); }   // next format, or the synth stays
   }
 }
 function preload() {
@@ -243,3 +259,17 @@ export function pop() {
 
 // for tests: how many files are decoded, and which format
 if (typeof window !== 'undefined') window.__sfx = { loaded: () => Object.keys(BUF).length, of: Object.keys(MAN).length, fmt: FMT };
+// ?lyd on the URL: a small readout of the audio state, for checking on a phone without dev tools
+if (typeof location !== 'undefined' && /[?&]lyd\b/.test(location.search)) {
+  const box = document.createElement('pre');
+  box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;margin:0;padding:6px 8px;max-width:calc(100vw - 16px);white-space:pre-wrap;font:11px/1.35 ui-monospace,monospace;color:#cfe;background:rgba(0,0,0,.75);border-radius:6px;pointer-events:none';
+  const show = () => {
+    box.textContent = `lyd: ${ctx ? ctx.state + ' ' + ctx.sampleRate + ' Hz' : 'ikke startet (trykk et sted)'} · på: ${on}\n`
+      + `format: ${FMT} · lastet ${Object.keys(BUF).length}/${Object.keys(MAN).length}`
+      + ` · audioSession: ${navigator.audioSession ? navigator.audioSession.type : '–'}`
+      + (ERR.length ? `\nfeil: ${ERR.slice(-4).join(' | ')}` : '');
+  };
+  addEventListener('DOMContentLoaded', () => document.body.appendChild(box));
+  if (document.body) document.body.appendChild(box);
+  setInterval(show, 500); show();
+}
