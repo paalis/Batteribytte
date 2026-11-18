@@ -8,8 +8,10 @@
 //   0 → REW        one whoosh back to the macro of the lid (the film runs backwards through itself, blurred)
 //   REW → 1        the film is scrubbed 0 → T_POP while the battery charges 6 → 100 %
 //   p = 1          the can waits («Åpne!»): scroll on, swipe up, press «Åpne!», J or Enter
-//   open           the film plays on to its last frame (tab, spray, foam), then the can comes out of the film
-//                  as a real 3D can you can turn (lib/can3d.js), and «Fullt ladet!» comes in
+//   open           the climax is live 3D (lib/can3d.js): the Blender-made can appears exactly over the film's can,
+//                  energy surges through the label, the tab snaps up, the spray bursts (a Cycles flipbook), flash
+//                  and slam; the film steps back, the can makes one hero turn, and «Fullt ladet!» comes in.
+//                  If the 3D can is not ready, the film plays on to its last frame instead, as before.
 //
 // The film is an image sequence on a canvas (frames/720 or frames/540, 24 fps, 494 frames), not a <video>:
 // every frame is exact in both directions on every browser, and it loads coarse-to-fine so scrubbing works early.
@@ -20,7 +22,7 @@
   const BB = window.BB;
   const film = document.getElementById('film');
   const cv = document.getElementById('frames');
-  const off = () => root.classList.remove('film-base', 'film-ready', 'scroll-mode', 'finale');
+  const off = () => root.classList.remove('film-base', 'film-ready', 'scroll-mode', 'finale', 'live3d');
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!BB || !film || !cv || RM || !window.gsap || !window.ScrollTrigger || !window.Lenis) { off(); return; }
   const gsap = window.gsap, ScrollTrigger = window.ScrollTrigger;
@@ -270,13 +272,23 @@
     Object.assign(host.style, { left: box.x + 'px', top: box.y + 'px', width: box.w + 'px', height: box.h + 'px' });
     can3d.resize(Math.round(box.w), Math.round(box.h));
   }
-  function finale() {
-    const done = () => { const f = onEnded; onEnded = null; if (f) f(); };
+  const ended = () => { const f = onEnded; onEnded = null; if (f) f(); };
+  function finale() {                                // the film's own ending (when the live show could not run)
     loadCan().then((c) => {
       if (BB.state !== 'yes') return;
       if (c) { root.classList.add('finale'); c.show(); }
-      done();
+      ended();
     });
+  }
+  function bigFlash() { if (!flash) return; flash.classList.remove('quick', 'go'); void flash.offsetWidth; flash.classList.add('go'); }
+  // the climax, live: the film holds on the closed can while the 3D can takes over in exactly the same place
+  function liveShow() {
+    can3d.reset();
+    placeCan();
+    root.classList.add('live3d');
+    can3d.openShow({
+      onHit: () => { bigFlash(); root.classList.add('finale'); },
+    }).then(() => { if (BB.state === 'yes') ended(); });
   }
 
   // ---------- the moments (app.js emits these) ----------
@@ -286,12 +298,14 @@
     if (t === 'armed') { armedAt = performance.now(); loadCan(); }
     else if (t === 'pop') {
       lenis && lenis.stop();
-      shown = T_POP; vel = 0; playing = true; playAt = performance.now();
+      shown = T_POP; vel = 0;
+      if (can3d) liveShow();
+      else { playing = true; playAt = performance.now(); }
     } else if (t === 'no') {
       lenis && lenis.stop();
     } else if (t === 'ask') {
       playing = false;
-      root.classList.remove('finale');
+      root.classList.remove('finale', 'live3d');
       if (can3d) can3d.hide();
       slow = true; vel = 0;
       if (lenis) { lenis.start(); lenis.scrollTo(0, { immediate: true, force: true }); }
@@ -300,11 +314,15 @@
     }
   });
 
-  Object.assign(J, {
-    go,
-    onEnd(fn) { onEnded = fn; },
-    waiting: () => false,
-    get moving() { return !!(lenis && lenis.isScrolling); },
-    T_POP, HIT_DELAY: (T_HIT - T_POP) * 1000,
+  // (defineProperties, not Object.assign: the getters must stay getters)
+  Object.defineProperties(J, {
+    go: { value: go },
+    onEnd: { value(fn) { onEnded = fn; } },
+    waiting: { value: () => false },
+    moving: { get: () => !!(lenis && lenis.isScrolling) },
+    T_POP: { value: T_POP },
+    // when the slam lands after «Åpne!»: on the tab's snap in the live show, on the spray in the film
+    HIT_DELAY: { get: () => (can3d ? can3d.HIT_MS : (T_HIT - T_POP) * 1000) },
+    live: { get: () => !!can3d },                    // «Åpne!» will run the live 3D show
   });
 })();

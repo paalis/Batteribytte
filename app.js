@@ -113,6 +113,8 @@
     // with the film, the slam lands on the frame where the tab lifts; the film itself is the spectacle (no 2D sparks)
     const J = window.JOURNEY && JOURNEY.active ? JOURNEY : null;
     if (J) panels.ask.hidden = true;                // the film has the screen until «Fullt ladet!» comes in
+    // in the live 3D show the energy surges first: a riser that peaks on the snap of the tab
+    if (J && J.live) sound.surge((J.HIT_DELAY) / 1000);
     setTimeout(() => { sound.pop(); buzz([25, 40, 35]); }, J ? J.HIT_DELAY : 0);
     emit('pop');
     const r = canBody.getBoundingClientRect();
@@ -438,6 +440,28 @@
         noise(0.45, 'lowpass', 520, 0.6);             // … a low thump …
         noise(0.35, 'bandpass', 3200, 0.5);           // … the crack, and the chord
         [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.05 + i * 0.05, 0.7, 0.06));
+      },
+      // the surge before the pop: a sawtooth climbing two octaves through a widening filter, a hiss rising with it,
+      // a fast tremolo that speeds up; it ends exactly where the slam begins
+      surge(dur) {
+        if (!ok()) return;
+        const t = ctx.currentTime, end = t + dur;
+        const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain(), trem = ctx.createGain();
+        o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(440, end);
+        f.type = 'lowpass'; f.Q.value = 6; f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(5200, end);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09, end - 0.02); g.gain.linearRampToValueAtTime(0, end + 0.03);
+        const lfo = ctx.createOscillator(), lg = ctx.createGain();
+        lfo.frequency.setValueAtTime(9, t); lfo.frequency.exponentialRampToValueAtTime(38, end);
+        lg.gain.value = 0.5; trem.gain.value = 0.5;
+        lfo.connect(lg).connect(trem.gain);
+        o.connect(f).connect(trem).connect(g).connect(ctx.destination);
+        o.start(t); lfo.start(t); o.stop(end + 0.05); lfo.stop(end + 0.05);
+        const nb = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * (dur + 0.1)), ctx.sampleRate), nd = nb.getChannelData(0);
+        for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+        const ns = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+        ns.buffer = nb; bp.type = 'bandpass'; bp.Q.value = 2; bp.frequency.setValueAtTime(800, t); bp.frequency.exponentialRampToValueAtTime(9000, end);
+        ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.12, end - 0.02); ng.gain.linearRampToValueAtTime(0, end + 0.03);
+        ns.connect(bp).connect(ng).connect(ctx.destination); ns.start(t); ns.stop(end + 0.05);
       },
       down() { if (!ok()) return; tone(440, 0, DRAIN, 0.07, 'triangle', 70); },
       fizz() { if (!ok()) return; noise(0.25, 'highpass', 5000, 0.12); },
