@@ -74,11 +74,14 @@ export function makeParticles(scene, max = 900) {
   return { emit, ring, update };
 }
 
-// Foam after the pop: a crown of small bubbles over the opening and two runs that creep down the wall, following the
-// can's profile, then settle and pop one by one. Bubbles are shaded little spheres (a cream body, a highlight, a darker
-// rim so packed bubbles read as foam), drawn with normal blending. Lives in the can's own frame (parent: the can), so
-// it turns with it. Units: metres; y = 0 is the can's middle, the top at +h/2.
-export function makeFoam(parent, h = 0.168, max = 2600) {
+// Foam after the pop, as soda foam behaves: it wells up out of the opening in a second, spills over the rim and runs
+// down the wall in two streams that leave a wet amber trail, then collapses — the bubbles burst from the top down, each
+// with a tiny spit of spray — until only a ring of bubbles clings round the opening. Three kinds of points:
+//   bubbles  thin shells: a bright, see-through middle, a darker film at the rim, a speck of highlight
+//   cream    the dense foam the bubbles sit in: soft, opaque, a little warm
+//   wet      the trail a run leaves: translucent amber with a glint
+// Lives in the can's own frame (parent: the can), so it turns with it. Units: metres; y = 0 is the can's middle.
+export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
   const PROF = [[0, 24.6], [9.5, 33.1], [145, 33.1], [148.5, 32.8], [151.5, 31.9], [154.5, 30.4], [157.5, 28.8], [160, 27.6], [162, 27.1], [168, 27.1]];
   const radiusAt = (y) => {                              // the can's radius (m) at height y
     const mm = (y + h / 2) * 1000;
@@ -97,53 +100,67 @@ export function makeFoam(parent, h = 0.168, max = 2600) {
     vertexShader: `attribute float size; attribute float alpha; attribute float shade; varying float vA; varying float vS; uniform float uScale;
       void main() { vA = alpha; vS = shade; vec4 mv = modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = alpha > 0.0 ? max(1.0, size * uScale / -mv.z) : 0.0; gl_Position = projectionMatrix * mv; }`,
-    // shade 1: a bubble (a faint highlight, a thin darker rim); shade 0: the soft cream the bubbles sit in
+    // shade 0: cream · 1: bubble · 2: wet trail
     fragmentShader: `varying float vA; varying float vS;
       void main() { vec2 d = (gl_PointCoord - 0.5) * 2.0; float r = length(d); if (r > 1.0) discard;
         vec3 n = vec3(d.x, -d.y, sqrt(max(0.0, 1.0 - r * r)));
-        float dif = 0.84 + 0.16 * dot(n, normalize(vec3(-0.4, 0.6, 0.7)));
-        float hl = smoothstep(0.22, 0.0, length(d - vec2(-0.3, -0.34))) * vS;
-        float rim = mix(1.0, 0.86, smoothstep(0.72, 1.0, r) * vS);
-        vec3 c = vec3(1.0, 0.97, 0.9) * dif * rim + vec3(1.0) * hl * 0.3;
-        float edge = mix(1.0 - smoothstep(0.3, 1.0, r), 1.0 - smoothstep(0.86, 1.0, r), vS);
-        gl_FragColor = vec4(c, vA * edge); }`,
+        float lit = dot(n, normalize(vec3(-0.45, 0.6, 0.65)));
+        float spec = pow(max(0.0, dot(reflect(-normalize(vec3(-0.45, 0.6, 0.65)), n), vec3(0.0, 0.0, 1.0))), 24.0);
+        vec3 c; float a;
+        if (vS < 0.5) {                                   // cream
+          c = vec3(1.0, 0.95, 0.85) * (0.86 + 0.14 * lit); a = 1.0 - smoothstep(0.25, 1.0, r);
+        } else if (vS < 1.5) {                            // a bubble: the film thickest (and darkest) at its edge
+          float film = smoothstep(0.55, 0.97, r);
+          c = mix(vec3(1.0, 0.97, 0.9), vec3(0.78, 0.66, 0.5), film * 0.55) * (0.9 + 0.1 * lit) + vec3(1.0) * spec * 0.9;
+          a = mix(0.42, 0.98, film) * (1.0 - smoothstep(0.93, 1.0, r));
+        } else {                                          // wet: amber, mostly see-through, one glint
+          c = vec3(0.98, 0.62, 0.22) * (0.7 + 0.3 * lit) + vec3(1.0, 0.95, 0.85) * spec * 1.2;
+          a = (0.28 + 0.5 * spec) * (1.0 - smoothstep(0.6, 1.0, r));
+        }
+        gl_FragColor = vec4(c, vA * a); }`,
     transparent: true, depthWrite: false,
   });
   const pts = new Points(geo, mat); pts.frustumCulled = false; pts.renderOrder = 4; parent.add(pts);
   const rnd = (a, b) => a + Math.random() * (b - a);
+  const small = () => 0.00035 + Math.pow(Math.random(), 2.2) * 0.0024;    // mostly tiny bubbles, a few big ones
   let n = 0, t = 0, running = false;
-  const RUNS = [{ a: 0.18, len: 0.06, w: 0.2, rate: 170 }, { a: -0.5, len: 0.032, w: 0.13, rate: 95 }];
+  const RUNS = [{ a: 0.16, len: 0.07, w: 0.17, rate: 230 }, { a: -0.55, len: 0.036, w: 0.11, rate: 120 }];
   const add = (b) => { const i = n; n = (n + 1) % max; Object.assign(B[i], { on: true, age: 0, ...b }); };
-  const yTop = h / 2 - 0.006;                            // the wall just under the rim, where the runs start
+  const yRim = h / 2 - 0.002, yTop = h / 2 - 0.006, OZ = 0.005, OR = 0.021;
+  // how high the head stands: wells up in half a second, then sinks to a thin layer
+  const head = (tt) => 0.017 * Math.min(1, tt / 0.45) ** 0.7 * (1 - 0.82 * Math.min(1, Math.max(0, (tt - 0.7) / 3.2)) ** 0.8);
   function start() {
     running = true; t = 0;
-    // the crown, over the opening and spilling to the front rim: a soft cream body, then packed bubbles on it
-    const crown = (k, s0, s1, sh, lift) => { for (let i = 0; i < k; i++) {
-      const a = rnd(0, Math.PI * 2), d = Math.sqrt(Math.random()) * 0.021;
-      const x = Math.cos(a) * d, z = 0.005 + Math.sin(a) * d;
-      const dome = 0.013 * (1 - (d / 0.021) ** 2);
-      add({ kind: 0, x, z, y: h / 2 - 0.004 + dome * rnd(lift, 1), s: rnd(s0, s1), sh, born: rnd(0, 0.35), life: rnd(5, 9) });
-    } };
-    crown(90, 0.006, 0.01, 0, 0.2);
-    crown(380, 0.0008, 0.0018, 1, 0.55);
-    crown(140, 0.0018, 0.0032, 1, 0.6);
+    for (let i = 0; i < 1500; i++) {                     // the head over the opening
+      const a = rnd(0, Math.PI * 2), d = Math.sqrt(Math.random()) * OR, hf = Math.pow(Math.random(), 0.7);
+      const cream = Math.random() < 0.08;
+      const edge = d / OR;
+      // bubbles high in the head burst first; the ones at the rim last longest
+      const life = cream ? rnd(2.2, 4.5) : 0.9 + 4.5 * (1 - hf) * rnd(0.5, 1) + 4 * edge ** 3 * rnd(0.5, 1);
+      add({ kind: 0, x: Math.cos(a) * d, z: OZ + Math.sin(a) * d, hf: hf * (1 - edge * edge * 0.7), s: cream ? rnd(0.004, 0.007) : small(), sh: cream ? 0 : 1, born: rnd(0, 0.3) * (0.3 + hf), life });
+    }
+    for (let i = 0; i < 260; i++) {                      // the ring that clings round the opening's edge
+      const a = rnd(0, Math.PI * 2), d = OR * rnd(0.88, 1.02);
+      add({ kind: 0, x: Math.cos(a) * d, z: OZ + Math.sin(a) * d, hf: rnd(0, 0.12), s: small() * 0.9, sh: 1, born: rnd(0.2, 0.6), life: rnd(7, 12) });
+    }
   }
-  const out = (b, i) => {                                // the bubble's position: crown bubbles where they are; run bubbles on the wall
-    if (b.kind === 0) { pos[i * 3] = b.x; pos[i * 3 + 1] = b.y - 0.004 * Math.min(1, b.age / 6); pos[i * 3 + 2] = b.z; return; }
-    const r = radiusAt(b.y) + 0.0012;
-    pos[i * 3] = Math.sin(b.a) * r; pos[i * 3 + 1] = b.y; pos[i * 3 + 2] = Math.cos(b.a) * r;
+  const tmp = { x: 0, y: 0, z: 0 };
+  const where = (b) => {
+    if (b.kind === 0) { tmp.x = b.x; tmp.y = yRim + head(t) * b.hf; tmp.z = b.z; return tmp; }
+    const r = radiusAt(b.y) + (b.kind === 2 ? 0.0004 : 0.0011);
+    tmp.x = Math.sin(b.a) * r; tmp.y = b.y; tmp.z = Math.cos(b.a) * r; return tmp;
   };
   function update(dt, camera, viewH) {
     mat.uniforms.uScale.value = viewH / (2 * Math.tan((camera.fov * Math.PI) / 360));
     if (running) {
       t += dt;
-      for (const R of RUNS) {                           // the runs: fed from the rim for a while, each bubble creeping down
-        if (t > 0.15 && t < 1.6) {
-          const k = Math.round(R.rate * dt * (1.6 - t) + Math.random());
+      for (const R of RUNS) {                           // the runs: fed from the rim for a while, creeping down
+        if (t > 0.2 && t < 1.8) {
+          const k = Math.round(R.rate * dt * (1.8 - t) / 1.6 + Math.random());
           for (let j = 0; j < k; j++) {
-            const go = R.len * rnd(0.25, 1) * Math.min(1, (t + 0.3) / 1.2);
-            const soft = Math.random() < 0.18;
-            add({ kind: 1, a: R.a + rnd(-1, 1) * R.w * 0.5, y: yTop - rnd(0, 0.004), stop: yTop - go, v: rnd(0.03, 0.06), s: soft ? rnd(0.004, 0.007) : rnd(0.0008, 0.0026), sh: soft ? 0 : 1, born: 0, life: rnd(4, 9), spread: rnd(-1, 1) * R.w * 0.35 });
+            const go = R.len * rnd(0.2, 1) * Math.min(1, (t + 0.2) / 1.1);
+            const cream = Math.random() < 0.1;
+            add({ kind: 1, a: R.a + rnd(-1, 1) * R.w * 0.5, y: yTop - rnd(0, 0.004), stop: yTop - go, v: rnd(0.035, 0.07), s: cream ? rnd(0.003, 0.0055) : small(), sh: cream ? 0 : 1, born: 0, life: rnd(2.5, 7), spread: rnd(-1, 1) * R.w * 0.3, trail: 0 });
           }
         }
       }
@@ -155,15 +172,25 @@ export function makeFoam(parent, h = 0.168, max = 2600) {
       const a = b.age - b.born;
       if (a < 0) { alpha[i] = 0; continue; }
       if (b.kind === 1 && b.y > b.stop) {
-        b.y = Math.max(b.stop, b.y - b.v * dt); b.v *= Math.exp(-dt * 0.8);
-        b.a += b.spread * dt * 0.6;                      // the run widens a little as it goes down
+        b.y = Math.max(b.stop, b.y - b.v * dt); b.v *= Math.exp(-dt * 0.9);
+        b.a += b.spread * dt * 0.5;
+        if ((b.trail += dt) > 0.05 && Math.random() < 0.5) {    // the wet streak behind it
+          b.trail = 0;
+          add({ kind: 2, a: b.a, y: b.y + 0.001, s: rnd(0.0022, 0.0042), sh: 2, born: 0, life: rnd(5, 8) });
+        }
       }
-      const grow = Math.min(1, a / 0.18), fade = 1 - Math.max(0, (a - b.life * 0.75) / (b.life * 0.25));
-      if (fade <= 0) { b.on = false; alpha[i] = 0; continue; }
-      size[i] = b.s * grow * (0.6 + 0.4 * fade);
-      alpha[i] = 0.97 * Math.min(1, fade * 2);
+      if (a > b.life) {                                 // it bursts: gone in a blink, with a little spit of spray
+        b.on = false; alpha[i] = 0;
+        if (onPop && b.sh === 1 && b.s > 0.0009 && Math.random() < 0.35) { const p = where(b); onPop(p.x, p.y, p.z); }
+        continue;
+      }
+      const grow = Math.min(1, a / 0.15);
+      const end = Math.max(0, 1 - (b.life - a) / 0.12);  // the last 0.12 s: it swells a touch and thins
+      size[i] = b.s * grow * (1 + 0.15 * end);
+      alpha[i] = (b.sh === 2 ? 1 - Math.max(0, (a - b.life * 0.6) / (b.life * 0.4)) : 1) * (1 - end);
       shade[i] = b.sh;
-      out(b, i);
+      const p = where(b);
+      pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z;
     }
     geo.attributes.position.needsUpdate = geo.attributes.size.needsUpdate = geo.attributes.alpha.needsUpdate = geo.attributes.shade.needsUpdate = true;
   }
