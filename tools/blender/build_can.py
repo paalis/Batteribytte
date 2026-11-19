@@ -8,7 +8,8 @@ Run headless with Blender as a Python module (no Blender install needed):
 What it makes (units: metres, Blender Z up → glTF Y up, the label's front faces the camera, −Y here / +Z in glTF):
   - a real 500 ml can: Ø 66.2 mm × 168 mm, base bevel and dome, body, shoulder, neck, seamed rim, countersunk lid;
   - the label unwrapped from the product photo (assets/battery-fresh.webp): a column at angle φ is the photo column
-    at x = sin φ; the back, which no photo shows, gets the label's own gradient row by row;
+    at x = sin φ; the back (ingredients, barcode, deposit mark, the English text) is stitched from photos of a real
+    can (tools/blender/label_360.webp);
   - condensation: a normal map of droplets, denser toward the cold bottom of the can;
   - a stay-on tab on a hinge and the opening under it, with an animation «open» (tab lifts, opening appears);
   - «foam»: a crown of foam over the opening and two runs of foam that grow down the wall, following the can's own
@@ -26,6 +27,7 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PHOTO = os.path.join(ROOT, 'assets', 'battery-fresh.webp')
+BACK = os.path.join(ROOT, 'tools', 'blender', 'label_360.webp')
 OUT_DIR = os.path.join(ROOT, 'assets', 'can')
 OUT = os.path.join(OUT_DIR, 'battery-can.glb')
 MM = 0.001
@@ -181,26 +183,20 @@ def build_label(tw=2048, th=1656):
     return out
 
 
-def add_barcode(out):
-    """The back of the can, which no photo shows yet: a white EAN-style barcode panel centred on the back (u = 0),
-    like the real can. Temporary until a 360° label is stitched from photos of a real can (docs/concept.md)."""
+def add_back(out):
+    """The back of the can, from photos of a real can turned in the hand (tools/blender/label_360.webp, stitched by
+    tools/blender/backlabel/): the English text, the ingredients, the barcode (centred at u ≈ 0.765, 95° right of the
+    front) and the deposit mark. The front between the «+» and «BATTERY» stays the product photo; the back takes over
+    left of the «+» (u < 0.262) and right of «BATTERY» (u > 0.690), with a short feather."""
     th, tw = out.shape[:2]
-    rng = np.random.default_rng(13)
-    w = int(tw * 0.15)                           # ~31 mm of the 208 mm circumference
-    h = int(th * 0.15)
-    y0 = int(th * 0.22)                          # rows run bottom → top in the texture
-    panel = np.full((h, w, 3), 246.0, np.float32)
-    x = int(w * 0.09)
-    bars = [1, 0, 1] + list(rng.integers(0, 2, 84)) + [0, 1, 0, 1, 0] + list(rng.integers(0, 2, 84)) + [1, 0, 1]
-    unit = (w * 0.82) / len(bars)
-    for i, b in enumerate(bars):
-        if b:
-            xa, xb = int(x + i * unit), int(x + (i + 1) * unit)
-            guard = i < 3 or 87 <= i < 92 or i >= len(bars) - 3
-            panel[int(h * (0.08 if guard else 0.2)):int(h * 0.9), xa:max(xb, xa + 1)] = 20.0
-    cols = (np.arange(w) - w // 2) % tw
-    out[y0:y0 + h][:, cols] = panel
-    return out
+    from PIL import Image
+    back = np.asarray(Image.open(BACK).convert('RGB').resize((tw, th), Image.LANCZOS), np.float32)[::-1]   # rows bottom → top
+    u = np.arange(tw) / tw
+    front = np.clip((u - 0.262) / 0.012 + 0.5, 0, 1) * np.clip((0.690 - u) / 0.004 + 0.5, 0, 1)
+    v = np.arange(th) / (th - 1)
+    keep = ((v < 0.038) | (v > 0.987))[:, None]                     # the rim and the bottom bevel stay as they were
+    w = np.maximum(front[None, :], keep)[..., None]
+    return out * w + back * (1 - w)
 
 
 def meter_mask(label, path, size=(512, 414)):
@@ -616,7 +612,7 @@ def build():
     scene.render.fps = 24
 
     print('label …')
-    label = add_barcode(build_label())
+    label = add_back(build_label())
     os.makedirs(os.path.join(ROOT, 'assets', 'pant'), exist_ok=True)
     meter_mask(label, os.path.join(ROOT, 'assets', 'pant', 'meter.webp'))
     nrm, rough = droplets()

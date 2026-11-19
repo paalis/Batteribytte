@@ -95,6 +95,6 @@ Plakaten (stillbildet av åpningen) vises med en gang, med ≈ 72 kB totalt. thr
   - `lite.js`, `sound.js`, `receipt.js` og `bloom.js`.
 - **Blender** (`tools/blender/`, Blender som Python-modul: `pip install bpy==5.3.0 pillow`):
   - `build_machine.py` → `assets/pant/machine.glb` (maskin og rom)
-  - `build_can.py` → `assets/can/battery-can.glb` (boksen: etikett, midlertidig strekkode bak, lyn, tapp og skum) og `assets/pant/meter.webp` (logoen som måler)
+  - `build_can.py` → `assets/can/battery-can.glb` (boksen: etikett, baksiden sydd sammen fra bilder av en ekte boks i `tools/blender/label_360.webp` (se `tools/blender/backlabel/`), lyn, tapp og skum) og `assets/pant/meter.webp` (logoen som måler)
   - `render_spray.py` → `assets/can/spray.webp`
   - `render_stills.py` → `assets/pant/stills/`

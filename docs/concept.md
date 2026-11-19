@@ -176,7 +176,7 @@ A er et godt alternativ hvis man ønsker noe enda mer mobilfokusert. C er det tr
   - ett bilde for hver 25–30°
 
   Jeg syr dem sammen til en 360°-etikett med metoden vi brukte på Monster-boksen. **I konsept B er dette nødvendig**, fordi avvisningsgaget bygger på strekkoden på baksiden.
-- **Til bildene finnes:** boksen kan bare dreies ±60° i alle steg, og i skannersteget brukes en midlertidig strekkode med etikettens gradient bak.
+- **Gjort:** 16 bilder av en ekte boks er sydd sammen til baksiden (`tools/blender/label_360.webp`, se `tools/blender/backlabel/`), med ingredienser, strekkode, pantemerke og den engelske teksten.
 
 ---
 
