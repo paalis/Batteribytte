@@ -33,6 +33,8 @@ const ui = {
     if (s.say) status.textContent = s.say;
     if (s.verb && !chip.contains(document.activeElement) && !$('#lapp').contains(document.activeElement)) chip.focus({ preventScroll: true });
   },
+  // a line of its own for the hint (the machine has opinions), read out too
+  hint(text) { hint.textContent = text; status.textContent = text; },
 };
 
 // ---------- input that every stage shares ----------
@@ -87,6 +89,16 @@ async function done(data) {
     note(r === 'copied' ? 'Lenke kopiert – lim den inn til kollegaene' : r === 'failed' ? 'Kunne ikke dele. Kopier adressen fra nettleseren.' : '');
   };
   $('#again').onclick = () => location.reload();
+  // AR: the can on your table — Quick Look on an iPhone (the USDZ), Scene Viewer on Android (the glTF); hidden elsewhere
+  const ar = $('#ar');
+  const ios = ar.relList && ar.relList.supports && ar.relList.supports('ar');
+  if (ios) ar.hidden = false;
+  else if (/android/i.test(navigator.userAgent)) {
+    const glb = new URL('assets/can/battery-can-ar.glb', location.href).href;
+    ar.removeAttribute('rel');
+    ar.href = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glb)}&mode=ar_preferred&title=${encodeURIComponent('Battery Fresh')}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(location.href)};end;`;
+    ar.hidden = false;
+  }
 }
 let noteT = 0;
 function note(msg) {

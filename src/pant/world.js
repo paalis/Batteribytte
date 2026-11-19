@@ -288,7 +288,19 @@ export async function createWorld(canvas, ui) {
   // ---------- input: the current step owns the pointer and the keys ----------
   let step = null;                                  // { name, down, move, up, act, key, hold }
   canvas.style.touchAction = 'none';
-  canvas.addEventListener('pointerdown', (e) => { S.unlock(); askMotion(); if (step && step.down) { canvas.setPointerCapture(e.pointerId); step.down(e); } });
+  canvas.addEventListener('pointerdown', (e) => { S.unlock(); askMotion(); poke(e); if (step && step.down) { canvas.setPointerCapture(e.pointerId); step.down(e); } });
+  // an easter egg: poke the machine's screen four times and it objects
+  let pokes = [], sulking = false;
+  function poke(e) {
+    if (!screen || sulking || !hits(e, screen)) return;
+    const now = performance.now(); pokes = pokes.filter((t) => now - t < 2500); pokes.push(now);
+    if (pokes.length < 4) { S.tick(0); return; }
+    pokes = []; sulking = true;
+    const was = { ...scrState };
+    S.reject(); shakeAmt = Math.max(shakeAmt, 0.004);
+    say('AU!', ['IKKE TRYKK PÅ SKJERMEN', 'JEG ER EN PANTEMASKIN, IKKE EN IPAD', 'FINGRENE AV GLASSET'][Math.floor(Math.random() * 3)], '#ff4b3e');
+    setTimeout(() => { scrState = was; sulking = false; }, 1800);
+  }
   canvas.addEventListener('pointermove', (e) => { if (step && step.move) step.move(e); });
   const up = (e) => { if (step && step.up) step.up(e); };
   canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
@@ -306,7 +318,19 @@ export async function createWorld(canvas, ui) {
     if (motionAsked) return; motionAsked = true;
     const D = window.DeviceMotionEvent;
     if (D && typeof D.requestPermission === 'function') D.requestPermission().catch(() => {});
+    const O = window.DeviceOrientationEvent;
+    if (O && typeof O.requestPermission === 'function') O.requestPermission().catch(() => {});
   }
+  // tilt: on a phone, how it is held (relative to how it was held at first, drifting along slowly); on a computer, the
+  // pointer. In the hero shots the can turns a little with it and its light slides across, so the reflections move.
+  const tiltGoal = new Vector2(), tilt = new Vector2(); let tiltBase = null, hasTilt = false, tiltOn = false;
+  addEventListener('deviceorientation', (e) => {
+    if (e.beta == null || e.gamma == null) return;
+    if (!tiltBase) tiltBase = { b: e.beta, g: e.gamma };
+    tiltBase.b += (e.beta - tiltBase.b) * 0.004; tiltBase.g += (e.gamma - tiltBase.g) * 0.004;
+    tiltGoal.set(clamp((e.gamma - tiltBase.g) / 22, -1, 1), clamp((e.beta - tiltBase.b) / 22, -1, 1));
+    hasTilt = true;
+  });
   let lastA = null;
   addEventListener('devicemotion', (e) => {
     const a = e.accelerationIncludingGravity || e.acceleration; if (!a || a.x == null) return;
@@ -339,6 +363,12 @@ export async function createWorld(canvas, ui) {
     // neon: the ring breathes; the tubes flicker now and then
     if (ring) ring.material.emissiveIntensity = ringBase * (ringPulse ? 0.7 + 0.6 * (0.5 + 0.5 * Math.sin(t * 4)) : 1);
     tubes.forEach((tb, i) => { tb.material.emissiveIntensity = (Math.sin(t * 0.7 + i * 2) > 0.985 && Math.random() > 0.5) ? 0.3 : 3; });
+    // tilt (see above)
+    tilt.lerp(hasTilt ? tiltGoal : V(pointerPar.x * 2, pointerPar.y * 2, 0), Math.min(1, dt * 4));
+    const tk = tiltOn && !RM ? 1 : 0;
+    fresh.root.rotation.y += (tilt.x * 0.42 * tk - fresh.root.rotation.y) * Math.min(1, dt * 6);
+    fresh.root.rotation.x += (tilt.y * 0.05 * tk - fresh.root.rotation.x) * Math.min(1, dt * 6);
+    if (tk) heroLight.position.set(-0.35 + tilt.x * 0.55, 1.25 - tilt.y * 0.25, 0.95);
     // the camera: rig + parallax + shake
     par.lerp(pointerPar, Math.min(1, dt * 3));
     camera.position.copy(cam.pos);
@@ -515,7 +545,23 @@ export async function createWorld(canvas, ui) {
   function stepRoll(th0) {
     let th = th0, vel = 0, dragging2 = false, last = null, lastT = 0, accepted = false, idleT = 0, touched = false;
     const ACCEPT = 0.24;
-    const setTh = (val) => { th = val; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8); };
+    // an easter egg: roll it round and round without finding the barcode, and the machine gets cheeky
+    // (counted in tries — each drag, fling or key press that ends without a lock — and in whole turns)
+    let spun = 0, tries = 0, sass = 0;
+    const SASS = [
+      [3, 2, 'PRØV Å SNU DEN, DA', 'STREKKODEN ER VED «500 ML»', 'Psst: strekkoden står ved siden av «ENERGIDRIKK 500 ml»'],
+      [6, 4, 'JEG BLIR SVIMMEL', 'RULL SAKTERE', 'Saktere … den låser seg når strekkoden er under laseren'],
+      [9, 7, 'DETTE ER EN PANTEMASKIN', 'IKKE EN KARUSELL', 'Eller trykk på knappen, så ruller maskinen den selv'],
+    ];
+    const sassy = () => {
+      if (accepted || sass >= SASS.length || (tries < SASS[sass][0] && spun < SASS[sass][1])) return;
+      const [, , a, b, h] = SASS[sass++]; say(a, b, '#ffd27a'); if (ui.hint) ui.hint(h); S.reject();
+    };
+    const tried = () => setTimeout(() => { if (!accepted) { tries++; sassy(); } }, 900);
+    const setTh = (val) => {
+      if (touched && !accepted) { spun += Math.abs(val - th) / TAU; sassy(); }
+      th = val; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8);
+    };
     const off = () => Math.abs(wrap(th - BAR));                        // 0 = barcode facing the scanner
     // screen pixels per radian, and the direction the can's near side moves for +θ
     const tangent = () => {
@@ -562,7 +608,7 @@ export async function createWorld(canvas, ui) {
       },
       up() {
         if (!dragging2) return; dragging2 = false;
-        self = this;
+        self = this; tried();
         frameHook = (dt) => {                                         // it keeps rolling, and slows
           if (accepted) return;
           setTh(th + vel * dt); vel *= Math.exp(-3.2 * dt);
@@ -573,7 +619,7 @@ export async function createWorld(canvas, ui) {
         if (k !== 'up' && k !== 'down') return;
         self = this; touched = true;
         const from = th, to = th + (k === 'up' ? -0.45 : 0.45);
-        tween(0.18, (q) => setTh(from + (to - from) * q), easeOut).then(() => { if (off() < ACCEPT + 0.12) lockIn(); });
+        tween(0.18, (q) => setTh(from + (to - from) * q), easeOut).then(() => { if (off() < ACCEPT + 0.12) lockIn(); else if (Math.random() < 0.34) tried(); });
       },
       act() { self = this; touched = true; const from = th, to = th + wrap(BAR - th); tween(0.8, (q) => setTh(from + (to - from) * q)).then(lockIn); },
     });
@@ -849,6 +895,7 @@ export async function createWorld(canvas, ui) {
     await tween(RM ? 0.01 : 0.5, (k) => { fresh.orient.rotation.z = Math.sin(k * Math.PI * 3) * 0.06 * (1 - k); }, (t) => t);   // settle
     await flying;
     say('LAD OPP', 'HOLD PÅ BATTERIET', '#ffd27a', { bar: 0 });
+    tiltOn = true;
   }
 
   // 7 · HOLD — charging. The logo's «+ ‖» fills from the bottom like a battery gauge; each part of it (the two bars,

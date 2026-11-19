@@ -34,6 +34,24 @@
   ],
   "headers": [
     {
+      "source": "/assets/can/(.*)\\.usdz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "model/vnd.usdz+zip"
+        }
+      ]
+    },
+    {
+      "source": "/assets/can/(.*)\\.glb",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "model/gltf-binary"
+        }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         {

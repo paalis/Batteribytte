@@ -96,6 +96,10 @@ button { font: inherit; color: inherit; }
 .big { min-height: 50px; padding: .6em 1.5em; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .35); background: rgba(4, 5, 6, .6);
   font-weight: 700; cursor: pointer; }
 .big.primary { background: var(--green); border-color: var(--green); color: #04130a; }
+/* AR: a link (Quick Look needs an <a rel="ar"> with an image in it), dressed as a button */
+.big.ar { display: inline-flex; align-items: center; gap: .5em; color: inherit; text-decoration: none; }
+.big.ar img { height: 1.6em; width: auto; }
+.lapp.in .lapp-actions .big + .big + .big { transition-delay: .99s; }
 
 .toast { position: absolute; left: 50%; bottom: calc(max(18px, env(safe-area-inset-bottom)) + 70px); translate: -50% 0; margin: 0;
   padding: .6rem 1rem; border-radius: 10px; background: var(--ink); color: #0b0b0e; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }

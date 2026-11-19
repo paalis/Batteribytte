@@ -684,6 +684,34 @@ def export():
     print('wrote', OUT, os.path.getsize(OUT) // 1024, 'kB')
 
 
+def export_ar():
+    """The can for «Se den på bordet» (AR on the receipt): closed and at rest — no foam, no opening, no energy veins, no
+    animation — as glTF (Android Scene Viewer) and USDZ (iPhone Quick Look). Runs last: it strips the scene."""
+    bpy.context.scene.frame_set(0)
+    for ob in list(bpy.data.objects):
+        if 'Foam' in ob.name or ob.name == 'Opening':
+            bpy.data.objects.remove(ob, do_unlink=True)
+    for ob in bpy.data.objects:
+        ob.animation_data_clear()
+        if ob.type == 'MESH' and ob.data.shape_keys:
+            ob.shape_key_clear()
+    for m in bpy.data.materials:
+        if m.use_nodes:
+            for n in m.node_tree.nodes:
+                if n.type == 'BSDF_PRINCIPLED' and 'Emission Strength' in n.inputs:
+                    n.inputs['Emission Strength'].default_value = 0.0
+    glb = os.path.join(OUT_DIR, 'battery-can-ar.glb')
+    bpy.ops.export_scene.gltf(filepath=glb, export_format='GLB', export_yup=True, export_apply=True,
+                              export_image_format='WEBP', export_image_quality=85, export_animations=False,
+                              export_morph=False, export_cameras=False, export_lights=False)
+    usdz = os.path.join(OUT_DIR, 'battery-can.usdz')
+    bpy.ops.wm.usd_export(filepath=usdz, export_materials=True, generate_preview_surface=True, export_animation=False,
+                          export_shapekeys=False, convert_orientation=True, export_global_forward_selection='NEGATIVE_Z',
+                          export_global_up_selection='Y', usdz_downscale_size='1024', convert_world_material=False,
+                          selected_objects_only=False)
+    print('wrote', glb, os.path.getsize(glb) // 1024, 'kB;', usdz, os.path.getsize(usdz) // 1024, 'kB')
+
+
 def render(path):
     scene = bpy.context.scene
     scene.frame_set(18)                             # opened, like the film's last frame
@@ -763,3 +791,4 @@ if __name__ == '__main__':
         render_foam(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'foam.png'))
     if '--render' in sys.argv:
         render(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'preview.png'))
+    export_ar()
