@@ -22,7 +22,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { makeBloom } from './bloom.js';
 import * as S from './sound.js';
 import { drawReceipt } from './receipt.js';
-import { makeParticles } from './particles.js';
+import { makeParticles, makeFoam } from './particles.js';
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -84,7 +84,8 @@ export async function createWorld(canvas, ui) {
   const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.14, 1.12, -0.18); scene.add(chamberFill);
   const heroLight = new PointLight(0xfff0d8, 0, 2.0, 2); heroLight.position.set(-0.35, 1.25, 0.95); scene.add(heroLight);
   const hatchLight = new PointLight(0x7ff0ff, 0, 0.45, 2); hatchLight.position.set(0, 0.27, 0.02); scene.add(hatchLight);   // inside the hatch
-  const popLight = new PointLight(0xffe2b0, 0, 0.9, 2); scene.add(popLight);                                           // the burst at the opening
+  const popLight = new PointLight(0xffe2b0, 0, 0.9, 2); scene.add(popLight);
+  const buttonLight = new PointLight(0x4dff8a, 0, 0.5, 2); scene.add(buttonLight);                                           // the burst at the opening
   const fx = makeParticles(scene);
   const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -147,7 +148,7 @@ export async function createWorld(canvas, ui) {
   const H = 0.168;
   meterTex.flipY = false;
   function prepare(root, { flat }) {
-    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 }, uCrush: { value: 0 } };
+    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 }, uCrush: { value: 0 }, uVein: { value: 1.2 }, uTime: { value: 0 } };
     let label = null;
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
@@ -164,10 +165,15 @@ export async function createWorld(canvas, ui) {
             { float a = atan(position.x, position.z);
               float c = sin(position.y * 170.0 + a * 3.0) * sin(a * 5.0 + position.y * 60.0) + 0.5 * sin(a * 11.0 - position.y * 240.0);
               transformed += normal * uCrush * 0.0045 * c; }`);
-          sh.fragmentShader = 'uniform sampler2D uMeter; uniform float uLevel; uniform vec3 uMeterColor; uniform float uMeterGain; uniform float uSat; uniform float uDim;\n' + sh.fragmentShader
+          sh.fragmentShader = 'uniform sampler2D uMeter; uniform float uLevel; uniform vec3 uMeterColor; uniform float uMeterGain; uniform float uSat; uniform float uDim; uniform float uVein; uniform float uTime;\n' + sh.fragmentShader
             .replace('#include <map_fragment>', `#include <map_fragment>
               { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = mix(vec3(l), diffuseColor.rgb, uSat) * uDim; }`)
             .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+              { float hv = 1.0 - vMapUv.y;
+                // the veins are current: they rise with the charge (lit below uVein, brightest at the front of it) and
+                // pulses run up them
+                float flow = 0.5 + 0.5 * sin(hv * 46.0 - uTime * 9.0 + vMapUv.x * 37.0);
+                totalEmissiveRadiance *= smoothstep(uVein + 0.04, uVein - 0.04, hv) * (0.45 + 0.75 * flow) + 2.2 * exp(-abs(hv - uVein) * 45.0) * step(hv, uVein + 0.05) * smoothstep(0.0, 0.05, uVein); }
               { float m = texture2D(uMeter, vMapUv).r; float h = 1.0 - vMapUv.y;
                 float top = 0.465 + uLevel * (0.815 - 0.465);
                 float lit = m * smoothstep(top + 0.006, top - 0.006, h);
@@ -187,6 +193,8 @@ export async function createWorld(canvas, ui) {
   const flatRoot = freshRoot.clone(true);
   const flat = prepare(flatRoot, { flat: true });
   const fresh = prepare(freshRoot, { flat: false });
+  if (fresh.label) fresh.label.emissive = new Color(0.55, 0.92, 1.0);   // the veins: electric blue-white current
+  const foam = makeFoam(fresh.orient, H);
   fresh.holder.visible = false;
   flat.u.uMeterColor.value.setRGB(1.0, 0.12, 0.08);   // a red last bar
 
@@ -319,6 +327,8 @@ export async function createWorld(canvas, ui) {
     if (idleBob && flat.holder.visible && !dragging) flat.holder.position.y = P_START.y + Math.sin(t * 1.6) * 0.008;
     // the fresh can: energy veins and the gauge
     if (fresh.label) fresh.label.emissiveIntensity = energy * (0.75 + 0.25 * Math.random());
+    fresh.u.uTime.value = t;
+    foam.update(dt, camera, innerHeight * renderer.getPixelRatio());
     fresh.u.uMeterGain.value = meterGlow;
     // neon: the ring breathes; the tubes flicker now and then
     if (ring) ring.material.emissiveIntensity = ringBase * (ringPulse ? 0.7 + 0.6 * (0.5 + 0.5 * Math.sin(t * 4)) : 1);
@@ -625,18 +635,41 @@ export async function createWorld(canvas, ui) {
   // 5 · PANT — a real button: it goes in under your finger and stays in while you hold it, flashes, and springs back
   // when you let go. The machine answers on the press.
   function stepPress() {
-    let pulse = true, pressed = false, self;
-    const z0 = button.position.z, bump = 0.012;
-    frameHook = (dt, t) => { if (pulse && button) button.material.emissiveIntensity = 1.6 * (0.6 + 0.8 * (0.5 + 0.5 * Math.sin(t * 5))); };
+    let pulse = true, pressed = false, self, nextRipple = 0;
+    const z0 = button.position.z, bump = 0.016;
+    const bp = button.getWorldPosition(new Vector3());
+    buttonLight.position.copy(bp).add(V(0, 0, 0.14));
+    // waiting: it breathes, and a soft ring ripples out from it now and then (press me)
+    frameHook = (dt, t) => {
+      if (!pulse || !button) return;
+      button.material.emissiveIntensity = 1.4 * (0.6 + 0.8 * (0.5 + 0.5 * Math.sin(t * 5)));
+      if (!RM && t > nextRipple) { nextRipple = t + 1.3; fx.ring(bp.clone().add(V(0, 0, 0.01)), { r0: 0.032, r1: 0.075, t: 0.9, color: 0x4dff8a, a: 0.35 }); }
+    };
     const near = (e) => { const b = toScreen(button.getWorldPosition(new Vector3())); return b.distanceTo(new Vector2(e.clientX, e.clientY)) < Math.max(90, innerWidth * 0.18) || hits(e, button); };
+    // in: it goes deep under your finger and bulges as it bottoms out; a green flash, a ring, sparks, the picture jolts
     const pushIn = () => {
       pulse = false; frameHook = null; pressed = true;
-      S.click();
-      button.material.emissiveIntensity = 3.2;
-      tween(0.07, (k) => { button.position.z = z0 - bump * k; }, easeOut);
+      S.click(); S.buzz(25);
+      button.material.emissiveIntensity = 2.0;
+      tween(RM ? 0.01 : 0.08, (k) => { button.position.z = z0 - bump * k; button.scale.set(1 + 0.07 * k, 1 + 0.07 * k, 1); }, easeOut);
+      shakeAmt = Math.max(shakeAmt, 0.006);
+      tween(RM ? 0.01 : 0.45, (k) => { push = 2.5 * (1 - k) * (1 - k); buttonLight.intensity = 0.05 * (1 - k); }, (t) => t);
+      if (!RM) {
+        fx.ring(bp.clone().add(V(0, 0, 0.012)), { r0: 0.035, r1: 0.1, t: 0.45, color: 0x6dffa0, a: 0.55 });
+        for (let i = 0; i < 36; i++) {
+          const a = rnd(0, TAU), sp = rnd(0.25, 0.8);
+          fx.emit(bp.clone().add(V(Math.cos(a) * 0.032, Math.sin(a) * 0.032, 0.01)), V(Math.cos(a) * sp, Math.sin(a) * sp, rnd(0.1, 0.4)), { t: rnd(0.25, 0.5), g: 1.5, k: 3, s: rnd(0.003, 0.006), color: 0x6dffa0 });
+        }
+      }
     };
+    // out: it springs back past its rest and settles
     const letGo = () => {
-      tween(0.22, (k) => { button.position.z = z0 - bump * (1 - k) + Math.sin(k * Math.PI) * 0.002; button.material.emissiveIntensity = MathUtils.lerp(3.2, 1.6, k); }, easeOut);
+      tween(RM ? 0.01 : 0.35, (k) => {
+        const o = 1 - Math.exp(-6 * k) * Math.cos(k * 14);           // a spring: overshoots, rings out
+        button.position.z = z0 - bump * (1 - o);
+        button.scale.set(1 + 0.07 * (1 - o), 1 + 0.07 * (1 - o), 1);
+        button.material.emissiveIntensity = MathUtils.lerp(2.0, 1.2, k);
+      }, (t) => t);
     };
     return begin('press', {
       // the step is over at the press; the button's own release waits for your finger to lift
@@ -781,7 +814,7 @@ export async function createWorld(canvas, ui) {
       fresh.holder.position.z += Math.sin(k * Math.PI) * 0.15;
       fresh.orient.quaternion.slerpQuaternions(q1, new Quaternion(), e);
       fresh.orient.rotateY(e * TAU);
-      energy = 1.0 * (1 - k) + 0.15;
+      energy = 1.0 * (1 - k);
       hatchLight.intensity = 0.5 * (1 - smooth(0, 0.5, k));
       // the flap is flung open as it passes, then let go on its spring: it claps shut and rattles in its frame
       if (flap && !flapFree) {
@@ -834,7 +867,8 @@ export async function createWorld(canvas, ui) {
       pulse = Math.max(0, pulse - dt * 4);
       fresh.u.uLevel.value = level;
       meterGlow = 0.5 + 1.8 * level + 1.5 * pulse;
-      energy = 0.15 + 2.2 * level * level + 0.6 * pulse;
+      energy = 0.45 + 1.5 * level + 0.6 * pulse;
+      fresh.u.uVein.value = level * 1.08;
       S.chargeLevel(level);
       scrState.bar = level; scrState.sub = `${Math.round(level * 100)} %`;
       if (ring) ring.material.emissiveIntensity = ringBase * (1 + 2.5 * level + 1.5 * pulse);
@@ -849,7 +883,7 @@ export async function createWorld(canvas, ui) {
         armed = true; holding = auto = false;
         S.charge.stop(); S.full(); flashIt(false);
         say('100 %', 'DRA FLIKEN OPP', '#4dff8a', { blink: true });
-        energy = 0.9; meterGlow = 2.3;
+        energy = 0.9; meterGlow = 2.3; fresh.u.uVein.value = 1.2;
         tween(RM ? 0.01 : 0.45, (k) => { fresh.holder.position.y = base.y + Math.sin(Math.PI * k) * 0.03; }, easeOut);   // a hop
         frameHook = (d, tt) => { if (tab) tab.material.emissiveIntensity = 0.5 + 0.5 * Math.sin(tt * 6); fresh.holder.position.y = base.y + Math.sin(tt * 1.6) * 0.006; };
         self.done();
@@ -935,13 +969,14 @@ export async function createWorld(canvas, ui) {
     };
     energy = 3.2;
     const t0p = performance.now();
-    const openDur = 0.75;
+    const openDur = 0.75; let foamOn = false;
+    fresh.u.uVein.value = 1.2;
     frameHook = (dt) => {
       const s = (performance.now() - t0p) / 1000;
       setOpen(easeOut(clamp(s / openDur)));
       sprayFrame(Math.floor(s * (sprayMeta ? sprayMeta.fps : 24)));
-      if (s > 0.3) setFoam(s - 0.3);
-      energy = Math.max(0.12, 3.2 * Math.exp(-s * 2.2));
+      if (!foamOn) { foamOn = true; foam.start(); }
+      energy = 3.2 * Math.exp(-s * 2.2);
       meterGlow = Math.max(0.8, 3.2 * Math.exp(-s * 1.5));
       popLight.intensity = 1.1 * Math.exp(-s * 3.5);
       if (RM) return;
