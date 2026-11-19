@@ -337,6 +337,9 @@ export async function createWorld(canvas, ui) {
   const qUp = new Quaternion().setFromEuler(new Euler(0.12, 0.35, -0.22));          // held out, a little tipped
   const qLie = new Quaternion().setFromAxisAngle(V(1, 0, 0), -Math.PI / 2);         // lying, top into the machine
   const rollQ = (th) => new Quaternion().setFromAxisAngle(V(0, 0, 1), th).multiply(qLie);
+  // where the barcode is on the label (u ≈ 0.765: 95° right of the front, tools/blender/build_can.py): at θ = BAR it
+  // faces the scanner, at θ = BAR − π it faces down
+  const BAR = 95 * Math.PI / 180;
   flat.holder.position.copy(P_START); flat.orient.quaternion.copy(qUp);
 
   // ================================================================== the story
@@ -452,7 +455,7 @@ export async function createWorld(canvas, ui) {
       l.position.z = laserZ[i] + Math.sin(t * 3.2 + i * 0.9) * 0.05;
       l.material.opacity = 0.55 + 0.45 * Math.abs(Math.sin(t * 24 + i));
     });
-    const th0 = TAU + Math.PI, th1 = 3 * TAU;         // ends with the barcode facing down (≡ 0)
+    const th0 = TAU + Math.PI, th1 = 3 * TAU + BAR - Math.PI;     // ends with the barcode facing down
     let beepAt = 0;
     await tween(RM ? 0.01 : 1.9, (k) => {
       const th = th0 + (th1 - th0) * k;
@@ -470,14 +473,14 @@ export async function createWorld(canvas, ui) {
     lasers.forEach((l) => l.material.emissive && l.material.emissive.setRGB(1, 0.08, 0.06));
     shakeAmt = 0.004; push = -2.5;
     await tween(RM ? 0.01 : 0.5, (k) => {
-      const th = Math.sin(k * Math.PI * 6) * 0.09 * (1 - k);
+      const th = th1 + Math.sin(k * Math.PI * 6) * 0.09 * (1 - k);
       flat.orient.quaternion.copy(rollQ(th));
       chamberRed.intensity = 0.35 + 1.1 * (1 - k) * (Math.sin(k * Math.PI * 4) > 0 ? 1 : 0.3);
       push = -2.5 * (1 - k);
     }, (t) => t);
     push = 0; chamberRed.intensity = 0.35;
     receiptData.tries = 2;
-    return 0;
+    return wrap(th1);
   }
 
   // 3 · ROLL — the can's surface follows your finger one to one: the drag is turned into rotation using where the
@@ -488,7 +491,7 @@ export async function createWorld(canvas, ui) {
     let th = th0, vel = 0, dragging2 = false, last = null, lastT = 0, accepted = false, idleT = 0, touched = false;
     const ACCEPT = 0.24;
     const setTh = (val) => { th = val; flat.orient.quaternion.copy(rollQ(th)); rollers.forEach((r) => r.rotation.y = -th * 1.8); };
-    const off = () => Math.abs(wrap(th - Math.PI));                    // 0 = barcode facing the scanner
+    const off = () => Math.abs(wrap(th - BAR));                        // 0 = barcode facing the scanner
     // screen pixels per radian, and the direction the can's near side moves for +θ
     const tangent = () => {
       const C = P_CHAMBER.clone(), toCam = camera.position.clone().sub(C); toCam.z = 0; toCam.normalize();
@@ -501,7 +504,7 @@ export async function createWorld(canvas, ui) {
     const lockIn = () => {
       if (accepted) return;
       accepted = true; frameHook = null; dragging2 = false;
-      const from = th, to = th + wrap(Math.PI - th);
+      const from = th, to = th + wrap(BAR - th);
       S.lock();
       tween(0.18, (k) => setTh(from + (to - from) * k), easeOut)
         .then(() => tween(0.28, (k) => { flat.crush.scale.setScalar(1 + 0.05 * Math.sin(Math.PI * k)); }, (t) => t))
@@ -519,7 +522,7 @@ export async function createWorld(canvas, ui) {
       // a hint when left alone: it rocks on its rollers
       if (!touched && !dragging2 && Math.abs(vel) < 0.01) {
         idleT += dt;
-        if (idleT > 2.2) { const k = (idleT - 2.2) / 0.9; setTh(Math.sin(Math.min(1, k) * Math.PI * 2) * 0.22 * Math.sin(Math.min(1, k) * Math.PI)); if (k >= 1) idleT = 0; }
+        if (idleT > 2.2) { const k = (idleT - 2.2) / 0.9; setTh(th0 + Math.sin(Math.min(1, k) * Math.PI * 2) * 0.22 * Math.sin(Math.min(1, k) * Math.PI)); if (k >= 1) idleT = 0; }
       }
     };
     return begin('roll', {
@@ -547,7 +550,7 @@ export async function createWorld(canvas, ui) {
         const from = th, to = th + (k === 'up' ? -0.45 : 0.45);
         tween(0.18, (q) => setTh(from + (to - from) * q), easeOut).then(() => { if (off() < ACCEPT + 0.12) lockIn(); });
       },
-      act() { self = this; touched = true; const from = th, to = th + wrap(Math.PI - th); tween(0.8, (q) => setTh(from + (to - from) * q)).then(lockIn); },
+      act() { self = this; touched = true; const from = th, to = th + wrap(BAR - th); tween(0.8, (q) => setTh(from + (to - from) * q)).then(lockIn); },
     });
   }
 
