@@ -18,6 +18,10 @@ OpenCV/NumPy/SciPy/Pillow virtualenv:
      and 1848 for the English text), with the seams in empty label;
    - the light is flattened and the colours are matched to the front, row by row;
    - the hand at the bottom is filled with the label's own red;
-   - the heights are mapped onto the front label using «EXOTIC FRUIT», «BATTERY» and the can's bottom.
+   - the heights are mapped onto the front label using «EXOTIC FRUIT», «BATTERY» and the can's bottom;
+   - the seams with the front: the back's colour is shifted row by row to meet the front, fading out over a tenth
+     of a turn;
+   - the barcode is drawn, not photographed: EAN-13 7044610799490, read off the photos (the check digit agrees),
+     on a white panel, turned a quarter like on the can.
 
-The barcode sits at u ≈ 0.765, 95° right of the front. `src/pant/world.js` (`BAR`) rolls it to the scanner.
+The barcode sits at u ≈ 0.765, 95° right of the front. `src/pant/world.js` (`BAR`) rolls it face up under the scanner's lasers (θ = 125°, a little toward the camera so it reads).

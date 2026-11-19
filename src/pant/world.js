@@ -22,6 +22,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { makeBloom } from './bloom.js';
 import * as S from './sound.js';
 import { drawReceipt } from './receipt.js';
+import { makeParticles } from './particles.js';
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -41,6 +42,7 @@ const ST = {
   button: { pos: V(0.32, 1.02, 0.62), tgt: V(0.22, 0.95, 0), fov: 46 },
   hatch:  { pos: V(0.0, 0.62, 1.05), tgt: V(0, 0.33, 0), fov: 48 },
   hero:   { pos: V(0.0, 0.98, 1.05), tgt: V(0, 0.95, 0.45), fov: 40 },
+  pop:    { pos: V(0.07, 1.1, 0.8), tgt: V(0, 1.035, 0.45), fov: 40 },      // close on the opening as it pops
   finale: { pos: V(0.35, 1.05, 1.9), tgt: V(0, 0.95, 0.2), fov: 48 },
 };
 const P_START = V(-0.1, 0.84, 1.2);      // the flat can, held out in front of you
@@ -81,6 +83,10 @@ export async function createWorld(canvas, ui) {
   // (in front of the press path, behind the camera: the faces it lights head-on are never seen, so no hot spot as the press comes down)
   const chamberFill = new PointLight(0xfff2e0, 0, 0.8, 2); chamberFill.position.set(0.14, 1.12, -0.18); scene.add(chamberFill);
   const heroLight = new PointLight(0xfff0d8, 0, 2.0, 2); heroLight.position.set(-0.35, 1.25, 0.95); scene.add(heroLight);
+  const hatchLight = new PointLight(0x7ff0ff, 0, 0.45, 2); hatchLight.position.set(0, 0.27, 0.02); scene.add(hatchLight);   // inside the hatch
+  const popLight = new PointLight(0xffe2b0, 0, 0.9, 2); scene.add(popLight);                                           // the burst at the opening
+  const fx = makeParticles(scene);
+  const rnd = (a, b) => a + Math.random() * (b - a);
 
   const camera = new PerspectiveCamera(50, 1, 0.01, 30);
   const bloom = makeBloom(renderer, { threshold: 2.4 });
@@ -328,6 +334,7 @@ export async function createWorld(canvas, ui) {
     if ((scrT += dt) > 0.06) { scrT = 0; drawScreen(t); }
     if (frameHook) frameHook(dt, t);
     if (fxHook) fxHook(dt, t);
+    if (!RM) fx.update(dt, camera, innerHeight * renderer.getPixelRatio());
     renderer.render(scene, camera);
     bloom.render(scene, camera, 0.35 + 0.45 * clamp(energy / 2));
   });
@@ -337,9 +344,9 @@ export async function createWorld(canvas, ui) {
   const qUp = new Quaternion().setFromEuler(new Euler(0.12, 0.35, -0.22));          // held out, a little tipped
   const qLie = new Quaternion().setFromAxisAngle(V(1, 0, 0), -Math.PI / 2);         // lying, top into the machine
   const rollQ = (th) => new Quaternion().setFromAxisAngle(V(0, 0, 1), th).multiply(qLie);
-  // where the barcode is on the label (u ≈ 0.765: 95° right of the front, tools/blender/build_can.py): at θ = BAR it
-  // faces the scanner, at θ = BAR − π it faces down
-  const BAR = 95 * Math.PI / 180;
+  // the barcode sits 95° right of the front on the label (u ≈ 0.765, tools/blender/build_can.py); at θ = BAR it faces up
+  // under the scanner's lasers, turned a little toward the camera so it reads; at θ = BAR − π it faces down
+  const BAR = 125 * Math.PI / 180;
   flat.holder.position.copy(P_START); flat.orient.quaternion.copy(qUp);
 
   // ================================================================== the story
@@ -729,9 +736,10 @@ export async function createWorld(canvas, ui) {
     });
   }
 
-  // it lets go: it drops, bounces twice in the hatch, rests a beat — then lifts by itself, charged, pushes the flap
-  // open on its way out (the flap follows the can, then swings shut on a spring), and arcs up to float in front of
-  // you, turning once and settling with a small wobble.
+  // it lets go: it drops into the hatch (the hatch light flickers on, sparks kick up from the tray), bounces twice,
+  // then charges where it lies — it crackles, trembles and the light pulses — and goes: a shockwave, the flap is flung
+  // open and claps shut behind it on its spring, and it arcs up to float in front of you trailing sparks, turning once
+  // and landing in the ring with a pulse.
   async function dropOut() {
     say('TA BATTERIET', '', '#4dff8a');
     const p0 = fresh.holder.position.clone(), q0 = fresh.orient.quaternion.clone();
@@ -739,28 +747,66 @@ export async function createWorld(canvas, ui) {
     const qLand = new Quaternion().setFromEuler(new Euler(0, 0.2, Math.PI / 2));
     await tween(RM ? 0.01 : 0.3, (k) => { fresh.holder.position.lerpVectors(p0, floorP, k); fresh.orient.quaternion.slerpQuaternions(q0, qLand, k); }, easeIn);
     S.thud(); shakeAmt = 0.012; flashIt(false);
+    const spark = (p, v, o = {}) => { if (!RM) fx.emit(p, v, { t: rnd(0.25, 0.5), g: 2.5, k: 2.5, s: rnd(0.004, 0.008), color: 0xbff8ff, ...o }); };
+    for (let i = 0; i < 28; i++) spark(V(floorP.x + rnd(-0.08, 0.08), floorP.y - 0.025, floorP.z + rnd(-0.03, 0.03)), V(rnd(-0.6, 0.6), rnd(0.2, 1.0), rnd(-0.1, 0.5)));
+    for (let i = 0; i < 10; i++) if (!RM) fx.emit(V(floorP.x + rnd(-0.07, 0.07), floorP.y - 0.02, floorP.z), V(rnd(-0.1, 0.1), rnd(0.02, 0.08), rnd(0, 0.06)), { t: rnd(0.6, 1.0), k: 2, s: rnd(0.015, 0.025), gr: 1.5, color: 0x6a8a90, a: 0.08 });
+    // the hatch light comes on with a stutter
+    tween(RM ? 0.01 : 0.45, (k) => { hatchLight.intensity = 0.16 * (k < 0.6 ? (Math.random() > 0.45 ? 1 : 0.1) : 1); }, (t) => t);
     for (const [hgt, dur] of [[0.03, 0.22], [0.01, 0.14]]) {      // two bounces
       await tween(RM ? 0.01 : dur, (k) => { fresh.holder.position.y = floorP.y + hgt * Math.sin(Math.PI * k); }, (t) => t);
       S.clank(0.5);
     }
-    await wait(0.35);
-    // it lifts by itself, crackling
-    S.whoosh(); energy = 0.6;
+    await wait(0.15);
+    // it charges where it lies
+    const pc = fresh.holder.position.clone();
+    S.rattle(0.5);
+    await tween(RM ? 0.01 : 0.75, (k) => {
+      energy = 0.2 + 0.9 * k * k * (0.7 + 0.3 * Math.random());
+      hatchLight.intensity = 0.16 + 0.34 * k * (0.55 + 0.45 * Math.random());
+      fresh.holder.position.set(pc.x + rnd(-1, 1) * 0.0025 * k, pc.y + rnd(0, 1) * 0.004 * k, pc.z);
+      if (Math.random() < 0.35 + 0.65 * k) { const a = rnd(0, TAU); spark(V(pc.x + rnd(-0.08, 0.08), pc.y + Math.sin(a) * 0.035, pc.z + Math.cos(a) * 0.035), V(rnd(-0.3, 0.3), rnd(0.1, 0.7), rnd(-0.2, 0.4)), { g: 0.8, color: Math.random() < 0.3 ? 0xffd27a : 0x9ff6ff }); }
+    }, (t) => t);
+    fresh.holder.position.copy(pc);
+    // and goes
+    S.whoosh(); energy = 1.1; shakeAmt = 0.014; flashIt(false);
+    if (!RM) { fx.ring(pc, { r0: 0.03, r1: 0.4, t: 0.5, color: 0x9ff6ff, a: 0.85 }); for (let i = 0; i < 30; i++) spark(pc.clone(), V(rnd(-1.2, 1.2), rnd(-0.2, 1.2), rnd(-0.2, 0.9)), { t: rnd(0.25, 0.5) }); }
     const p1 = fresh.holder.position.clone(), q1 = fresh.orient.quaternion.clone();
     heroLight.intensity = 0.6;
     const flying = fly(ST.hero, RM ? 0.01 : 1.4);
+    let flapFree = false;
+    const tail = V(0, 0, 0);
     await tween(RM ? 0.01 : 1.3, (k) => {
       const e = easeInOut(k);
       fresh.holder.position.lerpVectors(p1, P_HERO, e);
       fresh.holder.position.z += Math.sin(k * Math.PI) * 0.15;
       fresh.orient.quaternion.slerpQuaternions(q1, new Quaternion(), e);
       fresh.orient.rotateY(e * TAU);
-      if (flap) flap.rotation.x = -1.1 * smooth(0.02, 0.18, k) * (1 - smooth(0.3, 0.45, k));   // pushed open as it passes
-      energy = 0.6 * (1 - k) + 0.15;
+      energy = 1.0 * (1 - k) + 0.15;
+      hatchLight.intensity = 0.5 * (1 - smooth(0, 0.5, k));
+      // the flap is flung open as it passes, then let go on its spring: it claps shut and rattles in its frame
+      if (flap && !flapFree) {
+        flap.rotation.x = -1.6 * smooth(0, 0.06, k);
+        if (k > 0.22) {
+          flapFree = true;
+          const fv = V(0, 0, 0), fx_ = V(flap.rotation.x, 0, 0); let claps = 0, prev = fx_.x;
+          fxHook = (dt) => {
+            spring(fx_, fv, V(0, 0, 0), 140, 3.5, dt);
+            if (fx_.x > 0) { fx_.x = 0; fv.x = -Math.abs(fv.x) * 0.35; }                 // the frame stops it: it bounces back
+            if (prev < -0.005 && fx_.x >= 0 && claps < 3) { S.clank(0.45 / (claps + 1)); claps++; }
+            prev = fx_.x; flap.rotation.x = fx_.x;
+          };
+        }
+      }
+      // a trail of sparks behind it
+      if (k < 0.85) for (let i = 0; i < 3; i++) {
+        tail.copy(fresh.holder.position).add(V(rnd(-0.04, 0.04), rnd(-0.07, 0.07), rnd(-0.03, 0.03)));
+        spark(tail.clone(), V(rnd(-0.15, 0.15), rnd(-0.1, 0.25), rnd(-0.15, 0.1)), { t: rnd(0.35, 0.7), g: -0.2, k: 2, color: Math.random() < 0.35 ? 0xffd27a : 0x9ff6ff });
+      }
     });
     fresh.orient.quaternion.identity();
-    // the flap swings shut on a spring
-    if (flap) { const fv = V(0, 0, 0), fx = V(flap.rotation.x, 0, 0); fxHook = (dt) => { spring(fx, fv, V(0, 0, 0), 120, 5, dt); flap.rotation.x = fx.x; }; }
+    // it lands in the ring: a pulse of light
+    if (!RM) fx.ring(P_HERO.clone().add(V(0, 0, -0.02)), { r0: 0.06, r1: 0.15, t: 0.55, color: 0x9ff6ff, a: 0.45 });
+    tween(RM ? 0.01 : 0.6, (k) => { heroLight.intensity = 0.6 + 0.9 * (1 - k); hatchLight.intensity = 0; }, (t) => t);
     await tween(RM ? 0.01 : 0.5, (k) => { fresh.orient.rotation.z = Math.sin(k * Math.PI * 3) * 0.06 * (1 - k); }, (t) => t);   // settle
     await flying;
     say('LAD OPP', 'HOLD PÅ BATTERIET', '#ffd27a', { bar: 0 });
@@ -864,6 +910,21 @@ export async function createWorld(canvas, ui) {
       fresh.orient.rotation.x = rest - 0.2 * Math.max(lift, k);
     }, easeIn);
     S.pop(); flashIt(true); shakeAmt = 0.025; push = 3.5;
+    // the burst: a spray of droplets and a puff of mist out of the opening, a ring, a flash of light at the top
+    const topAt = () => fresh.holder.localToWorld(V(0, H / 2, 0.012));
+    const top = topAt();
+    popLight.position.copy(top).add(V(0, 0.04, 0.06));
+    const drop = (p, sp) => {
+      const a = rnd(0, TAU), w = rnd(0, 0.42) * sp;
+      fx.emit(p, V(Math.cos(a) * w, sp, Math.sin(a) * w * 0.6 + 0.18 * sp), { t: rnd(0.6, 1.3), g: 4.5, k: 0.6, s: rnd(0.0025, 0.006), color: Math.random() < 0.7 ? 0x7a5a30 : 0x6a6a6a, a: rnd(0.5, 0.9) });
+    };
+    if (!RM) {
+      fx.ring(top, { r0: 0.01, r1: 0.2, t: 0.5, color: 0xffd8a0, a: 0.45 });
+      for (let i = 0; i < 150; i++) drop(top.clone().add(V(rnd(-0.006, 0.006), 0, rnd(-0.004, 0.004))), rnd(0.6, 2.0));
+      for (let i = 0; i < 32; i++) fx.emit(top.clone(), V(rnd(-0.15, 0.15), rnd(0.15, 0.5), rnd(-0.05, 0.2)), { t: rnd(0.9, 1.7), g: -0.05, k: 1.5, s: rnd(0.02, 0.035), gr: 2.5, color: 0x3a362f, a: 0.12 });
+    }
+    // the camera punches in on the opening
+    const closeIn = fly(ST.pop, RM ? 0.01 : 0.45, [], { ease: easeOut });
     const rec = V(-0.018, 0, 0), recV = V(0, 0, 0), sq = V(-0.06, 0, 0), sqV = V(0, 0, 0), tilt = V(0.12, 0, 0), tiltV = V(0, 0, 0);
     fxHook = (dt) => {                                             // recoil, stretch and lean, each on its own spring
       spring(rec, recV, V(0, 0, 0), 220, 9, dt); spring(sq, sqV, V(0, 0, 0), 300, 8, dt); spring(tilt, tiltV, V(0, 0, 0), 90, 7, dt);
@@ -882,10 +943,18 @@ export async function createWorld(canvas, ui) {
       if (s > 0.3) setFoam(s - 0.3);
       energy = Math.max(0.12, 3.2 * Math.exp(-s * 2.2));
       meterGlow = Math.max(0.8, 3.2 * Math.exp(-s * 1.5));
+      popLight.intensity = 1.1 * Math.exp(-s * 3.5);
+      if (RM) return;
+      // the spray keeps coming for a moment, then it just fizzes: fine bubbles rising off the opening
+      const tp = topAt();
+      const n = Math.round(7 * Math.exp(-s * 4.5));
+      for (let i = 0; i < n; i++) drop(tp, rnd(0.5, 1.5) * Math.exp(-s));
+      if (s > 0.4 && Math.random() < 0.5) fx.emit(tp.add(V(rnd(-0.015, 0.015), 0, rnd(-0.01, 0.01))), V(rnd(-0.02, 0.02), rnd(0.04, 0.12), rnd(-0.01, 0.02)), { t: rnd(0.5, 1.0), s: rnd(0.001, 0.002), color: 0x9a9a9a, a: 0.6 });
     };
     push = 0;
     say('FULLT LADET', 'BATTERIET ER BYTTET', '#4dff8a');
-    await wait(0.8);
+    await closeIn;
+    await wait(1.1);                                                // the spray and the foam, up close
     // the camera pulls back to the hero shot: the machine, the fresh can, the receipt hanging from the slot
     const back = (t) => { const c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };   // ease-out-back
     const turn = tween(RM ? 0.01 : 3.0, (k) => { fresh.orient.rotation.y = TAU * k; }, (t) => back(easeInOut(t)));
