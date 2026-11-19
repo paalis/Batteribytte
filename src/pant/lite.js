@@ -2,6 +2,7 @@
 // rendered with Cycles from the live version's own camera stations (tools/blender/render_stills.py). Each step is
 // one press of the action chip (or its key); the machine's screen becomes a caption. No movement, no shaking.
 import * as S from './sound.js';
+import { bump } from './counter.js';
 
 const SHOTS = {
   drag: ['start', 'FLATT BATTERI?', 'SETT INN HER'],
@@ -35,7 +36,7 @@ export function createLite(ui) {
         ({ drag: S.suck, roll: S.accept, press: S.click, shake: S.thud, hold: S.full, flick: S.pop })[n]();
       }
       show('done');
-      return { time: new Date(), tries: 2, count: 1 + (Number(localStorage.getItem('bb-count') || 0) || 0) };
+      return { time: new Date(), tries: 2, count: bump().total };
     },
     act() { next(); },
     key(k) { if ((k === 'up' && current === 'flick') || (k === 'shake' && current === 'shake') || ((k === 'up' || k === 'down') && current === 'roll')) next(); },
