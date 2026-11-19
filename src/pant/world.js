@@ -182,6 +182,7 @@ export async function createWorld(canvas, ui) {
       }
     });
     if (flat) root.traverse((o) => { if (o.name === 'Opening') o.visible = false; });
+    if (flat && label) { label.normalMap = null; label.needsUpdate = true; }   // old and empty: no condensation on it
     // holder: where it is · crush: squashes in world space (the press) · orient: how it is turned · root: the model
     const orient = new Group(); orient.add(root); root.position.y = -H / 2;
     const crush = new Group(); crush.add(orient);
@@ -194,7 +195,12 @@ export async function createWorld(canvas, ui) {
   const flat = prepare(flatRoot, { flat: true });
   const fresh = prepare(freshRoot, { flat: false });
   if (fresh.label) fresh.label.emissive = new Color(0.55, 0.92, 1.0);   // the veins: electric blue-white current
-  const foam = makeFoam(fresh.orient, H);
+  // the foam's bursting bubbles spit a fleck of spray (the foam lives in the can's frame; the spray in the world)
+  const foam = makeFoam(fresh.orient, H, { onPop: (x, y, z) => {
+    if (RM) return;
+    const p = fresh.orient.localToWorld(V(x, y, z));
+    fx.emit(p, V(rnd(-0.05, 0.05), rnd(0.04, 0.16), rnd(-0.03, 0.05)), { t: rnd(0.15, 0.3), g: 2, k: 2, s: rnd(0.0007, 0.0014), color: 0x8a7a60, a: 0.8 });
+  } });
   fresh.holder.visible = false;
   flat.u.uMeterColor.value.setRGB(1.0, 0.12, 0.08);   // a red last bar
 
@@ -770,7 +776,7 @@ export async function createWorld(canvas, ui) {
   }
 
   // it lets go: it drops into the hatch (the hatch light flickers on, sparks kick up from the tray), bounces twice,
-  // then charges where it lies — it crackles, trembles and the light pulses — and goes: a shockwave, the flap is flung
+  // then charges where it lies — sparks crackle, it trembles and the light pulses — and goes: a shockwave, the flap is flung
   // open and claps shut behind it on its spring, and it arcs up to float in front of you trailing sparks, turning once
   // and landing in the ring with a pulse.
   async function dropOut() {
@@ -794,14 +800,13 @@ export async function createWorld(canvas, ui) {
     const pc = fresh.holder.position.clone();
     S.rattle(0.5);
     await tween(RM ? 0.01 : 0.75, (k) => {
-      energy = 0.2 + 0.9 * k * k * (0.7 + 0.3 * Math.random());
       hatchLight.intensity = 0.16 + 0.34 * k * (0.55 + 0.45 * Math.random());
       fresh.holder.position.set(pc.x + rnd(-1, 1) * 0.0025 * k, pc.y + rnd(0, 1) * 0.004 * k, pc.z);
       if (Math.random() < 0.35 + 0.65 * k) { const a = rnd(0, TAU); spark(V(pc.x + rnd(-0.08, 0.08), pc.y + Math.sin(a) * 0.035, pc.z + Math.cos(a) * 0.035), V(rnd(-0.3, 0.3), rnd(0.1, 0.7), rnd(-0.2, 0.4)), { g: 0.8, color: Math.random() < 0.3 ? 0xffd27a : 0x9ff6ff }); }
     }, (t) => t);
     fresh.holder.position.copy(pc);
     // and goes
-    S.whoosh(); energy = 1.1; shakeAmt = 0.014; flashIt(false);
+    S.whoosh(); shakeAmt = 0.014; flashIt(false);
     if (!RM) { fx.ring(pc, { r0: 0.03, r1: 0.4, t: 0.5, color: 0x9ff6ff, a: 0.85 }); for (let i = 0; i < 30; i++) spark(pc.clone(), V(rnd(-1.2, 1.2), rnd(-0.2, 1.2), rnd(-0.2, 0.9)), { t: rnd(0.25, 0.5) }); }
     const p1 = fresh.holder.position.clone(), q1 = fresh.orient.quaternion.clone();
     heroLight.intensity = 0.6;
@@ -814,7 +819,6 @@ export async function createWorld(canvas, ui) {
       fresh.holder.position.z += Math.sin(k * Math.PI) * 0.15;
       fresh.orient.quaternion.slerpQuaternions(q1, new Quaternion(), e);
       fresh.orient.rotateY(e * TAU);
-      energy = 1.0 * (1 - k);
       hatchLight.intensity = 0.5 * (1 - smooth(0, 0.5, k));
       // the flap is flung open as it passes, then let go on its spring: it claps shut and rattles in its frame
       if (flap && !flapFree) {
