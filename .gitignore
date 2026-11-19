@@ -8,3 +8,4 @@ __pycache__/
 # sound candidates (not committed until chosen) and local keys
 assets/sfx/_candidates/
 .env
+.venv-blender/
