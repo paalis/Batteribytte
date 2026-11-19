@@ -82,12 +82,15 @@ export function makeParticles(scene, max = 900) {
 //   wet      the trail a run leaves: translucent amber with a glint
 // Lives in the can's own frame (parent: the can), so it turns with it. Units: metres; y = 0 is the can's middle.
 export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
-  const PROF = [[0, 24.6], [9.5, 33.1], [145, 33.1], [148.5, 32.8], [151.5, 31.9], [154.5, 30.4], [157.5, 28.8], [160, 27.6], [162, 27.1], [168, 27.1]];
+  // the can's outside, as built (tools/blender/build_can.py OUTER): body, shoulder, neck and the seamed rim on top
+  const PROF = [[0, 24.6], [9.5, 33.1], [145, 33.1], [148.5, 32.8], [151.5, 31.9], [154.5, 30.4], [157.5, 28.8], [160, 27.6], [162, 27.1],
+    [163.6, 27.1], [164.4, 27.75], [166.2, 27.9], [167.6, 27.6], [168, 27.0]];
   const radiusAt = (y) => {                              // the can's radius (m) at height y
     const mm = (y + h / 2) * 1000;
     for (let i = 1; i < PROF.length; i++) if (mm <= PROF[i][0]) { const [a, ra] = PROF[i - 1], [b, rb] = PROF[i]; return (ra + (rb - ra) * (mm - a) / (b - a)) / 1000; }
     return PROF[PROF.length - 1][1] / 1000;
   };
+  const INNER = 0.0245;                                  // inside the rim: the head has to stay within this
   const pos = new Float32Array(max * 3), size = new Float32Array(max), alpha = new Float32Array(max), shade = new Float32Array(max);
   const B = Array.from({ length: max }, () => ({ on: false }));
   const geo = new BufferGeometry();
@@ -99,6 +102,7 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
     uniforms: { uScale: { value: 800 } },
     vertexShader: `attribute float size; attribute float alpha; attribute float shade; varying float vA; varying float vS; uniform float uScale;
       void main() { vA = alpha; vS = shade; vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        mv.xyz += normalize(-mv.xyz) * size * (shade > 1.5 ? 0.15 : 0.55);   // depth-test as the bubble's front, not its middle
         gl_PointSize = alpha > 0.0 ? max(1.0, size * uScale / -mv.z) : 0.0; gl_Position = projectionMatrix * mv; }`,
     // shade 0: cream · 1: bubble · 2: wet trail
     fragmentShader: `varying float vA; varying float vS;
@@ -126,9 +130,11 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
   let n = 0, t = 0, running = false;
   const RUNS = [{ a: 0.16, len: 0.07, w: 0.17, rate: 230 }, { a: -0.55, len: 0.036, w: 0.11, rate: 120 }];
   const add = (b) => { const i = n; n = (n + 1) % max; Object.assign(B[i], { on: true, age: 0, ...b }); };
-  const yRim = h / 2 - 0.002, yTop = h / 2 - 0.006, OZ = 0.005, OR = 0.021;
+  const yRim = h / 2 - 0.0015, yTop = h / 2 - 0.0018, OZ = 0.003, OR = 0.021;   // the head sits on the lid, inside the rim; runs start over the rim
   // how high the head stands: wells up in half a second, then sinks to a thin layer
   const head = (tt) => 0.017 * Math.min(1, tt / 0.45) ** 0.7 * (1 - 0.82 * Math.min(1, Math.max(0, (tt - 0.7) / 3.2)) ** 0.8);
+  // keep a bubble of size s (diameter) inside the rim
+  const inside = (x, z, s_) => { const r = Math.hypot(x, z), m = INNER - s_ / 2; return r > m ? { x: x * m / r, z: z * m / r } : { x, z }; };
   function start() {
     running = true; t = 0;
     for (let i = 0; i < 1500; i++) {                     // the head over the opening
@@ -137,17 +143,18 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
       const edge = d / OR;
       // bubbles high in the head burst first; the ones at the rim last longest
       const life = cream ? rnd(2.2, 4.5) : 0.9 + 4.5 * (1 - hf) * rnd(0.5, 1) + 4 * edge ** 3 * rnd(0.5, 1);
-      add({ kind: 0, x: Math.cos(a) * d, z: OZ + Math.sin(a) * d, hf: hf * (1 - edge * edge * 0.7), s: cream ? rnd(0.004, 0.007) : small(), sh: cream ? 0 : 1, born: rnd(0, 0.3) * (0.3 + hf), life });
+      const s_ = cream ? rnd(0.004, 0.007) : small();
+      add({ kind: 0, ...inside(Math.cos(a) * d, OZ + Math.sin(a) * d, s_), hf: hf * (1 - edge * edge * 0.7), s: s_, sh: cream ? 0 : 1, born: rnd(0, 0.3) * (0.3 + hf), life });
     }
     for (let i = 0; i < 260; i++) {                      // the ring that clings round the opening's edge
-      const a = rnd(0, Math.PI * 2), d = OR * rnd(0.88, 1.02);
-      add({ kind: 0, x: Math.cos(a) * d, z: OZ + Math.sin(a) * d, hf: rnd(0, 0.12), s: small() * 0.9, sh: 1, born: rnd(0.2, 0.6), life: rnd(7, 12) });
+      const a = rnd(0, Math.PI * 2), s_ = small() * 0.9, d = INNER - s_ / 2 - rnd(0, 0.0015);
+      add({ kind: 0, x: Math.cos(a) * d, z: Math.sin(a) * d, hf: rnd(0, 0.12), s: s_, sh: 1, born: rnd(0.2, 0.6), life: rnd(7, 12) });
     }
   }
   const tmp = { x: 0, y: 0, z: 0 };
   const where = (b) => {
     if (b.kind === 0) { tmp.x = b.x; tmp.y = yRim + head(t) * b.hf; tmp.z = b.z; return tmp; }
-    const r = radiusAt(b.y) + (b.kind === 2 ? 0.0004 : 0.0011);
+    const r = radiusAt(b.y) + (b.kind === 2 ? 0.0003 : b.s * 0.5 * Math.min(1, (b.age - b.born) / 0.15) + 0.0003);   // on the wall, not in it
     tmp.x = Math.sin(b.a) * r; tmp.y = b.y; tmp.z = Math.cos(b.a) * r; return tmp;
   };
   function update(dt, camera, viewH) {
