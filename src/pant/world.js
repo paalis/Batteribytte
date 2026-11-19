@@ -342,7 +342,9 @@ export async function createWorld(canvas, ui) {
     // the camera: rig + parallax + shake
     par.lerp(pointerPar, Math.min(1, dt * 3));
     camera.position.copy(cam.pos);
-    camera.position.x += par.x * 0.05; camera.position.y -= par.y * 0.03;
+    // the parallax fades out in close quarters (in the scan chamber it would push the camera behind the press plate)
+    const parK = clamp((cam.pos.distanceTo(cam.tgt) - 0.4) / 0.5);
+    camera.position.x += par.x * 0.05 * parK; camera.position.y -= par.y * 0.03 * parK;
     if (shakeAmt > 0) { camera.position.x += (Math.random() - 0.5) * shakeAmt; camera.position.y += (Math.random() - 0.5) * shakeAmt; shakeAmt = Math.max(0, shakeAmt - dt * 0.06); }
     camera.fov = cam.fov - push;
     camera.updateProjectionMatrix();
