@@ -103,3 +103,4 @@ Plakaten (stillbildet av åpningen) vises med en gang, med ≈ 72 kB totalt. thr
 - **Rull og bom:** ruller du boksen i skanneren mange ganger uten å treffe, blir maskinen frekkere for hver gang. Skjermen viser «PRØV Å SNU DEN, DA», så «JEG BLIR SVIMMEL» og til slutt «DETTE ER EN PANTEMASKIN, IKKE EN KARUSELL». Hjelpeteksten gir hint.
 - **Trykk på skjermen:** trykker du fire ganger på maskinens skjerm, sier den «AU!» og klager litt før den går tilbake.
 - **Vipping:** i bildene der den nye boksen svever, snur den seg litt etter hvordan du holder telefonen (eller etter musepekeren på PC), og lyset glir over den.
+- **Telleren:** lagres bare i nettleseren din (ingen server). Skjermen viser «BATTERIER BYTTET I DAG», som nullstilles hver dag, og pantelappen viser «ditt bytte nr. …» totalt. I privat modus starter den på null hver gang.

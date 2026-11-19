@@ -23,6 +23,7 @@ import { makeBloom } from './bloom.js';
 import * as S from './sound.js';
 import { drawReceipt } from './receipt.js';
 import { makeParticles, makeFoam } from './particles.js';
+import { bump } from './counter.js';
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -658,11 +659,10 @@ export async function createWorld(canvas, ui) {
       push = 4 * (1 - k);
     }, easeOut);
     push = 0;
-    const count = 1 + (Number(localStorage.getItem('bb-count') || 0) || 0);
-    try { localStorage.setItem('bb-count', String(count)); } catch (e) { /* private mode */ }
-    receiptData.count = count;
-    say('KNAS!', `BATTERIER BYTTET I DAG: ${count - 1}`, '#ffd27a');
-    setTimeout(() => { say('KNAS!', `BATTERIER BYTTET I DAG: ${count}`, '#ffd27a'); S.tick(2); }, RM ? 0 : 420);   // the counter ticks
+    const c = bump();
+    receiptData.count = c.total;
+    say('KNAS!', `BATTERIER BYTTET I DAG: ${c.today - 1}`, '#ffd27a');
+    setTimeout(() => { say('KNAS!', `BATTERIER BYTTET I DAG: ${c.today}`, '#ffd27a'); S.tick(2); }, RM ? 0 : 420);   // the counter ticks
     await tween(RM ? 0.01 : 0.35, (k) => { if (press) press.position.y = py - (bottom0 - flatTop) * (1 - k); }, easeInOut);
     // the rollers part, and it falls between them, tumbling
     const rx = rollers.map((r) => r.position.x);

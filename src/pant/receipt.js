@@ -37,7 +37,8 @@ export function drawReceipt(canvas, { time = new Date(), tries = 1, count = 1, p
   const no = String(100000 + (count * 7919) % 900000);
   row(g, 178, 'PANTELAPP', '#' + no, 24, 800);
   row(g, 210, `${pad(time.getDate())}.${pad(time.getMonth() + 1)}.${time.getFullYear()}`, `kl. ${pad(time.getHours())}:${pad(time.getMinutes())}`, 20);
-  line(g, 236);
+  row(g, 232, count > 1 ? `ditt bytte nr. ${count}` : 'ditt første bytte', null, 16, 500);
+  line(g, 246);
   row(g, 280, '1 × BATTERI, FLATT', 'PANTET', 22, 800);
   row(g, 310, tries > 1 ? `  godkjent på ${tries}. forsøk` : '  godkjent med en gang', null, 18, 500);
   row(g, 352, '1 × BATTERY FRESH', 'LADET', 22, 800);
