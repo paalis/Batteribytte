@@ -4,7 +4,7 @@ Konsept, vurdering og valg står i `docs/concept.md`.
 
 **Idé:** Batteribytte på norsk. Du panter det flate batteriet og får et fullt tilbake. Alt skjer i én 3D-verden: en nattlig pantemaskin under skiltet «BATTERIBYTTE», bygget i Blender og kjørt i sanntid. Det er ingen film og ingen paneler. All tekst står på maskinens skjerm og på pantelappen.
 
-## Flyt (sju handlinger, ulik type hver gang)
+## Flyt (åtte handlinger, ulik type hver gang)
 
 | # | Handling (mobil · mus) | Tastatur | Hva som skjer | Overraskelsen |
 |---|---|---|---|---|
@@ -17,9 +17,10 @@ Konsept, vurdering og valg står i `docs/concept.md`.
 | 6 | **Rist** telefonen, eller dra fram og tilbake over skjermen | R eller Mellomrom flere ganger | Maskinen er tung og fjærende. Hvert rist dytter den i retningen du ristet, og den gynger tilbake. Boksen henger etter maskinen og løsner gradvis: den sklir, vipper og synker, mens en måler på skjermen fylles. Når den løsner, faller den ned i luka: lyset i luka hakker seg på, og gnister og støv spruter opp. Den spretter to ganger og lader seg så opp der den ligger: gnistene knitrer, den dirrer, og lyset pulserer. Så skytes den ut med en sjokkbølge og et gnistdryss. Klaffen kastes opp og smeller igjen på fjæren med et par klakk. Boksen svever opp foran deg med et gnistspor, snurrer én gang og lander i ringen med en lyspuls. | |
 | 7 | **Hold** på boksen | Hold Mellomrom (Enter lader av seg selv) | **Logoens «+ ‖» fylles nedenfra som en batterimåler.** Hver del (de to strekene, stammen og armene i plusset) lander med et tikk og en puls. Lynårene er strøm: de stiger opp over boksen i takt med ladingen, med pulser som løper oppover, og trekker seg tilbake hvis du slipper. Når boksen ikke lades, er de borte. ringen bak lyser opp, og boksen summer heller enn å dirre. Kameraet lener seg inn og litt rundt. Slipper du, hører du strømmen gå av, og nivået synker litt. Ved 100 % hopper boksen, det blinker, og fliken glinser: «DRA FLIKEN OPP». | Logoen *er* batteriet. |
 | 8 | **Flikk** fliken opp (sveip opp, eller trykk på boksen) | Pil opp eller Enter | Fliken svarer før den gir etter: den løfter seg mot en stiv fjær mens du drar, og boksen lener seg bakover og dukker litt. Slipper du for tidlig, smekker den ned igjen med et klikk. Over streken kommer først et lite trykk (boksen klemmes, fliken graver seg inn), så smellet: boksen sparkes ned og fjærer tilbake, og kameraet går tett inn på åpningen. Det kommer blits, en gyllen fontene av dråper med tyngdekraft, en sky av dugg og en ring av lys, sprut i sakte film (Cycles-sprite), skummet velter opp (et skumhode av små, gjennomsiktige bobler som renner over kanten og nedover veggen med et vått, gyllent spor, og så synker sammen mens boblene brister med en liten sprut, til bare en krans ved åpningen er igjen), og lynene topper. Etterpå bobler det fra åpningen. Etter et drøyt sekund i nærbildet trekker kameraet seg ut til heltebildet mens boksen snurrer én runde, går litt forbi og legger seg i en rolig sveving. Bildet får stå et øyeblikk før lappen kommer. | |
+| 8b | **Ta en slurk**: vipp telefonen mot deg, eller dra ned over skjermen (eller trykk på boksen) | Pil ned eller Enter | Den åpne boksen bruser og ber om det: «SKÅL! TA EN SLURK», og den lener seg mot deg innimellom. Når du vipper eller drar, følger den litt etter. Så kommer den opp til deg og tipper, kameraet går tett inn på åpningen, og den gylne drikken glimter i åpningen mens fresingen øker. Du hører slurk, svelg og «ah», og kameraet dupper med svelget. På «ah» går boksen ned igjen, lynårene blusser opp én gang til, det kommer et kaldt pust og en ring, og skjermen sier «AAAH. BATTERI: 100 %». Så trekker kameraet seg ut til heltebildet. | Belønningen er å drikke den, ikke bare se på den. |
 | 9 | **Del** pantelappen, eller «Bytt igjen» | Tab, Enter | Bakgrunnen dempes, og pantelappen kommer inn som papir revet av sporet: ovenfra, rullet ut fra toppen, den svinger forbi og legger seg litt skjevt. Så kommer de to knappene opp etter hverandre. Lappen kan deles som bilde (Web Share med fil) eller som lenke, som kopieres. På iPhone og Android kommer også «Se den på bordet»: boksen i ekte størrelse i kamerabildet (Quick Look med `battery-can.usdz`, Scene Viewer med `battery-can-ar.glb`). Med redusert bevegelse står alt der med en gang. | Premien er en gjenstand: «PANTELAPP · 1 × BATTERI, FLATT · PANTET · 1 × BATTERY FRESH · LADET · DIN TUR?» |
 
-**Handlingsknappen** nederst sier alltid hva neste handling er («Dra batteriet inn», «Rull boksen», «Trykk PANT», «Rist maskinen», «Hold for å lade», «Åpne»).
+**Handlingsknappen** nederst sier alltid hva neste handling er («Dra batteriet inn», «Rull boksen», «Trykk PANT», «Rist maskinen», «Hold for å lade», «Åpne», «Ta en slurk»).
 - Trykker du på den, gjøres handlingen for deg. Det er alternativet til bevegelser og presisjon (WCAG 2.5.1 og 2.5.7).
 - I hold-steget holder du den som boksen. Et kort trykk lader av seg selv.
 - Fokus flyttes til knappen ved hvert nytt steg.
@@ -41,7 +42,7 @@ Stasjonene er felles for siden og Blender-stillbildene: `src/pant/world.js` (`ST
 Pekeren gir litt parallakse (bare med mus). Kameraet rister ved knaset, smellet og fallet.
 
 ## Lyd og haptikk (`src/pant/sound.js`)
-- **Lydene er opptak av reklamefilmkvalitet:** 27 lydeffekter fra ElevenLabs, valgt ved lytting (`tools/sfx/selection.json`, kreditering i `CREDITS.md` og «Lyd: ElevenLabs» under logoen).
+- **Lydene er opptak av reklamefilmkvalitet:** 27 lydeffekter fra ElevenLabs og ett CC0-opptak fra Freesound (slurken), valgt ved lytting (`tools/sfx/selection.json`, kreditering i `CREDITS.md` og «Lyd: ElevenLabs» under logoen).
 - **Filformat:** De ligger i `assets/sfx/` som .ogg (Vorbis) og .m4a (AAC, for Safari og iPhone). Nettleseren henter bare ett av formatene.
 - **Lasting:** Lyden låses opp ved første trykk, tast eller berøring. iOS får en stille buffer i samme gest. Filene hentes og dekodes rett etter, med lydene til første steg først.
 - **Avspilling:**
@@ -49,19 +50,20 @@ Pekeren gir litt parallakse (bare med mus). Kameraet rister ved knaset, smellet 
   - Loopene (`hum`, `room`, `rollers`, `rumble`, `charge`, `fizz`) går over sin nøyaktige lengde. Skjøten er bakt inn med 40 ms overtoning.
   - Ladelyden følger nivået: den går fortere og blir lysere og sterkere.
 - **Miks i lag:**
-  - Smellet er fliken, spruten og en dyp dunk, og så fresingen som dør ut over et par sekunder.
+  - Smellet er fliken, spruten og en dyp dunk, og så fresingen: sterk i starten, så en stille fresing som varer så lenge den åpne boksen er i bildet. Den øker mens du drikker.
+  - Slurken (`drink`) er et CC0-opptak fra Freesound med slurk, svelg og «ah». Det er ikke vurdert ved lytting.
   - Knaset har en dyp dunk under seg.
   - Maskinsummingen har natten utenfor under seg.
 - **Alt går gjennom én lett kompressor** (−14 dB, 3:1).
 - **Reserve:** Hver lyd beholder den gamle syntesen (oscillator og støy). Den spiller til filen er lastet, eller hvis filen ikke kan lastes. En loop som går på syntese, bytter over til filen når den kommer.
 - **Lyd av og på:** Lyden er på som standard, og «Lyd» (eller M) slår den av. Knappene gir et dempet klikk.
-- **Vibrasjon** (`navigator.vibrate`, bare Android) på hvert mekanisk steg.
+- **Vibrasjon** (`navigator.vibrate`, bare Android) på hvert mekanisk steg. Etter smellet kommer en knitring som kullsyre, og slurken har et mønster som følger slurk og svelg.
 - **Risting med telefonen** bruker `devicemotion`. iOS ber om tillatelse ved første trykk.
 - **Verktøyene** bak utvalget ligger i `tools/sfx/`: søk, generering, måling, poeng, lytteside og `prepare.py`, som kutter, normaliserer og koder. Vurderingen står i `docs/sound-review.md`.
 
 ## Lett reserve (`src/pant/lite.js`)
 Ved **prefers-reduced-motion**, **uten WebGL**, eller hvis 3D-lastingen feiler:
-- Samme historie fortelles i sju stillbilder fra Cycles (`assets/pant/stills/*.webp`, rendret fra de samme kamerastasjonene).
+- Samme historie fortelles i stillbilder fra Cycles (åtte steg, der slurken bruker heltebildet) (`assets/pant/stills/*.webp`, rendret fra de samme kamerastasjonene).
 - Teksten fra maskinens skjerm vises som bildetekst.
 - Hvert steg er ett trykk på handlingsknappen (eller tasten).
 - Ingen bevegelse og ingen risting.
@@ -104,3 +106,13 @@ Plakaten (stillbildet av åpningen) vises med en gang, med ≈ 72 kB totalt. thr
 - **Trykk på skjermen:** trykker du fire ganger på maskinens skjerm, sier den «AU!» og klager litt før den går tilbake.
 - **Vipping:** i bildene der den nye boksen svever, snur den seg litt etter hvordan du holder telefonen (eller etter musepekeren på PC), og lyset glir over den.
 - **Telleren:** lagres bare i nettleseren din (ingen server). Skjermen viser «BATTERIER BYTTET I DAG», som nullstilles hver dag, og pantelappen viser «ditt bytte nr. …» totalt. I privat modus starter den på null hver gang.
+
+## Iskald (lyst på en)
+Den ferske boksen skal se ut som den kommer rett fra kjøleskapet:
+- **Rim** på kanten av lokket når den faller ut av maskinen (`uFrost` i lokkets shader).
+- **Dugg som tetner til** mens du ser på den: dråpe-normalkartet på etiketten går fra nesten tørt til fullt i heltebildet og under ladingen.
+- **Dråper som renner:** i noen av etikettens kolonner glir en dråpe nedover nå og da og etterlater et vått, blankt spor som fanger lyset (`uWet`).
+- **Kald damp** som siger ned fra boksen, og et hvitt pust ut av åpningen når den åpnes, i stedet for røyk.
+- **Et kjølig blått kantlys** bak boksen i heltebildet.
+- **Drikken i åpningen:** den gylne væsken glimter i åpningen etter at den er åpnet, og sterkest når du drikker.
+- **Den bruser så lenge den er åpen:** bobler som brister, små dråper som spretter opp og en tynn kald damp fra åpningen. Mest i starten, så roligere.

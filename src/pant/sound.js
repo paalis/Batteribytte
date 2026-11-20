@@ -236,25 +236,50 @@ export function chargeLevel(c) {
   });
 }
 export function full() { if (!ok()) return; if (!play('full', { pitch: 0.01 })) [523, 659, 784].forEach((f, i) => tone(f, 0.25, 0.06, 'sine', null, i * 0.06)); buzz([20, 30, 20]); }
-// the can opens, in layers: the tab's crack, the spray on top of it, then the fizz that keeps going and dies away
+// the can opens, in layers: the tab's crack, the spray on top of it, then the fizz that keeps going: loud at first,
+// then settling to a quiet hiss that stays as long as the open can is on screen
+let fizzV = 0.22;                                                      // where it settles (and where it comes back to)
+export const fizz = loop(() => {
+  if (BUF.fizz) return sampleLoop('fizz', fizzV * 0.9, 0.6);
+  const n = ctx.createBufferSource(), f = ctx.createBiquadFilter(), out = ctx.createGain();
+  n.buffer = noiseBuf(2); n.loop = true; f.type = 'highpass'; f.frequency.value = 5500; out.gain.value = 0.0001;
+  out.gain.setTargetAtTime(fizzV * 0.12, now(), 0.2);
+  n.connect(f).connect(out).connect(master); n.start();
+  return { out, srcs: [n] };
+}, 'fizz');
+// how loud the fizz is: v (0…1) reached over tau seconds
+export function fizzLevel(v, tau = 0.3) { fizzV = v; fizz.set((n, t) => { n.out.gain.cancelScheduledValues(t); n.out.gain.setTargetAtTime(Math.max(0.0001, v * (n.sample ? 0.9 : 0.12)), t, tau); }); }
 export function pop() {
   if (!ok()) return;
+  fizzV = 0.22; fizz.start();
+  fizz.set((n, t) => {
+    const g = n.out.gain, top = n.sample ? 0.9 : 0.12;
+    g.cancelScheduledValues(t); g.setValueAtTime(0.0001, t);
+    g.exponentialRampToValueAtTime(top, t + 0.35); g.setTargetAtTime(top * 0.22, t + 1.2, 1.6);
+  });
   if (play('pop', { pitch: 0.02 })) {
     play('spray', { at: 0.03, gain: 0.9 });
     tone(80, 0.5, 0.22, 'sine', 36);                                  // a sub thump under it: the size of the moment
-    if (BUF.fizz) {
-      const n = sampleLoop('fizz', 0.0001, 0.01), g = n.out.gain, t = now();
-      g.cancelScheduledValues(t); g.setValueAtTime(0.0001, t);
-      g.exponentialRampToValueAtTime(0.9, t + 0.35); g.setTargetAtTime(0.0001, t + 1.2, 1.3);
-      n.src.stop(t + 6);
-    } else noise(1.6, 'highpass', 5000, 8000, 0.12, 0.1);
-    buzz([25, 40, 35]);
-    return;
+  } else {
+    tone(92, 0.7, 0.4, 'sine', 36); noise(0.45, 'lowpass', 520, null, 0.7); noise(0.35, 'bandpass', 3200, null, 0.6);
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.7, 0.06, 'sine', null, 0.05 + i * 0.05));
   }
-  tone(92, 0.7, 0.4, 'sine', 36); noise(0.45, 'lowpass', 520, null, 0.7); noise(0.35, 'bandpass', 3200, null, 0.6);
-  [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.7, 0.06, 'sine', null, 0.05 + i * 0.05));
-  noise(1.6, 'highpass', 5000, 8000, 0.12, 0.1);    // the fizz
-  buzz([25, 40, 35]);
+  // the bang, then a crackle in the hand: the bubbles
+  buzz([25, 40, 35, 90, 6, 50, 8, 70, 5, 40, 7, 110, 5]);
+}
+// a sip from the can: the slurp (0.15–0.8 s), a swallow (1.15–1.45 s) and the «ah» (from 1.9 s); the fizz swells
+// while the can is tipped. Synth: a slurp of noise, two gulps and a breath.
+export const DRINK = { swallow: 1.15, ah: 1.9, len: 3.0 };
+export function drink() {
+  if (!ok()) return;
+  fizzLevel(0.55, 0.2);
+  setTimeout(() => fizzLevel(0.2, 0.8), 1900);
+  if (!play('drink', { pitch: 0.01, level: 0.05 })) {
+    noise(0.6, 'bandpass', 1800, 900, 0.18, 0.15, 3);
+    tone(150, 0.18, 0.3, 'sine', 70, 1.15); noise(0.15, 'lowpass', 500, 200, 0.3, 1.18);
+    noise(0.7, 'bandpass', 1100, 600, 0.12, 1.9, 0.8);
+  }
+  buzz([0, 150, 12, 120, 10, 120, 12, 600, 45, 700, 20]);
 }
 
 // for tests: how many files are decoded, and which format

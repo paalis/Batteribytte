@@ -12,6 +12,7 @@ For each chosen sound:
     needs (length, loop length, channels) as src/pant/sfx-manifest.js
 
   python3 tools/sfx/prepare.py
+  python3 tools/sfx/prepare.py drink     # just these
 """
 import json, subprocess, pathlib
 import numpy as np
@@ -26,7 +27,7 @@ TARGET = {
     'pop': -15, 'spray': -18, 'fizz': -24, 'charge': -22, 'full': -16, 'powerDown': -20, 'hum': -30, 'crush': -14,
     'reject': -17, 'accept': -19, 'scanBeep': -22, 'suck': -18, 'gulp': -17, 'rollers': -26, 'lock': -18, 'click': -19,
     'printer': -21, 'rumble': -22, 'rattle': -18, 'clank': -18, 'thud': -16, 'drop': -20, 'whoosh': -20, 'tick': -22,
-    'grab': -24, 'ui': -26, 'room': -36,
+    'grab': -24, 'ui': -26, 'room': -36, 'drink': -19,
 }
 
 def load(path, ch):
@@ -71,12 +72,21 @@ def write(y, ch, sid):
     subprocess.run(base + ['-c:a', 'aac', '-b:a', '48k' if quiet else ('96k' if ch == 2 else '64k'), '-movflags', '+faststart', str(OUT / f'{sid}.m4a')], input=raw, check=True)
 
 def main():
+    import sys
+    only = set(sys.argv[1:])                                          # just these ids (the rest stay as they are)
     sel = json.loads((ROOT / 'tools/sfx/selection.json').read_text())['selections']
+    old = {}
+    if only:
+        txt = (ROOT / 'src/pant/sfx-manifest.js').read_text()
+        old = json.loads(txt[txt.index('{'):txt.rindex('}') + 1])
     OUT.mkdir(exist_ok=True)
     man, tot_o, tot_m = {}, 0, 0
     for s in sel:
         sid = s['sound']
         if not s.get('choice') or s['choice'] == 'none':
+            continue
+        if only and sid not in only:
+            if sid in old: man[sid] = old[sid]
             continue
         ch = 2 if sid in STEREO else 1
         x = load(ROOT / s['file'], ch)
