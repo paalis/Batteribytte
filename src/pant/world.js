@@ -149,7 +149,7 @@ export async function createWorld(canvas, ui) {
   const H = 0.168;
   meterTex.flipY = false;
   function prepare(root, { flat }) {
-    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 }, uCrush: { value: 0 }, uVein: { value: 1.2 }, uTime: { value: 0 } };
+    const u = { uMeter: { value: meterTex }, uLevel: { value: 0 }, uMeterColor: { value: new Color(1.0, 0.75, 0.35) }, uMeterGain: { value: 0 }, uSat: { value: flat ? 0.06 : 1 }, uDim: { value: flat ? 0.55 : 1 }, uCrush: { value: 0 }, uVein: { value: 1.2 }, uTime: { value: 0 }, uWet: { value: 0 } };
     let label = null;
     root.traverse((o) => {
       if (!o.isMesh || !o.material) return;
@@ -166,9 +166,21 @@ export async function createWorld(canvas, ui) {
             { float a = atan(position.x, position.z);
               float c = sin(position.y * 170.0 + a * 3.0) * sin(a * 5.0 + position.y * 60.0) + 0.5 * sin(a * 11.0 - position.y * 240.0);
               transformed += normal * uCrush * 0.0045 * c; }`);
-          sh.fragmentShader = 'uniform sampler2D uMeter; uniform float uLevel; uniform vec3 uMeterColor; uniform float uMeterGain; uniform float uSat; uniform float uDim; uniform float uVein; uniform float uTime;\n' + sh.fragmentShader
+          sh.fragmentShader = 'uniform sampler2D uMeter; uniform float uLevel; uniform vec3 uMeterColor; uniform float uMeterGain; uniform float uSat; uniform float uDim; uniform float uVein; uniform float uTime; uniform float uWet;\n' + sh.fragmentShader
             .replace('#include <map_fragment>', `#include <map_fragment>
               { float l = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)); diffuseColor.rgb = mix(vec3(l), diffuseColor.rgb, uSat) * uDim; }`)
+            .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+              // condensation running: in some of the label's columns a drop slides down now and then, leaving a wet,
+              // glossy streak behind it that catches the light (uWet: how cold and wet the can is)
+              { float hv = 1.0 - vMapUv.y, cx = vMapUv.x * 70.0, col = floor(cx);
+                float r = fract(sin(col * 12.9898 + 4.1) * 43758.5453);
+                float head = 1.05 - fract(uTime * (0.02 + 0.045 * fract(r * 7.3)) + r * 5.0) * 1.25;
+                float x = fract(cx) - 0.5 + 0.16 * sin(hv * 37.0 + r * 30.0), above = hv - head;
+                float trail = step(0.0, above) * exp(-above * 6.0) * smoothstep(0.17, 0.04, abs(x));
+                float drop = exp(-pow(above * 90.0, 2.0)) * smoothstep(0.3, 0.06, abs(x));
+                float d = step(0.68, r) * uWet * clamp(trail * 0.85 + drop, 0.0, 1.0);
+                roughnessFactor = mix(roughnessFactor, 0.04, d);
+                diffuseColor.rgb *= (1.0 - 0.18 * d) * (1.0 - 0.07 * uWet); }`)
             .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
               { float hv = 1.0 - vMapUv.y;
                 // the veins are current: they rise with the charge (lit below uVein, brightest at the front of it) and
@@ -204,6 +216,36 @@ export async function createWorld(canvas, ui) {
   } });
   fresh.holder.visible = false;
   flat.u.uMeterColor.value.setRGB(1.0, 0.12, 0.08);   // a red last bar
+  // ice cold: frost on the fresh can's rim (uFrost), condensation that thickens and runs (the label's droplet normals
+  // and uWet), a cold breath sinking off it (coldMist); the open can shows its drink in the opening
+  const frostU = { value: 0 };
+  const lid = freshRoot.getObjectByName('Lid');
+  if (lid && lid.material) lid.material.onBeforeCompile = (sh) => {
+    sh.uniforms.uFrost = frostU;
+    sh.vertexShader = 'varying vec3 vLP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vLP = position;');
+    sh.fragmentShader = 'varying vec3 vLP; uniform float uFrost;\n' + sh.fragmentShader.replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+      { float r = length(vLP.xz); vec2 q = floor(vLP.xz * 2400.0);
+        float n = fract(sin(dot(q, vec2(12.9898, 78.233))) * 43758.5453);
+        float fr = uFrost * clamp(smoothstep(0.0228, 0.0262, r) * (0.45 + 0.7 * n) + 0.3 * step(0.9, n), 0.0, 1.0);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.9, 0.95, 1.0), fr * 0.85);
+        roughnessFactor = mix(roughnessFactor, 0.8, fr); metalnessFactor = mix(metalnessFactor, 0.0, fr); }`);
+  };
+  const opening = freshRoot.getObjectByName('Opening');
+  if (opening && opening.material) Object.assign(opening.material, { color: new Color(0x2a1604), emissive: new Color(0xffa83e), emissiveIntensity: 0, roughness: 0.12, metalness: 0 });
+  let liquid = 0;                                      // how much of the drink shows in the opening (0…1)
+  const wetBase = fresh.label && fresh.label.normalScale ? fresh.label.normalScale.x : 0.7;
+  const setWet = (k) => { if (fresh.label && fresh.label.normalScale) fresh.label.normalScale.setScalar(wetBase * (0.25 + 1.05 * k)); fresh.u.uWet.value = k; };
+  setWet(0);
+  const CAN_R = 0.0335;
+  let coldMist = 0, mistAcc = 0, boost = 0;
+  function mistOff(dt) {
+    mistAcc += dt * 18 * coldMist;
+    for (; mistAcc > 1; mistAcc--) {
+      const a = rnd(0, TAU), y = rnd(-H * 0.45, H * 0.32);
+      const p = fresh.orient.localToWorld(V(Math.sin(a) * CAN_R * 1.08, y, Math.cos(a) * CAN_R * 1.08));
+      fx.emit(p, V(Math.sin(a) * 0.01, -0.006, Math.cos(a) * 0.01), { t: rnd(1.6, 2.8), g: 0.014, k: 0.7, s: rnd(0.005, 0.009), gr: 2.2, a: 0.025, color: 0xcfe6ff });
+    }
+  }
 
   // the fresh can's own animations: «open» (tab, opening) and «Foam»
   const mixer = new AnimationMixer(freshRoot);
@@ -359,6 +401,8 @@ export async function createWorld(canvas, ui) {
     // the fresh can: energy veins and the gauge
     if (fresh.label) fresh.label.emissiveIntensity = energy * (0.75 + 0.25 * Math.random());
     fresh.u.uTime.value = t;
+    if (coldMist > 0 && fresh.holder.visible && !RM) mistOff(dt);
+    if (opening) opening.material.emissiveIntensity = liquid * (0.22 + 0.08 * Math.sin(t * 9) + 0.06 * Math.sin(t * 23 + 1));
     foam.update(dt, camera, innerHeight * renderer.getPixelRatio());
     fresh.u.uMeterGain.value = meterGlow;
     // neon: the ring breathes; the tubes flicker now and then
@@ -832,6 +876,7 @@ export async function createWorld(canvas, ui) {
     const p0 = fresh.holder.position.clone(), q0 = fresh.orient.quaternion.clone();
     const floorP = V(0.0, 0.185, -0.08);
     const qLand = new Quaternion().setFromEuler(new Euler(0, 0.2, Math.PI / 2));
+    frostU.value = 1; setWet(0.08);                               // straight out of the cold: frosted rim, still dry
     await tween(RM ? 0.01 : 0.3, (k) => { fresh.holder.position.lerpVectors(p0, floorP, k); fresh.orient.quaternion.slerpQuaternions(q0, qLand, k); }, easeIn);
     S.thud(); shakeAmt = 0.012; flashIt(false);
     const spark = (p, v, o = {}) => { if (!RM) fx.emit(p, v, { t: rnd(0.25, 0.5), g: 2.5, k: 2.5, s: rnd(0.004, 0.008), color: 0xbff8ff, ...o }); };
@@ -857,7 +902,7 @@ export async function createWorld(canvas, ui) {
     S.whoosh(); shakeAmt = 0.014; flashIt(false);
     if (!RM) { fx.ring(pc, { r0: 0.03, r1: 0.4, t: 0.5, color: 0x9ff6ff, a: 0.85 }); for (let i = 0; i < 30; i++) spark(pc.clone(), V(rnd(-1.2, 1.2), rnd(-0.2, 1.2), rnd(-0.2, 0.9)), { t: rnd(0.25, 0.5) }); }
     const p1 = fresh.holder.position.clone(), q1 = fresh.orient.quaternion.clone();
-    heroLight.intensity = 0.6;
+    heroLight.intensity = 0.6; coldMist = 0.6;
     const flying = fly(ST.hero, RM ? 0.01 : 1.4);
     let flapFree = false;
     const tail = V(0, 0, 0);
@@ -894,6 +939,8 @@ export async function createWorld(canvas, ui) {
     tween(RM ? 0.01 : 0.6, (k) => { heroLight.intensity = 0.6 + 0.9 * (1 - k); hatchLight.intensity = 0; }, (t) => t);
     await tween(RM ? 0.01 : 0.5, (k) => { fresh.orient.rotation.z = Math.sin(k * Math.PI * 3) * 0.06 * (1 - k); }, (t) => t);   // settle
     await flying;
+    // in the warm air it starts to sweat: the dew thickens while you look at it, and the first drops run
+    tween(RM ? 0.01 : 3.5, (k) => { setWet(0.08 + 0.52 * k); }, (t) => t);
     say('LAD OPP', 'HOLD PÅ BATTERIET', '#ffd27a', { bar: 0 });
     tiltOn = true;
   }
@@ -922,6 +969,7 @@ export async function createWorld(canvas, ui) {
       meterGlow = 0.5 + 1.8 * level + 1.5 * pulse;
       energy = 0.45 + 1.5 * level + 0.6 * pulse;
       fresh.u.uVein.value = level * 1.08;
+      if (level > 0.01) { setWet(0.6 + 0.4 * level); coldMist = 0.6 + 0.6 * level; }
       S.chargeLevel(level);
       scrState.bar = level; scrState.sub = `${Math.round(level * 100)} %`;
       if (ring) ring.material.emissiveIntensity = ringBase * (1 + 2.5 * level + 1.5 * pulse);
@@ -984,6 +1032,79 @@ export async function createWorld(canvas, ui) {
     });
   }
 
+  // 9 · DRINK — the open can, fizzing, asks for it: it leans toward you now and then. Tip the phone toward you (or
+  // drag down, or the arrow keys) and it follows a little, then you take it.
+  function stepDrink(base, rest) {
+    say('SKÅL!', 'TA EN SLURK', '#ffd27a', { blink: true });
+    let y0 = null, goal = 0, lean = 0, sure = 0;
+    const t0 = performance.now();
+    return new Promise((resolve) => {
+      const go = (self) => { fxHook = null; self.done(); };
+      begin('drink', {
+        down(e) { y0 = e.clientY; },
+        move(e) { if (y0 == null) return; const d = e.clientY - y0; goal = clamp(d / 140); if (d > 70) { y0 = null; go(this); } },
+        up(e) { if (y0 != null && Math.abs(goal) < 0.05 && hits(e, fresh.holder)) { y0 = null; go(this); return; } y0 = null; goal = 0; },
+        key(k) { if (k === 'down' || k === 'up') go(this); },
+        act() { go(this); },
+      }).then(resolve);
+      const me = step;
+      fxHook = (dt) => {
+        if (hasTilt) { const tv = Math.abs(tiltGoal.y); goal = Math.max(goal * 0.9, clamp((tv - 0.3) / 0.6)); sure = tv > 0.8 ? sure + dt : 0; if (sure > 0.15 && step === me) go(me); }
+        const s = (performance.now() - t0) / 1000, beckon = RM ? 0 : 0.06 * Math.max(0, Math.sin(s * 2.2)) ** 3;
+        lean += (goal * 0.35 + beckon - lean) * Math.min(1, dt * 8);
+        fresh.orient.rotation.x = rest + lean;
+        fresh.holder.position.set(base.x, base.y + 0.02 * lean, base.z + 0.04 * lean);
+      };
+    });
+  }
+  // the sip: the can comes up to you and tips, the camera goes in close on the opening, the drink glints in it and
+  // the fizz swells; a swallow (the camera dips), then «aah»: it goes back down, the veins flare once more, a cold
+  // breath, and the screen reports the battery
+  async function drinkIt(base, rest) {
+    S.drink();
+    const r0 = fresh.orient.rotation.x, h0 = fresh.holder.position.clone();
+    const c0 = { pos: cam.pos.clone(), tgt: cam.tgt.clone(), fov: cam.fov };
+    const lifted = base.clone().lerp(c0.pos, 0.3).add(V(0, -0.03, 0));
+    const camIn = { pos: c0.pos.clone().lerp(lifted, 0.12), tgt: lifted.clone().add(V(0, 0.025, 0)), fov: c0.fov - 2 };
+    const up = tween(RM ? 0.01 : 0.7, (k) => {
+      fresh.holder.position.lerpVectors(h0, lifted, k);
+      fresh.orient.rotation.x = MathUtils.lerp(r0, rest + 1.0, k);
+      liquid = 0.35 + 0.65 * k;
+    });
+    await fly(camIn, RM ? 0.01 : 0.7);
+    await up;
+    // drinking: it rocks a little as you sip; at the swallow the camera dips with it
+    const t1 = performance.now();
+    fxHook = () => {
+      const s = (performance.now() - t1) / 1000;
+      fresh.orient.rotation.x = rest + 1.0 + 0.05 * Math.sin(s * 9) * Math.exp(-s * 1.5);
+      const sw = Math.exp(-Math.pow((s - (S.DRINK.swallow - 0.7)) / 0.12, 2));
+      cam.pos.y = camIn.pos.y - 0.012 * sw;
+    };
+    await wait(Math.max(0, S.DRINK.ah - 0.7 - 0.05));
+    fxHook = null;
+    // «aah»
+    S.tick(3);
+    boost = 2.2; flashIt(false);
+    say('AAAH.', 'BATTERI: 100 %', '#4dff8a');
+    if (!RM) {
+      // the breath after it: a puff of cold air drifting away from the camera
+      const fwd = cam.tgt.clone().sub(cam.pos).normalize();
+      for (let i = 0; i < 26; i++) fx.emit(cam.pos.clone().add(fwd.clone().multiplyScalar(0.12)).add(V(rnd(-0.02, 0.02), -0.05 + rnd(-0.01, 0.01), 0)), fwd.clone().multiplyScalar(rnd(0.08, 0.2)).add(V(rnd(-0.03, 0.03), rnd(0, 0.03), 0)), { t: rnd(1.2, 2), k: 1.2, s: rnd(0.01, 0.018), gr: 2.5, color: 0xe4f2ff, a: 0.03 });
+      fx.ring(base.clone().add(V(0, 0, -0.02)), { r0: 0.05, r1: 0.22, t: 0.6, color: 0x9ff6ff, a: 0.4 });
+    }
+    const h1 = fresh.holder.position.clone();
+    const down = tween(RM ? 0.01 : 0.8, (k) => {
+      fresh.holder.position.lerpVectors(h1, base, k);
+      fresh.orient.rotation.x = MathUtils.lerp(rest + 1.0, rest, k);
+      liquid = 1 - 0.65 * k;
+    });
+    await fly(c0, RM ? 0.01 : 0.8);
+    await down;
+    S.buzz([30, 40, 30]);
+    await wait(0.5);
+  }
+
   // 8b · POP — a beat of pressure first (the can squeezes, the tab digs in), then the bang: the can kicks down and springs
   // back, the frame punches in, spray in slow motion, foam runs. The camera pulls out to the hero shot while the can
   // turns once, overshoots a touch and settles into a slow hover, so the last picture behind the receipt is alive.
@@ -998,7 +1119,7 @@ export async function createWorld(canvas, ui) {
     }, easeIn);
     S.pop(); flashIt(true); shakeAmt = 0.025; push = 3.5;
     // the burst: a spray of droplets and a puff of mist out of the opening, a ring, a flash of light at the top
-    const topAt = () => fresh.holder.localToWorld(V(0, H / 2, 0.012));
+    const topAt = () => fresh.orient.localToWorld(V(0, H / 2, 0.012));   // follows the can as it tips
     const top = topAt();
     popLight.position.copy(top).add(V(0, 0.04, 0.06));
     const drop = (p, sp) => {
@@ -1008,7 +1129,8 @@ export async function createWorld(canvas, ui) {
     if (!RM) {
       fx.ring(top, { r0: 0.01, r1: 0.2, t: 0.5, color: 0xffd8a0, a: 0.45 });
       for (let i = 0; i < 150; i++) drop(top.clone().add(V(rnd(-0.006, 0.006), 0, rnd(-0.004, 0.004))), rnd(0.6, 2.0));
-      for (let i = 0; i < 32; i++) fx.emit(top.clone(), V(rnd(-0.15, 0.15), rnd(0.15, 0.5), rnd(-0.05, 0.2)), { t: rnd(0.9, 1.7), g: -0.05, k: 1.5, s: rnd(0.02, 0.035), gr: 2.5, color: 0x3a362f, a: 0.12 });
+      // the cold breath out of the can: a white puff that rises, curls and thins
+      for (let i = 0; i < 28; i++) fx.emit(top.clone().add(V(rnd(-0.008, 0.008), 0, rnd(-0.006, 0.006))), V(rnd(-0.08, 0.08), rnd(0.08, 0.3), rnd(-0.05, 0.05)), { t: rnd(1.0, 2.0), g: -0.03, k: 1.8, s: rnd(0.006, 0.012), gr: 2.2, color: 0xdcefff, a: 0.035 });
     }
     // the camera punches in on the opening
     const closeIn = fly(ST.pop, RM ? 0.01 : 0.45, [], { ease: easeOut });
@@ -1024,12 +1146,14 @@ export async function createWorld(canvas, ui) {
     const t0p = performance.now();
     const openDur = 0.75; let foamOn = false;
     fresh.u.uVein.value = 1.2;
+    coldMist = 1;
     frameHook = (dt) => {
       const s = (performance.now() - t0p) / 1000;
       setOpen(easeOut(clamp(s / openDur)));
+      liquid = Math.max(liquid, 0.35 * clamp((s - 0.3) / 0.5));
       sprayFrame(Math.floor(s * (sprayMeta ? sprayMeta.fps : 24)));
       if (!foamOn) { foamOn = true; foam.start(); }
-      energy = 3.2 * Math.exp(-s * 2.2);
+      energy = 3.2 * Math.exp(-s * 2.2) + boost; boost *= Math.exp(-dt * 2.2);
       meterGlow = Math.max(0.8, 3.2 * Math.exp(-s * 1.5));
       popLight.intensity = 1.1 * Math.exp(-s * 3.5);
       if (RM) return;
@@ -1037,12 +1161,22 @@ export async function createWorld(canvas, ui) {
       const tp = topAt();
       const n = Math.round(7 * Math.exp(-s * 4.5));
       for (let i = 0; i < n; i++) drop(tp, rnd(0.5, 1.5) * Math.exp(-s));
-      if (s > 0.4 && Math.random() < 0.5) fx.emit(tp.add(V(rnd(-0.015, 0.015), 0, rnd(-0.01, 0.01))), V(rnd(-0.02, 0.02), rnd(0.04, 0.12), rnd(-0.01, 0.02)), { t: rnd(0.5, 1.0), s: rnd(0.001, 0.002), color: 0x9a9a9a, a: 0.6 });
+      // it keeps fizzing as long as it is open: bubbles breaking at the opening, a fine spit of drops jumping off it,
+      // and a thin cold vapour curling out of it (lively at first, then settling)
+      const fz = 0.3 + 0.7 * Math.exp(-s / 4);
+      if (s > 0.4) {
+        if (Math.random() < 0.8 * fz) fx.emit(tp.clone().add(V(rnd(-0.012, 0.012), 0, rnd(-0.008, 0.008))), V(rnd(-0.02, 0.02), rnd(0.04, 0.12), rnd(-0.01, 0.02)), { t: rnd(0.4, 0.9), s: rnd(0.0009, 0.0018), color: 0xb4b4b4, a: 0.6 });
+        if (Math.random() < 0.22 * fz) fx.emit(tp.clone().add(V(rnd(-0.01, 0.01), 0.002, rnd(-0.006, 0.006))), V(rnd(-0.06, 0.06), rnd(0.12, 0.34), rnd(-0.03, 0.06)), { t: rnd(0.25, 0.5), g: 3.2, s: rnd(0.0009, 0.0016), color: 0xc8892e, a: 0.9 });
+        if (Math.random() < 0.12 * fz) fx.emit(tp.clone(), V(rnd(-0.02, 0.02), rnd(0.03, 0.08), rnd(-0.01, 0.03)), { t: rnd(1.4, 2.4), g: -0.01, k: 1, s: rnd(0.005, 0.009), gr: 2, color: 0xdcefff, a: 0.025 });
+      }
     };
     push = 0;
     say('FULLT LADET', 'BATTERIET ER BYTTET', '#4dff8a');
     await closeIn;
     await wait(1.1);                                                // the spray and the foam, up close
+    fxHook = null;
+    await stepDrink(base, rest);
+    await drinkIt(base, rest);
     // the camera pulls back to the hero shot: the machine, the fresh can, the receipt hanging from the slot
     const back = (t) => { const c = 1.4; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };   // ease-out-back
     const turn = tween(RM ? 0.01 : 3.0, (k) => { fresh.orient.rotation.y = TAU * k; }, (t) => back(easeInOut(t)));

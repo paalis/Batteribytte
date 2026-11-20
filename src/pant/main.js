@@ -14,6 +14,7 @@ const STEPS = {
   shake: { verb: 'Rist maskinen', hint: 'Det nye batteriet sitter fast – rist!', say: 'Pantelappen er skrevet ut, men det nye batteriet sitter fast. Rist telefonen, dra fram og tilbake over skjermen, eller trykk R flere ganger.' },
   hold:  { verb: 'Hold for å lade', hint: 'Hold på batteriet til det er fullt', say: 'Det ferske batteriet svever foran deg. Hold på det, eller hold mellomrom, til logoen er fylt. Enter lader av seg selv.' },
   flick: { verb: 'Åpne', hint: 'Dra fliken opp', say: 'Hundre prosent. Dra fliken opp, eller trykk pil opp.' },
+  drink: { verb: 'Ta en slurk', hint: 'Vipp telefonen mot deg, eller dra ned', say: 'Boksen er åpen, iskald og bruser. Ta en slurk: vipp telefonen mot deg, dra ned over skjermen, eller trykk pil ned eller Enter.' },
   done:  { verb: '', say: 'Batteriet er byttet. Pantelappen er klar, du kan dele den.' },
 };
 

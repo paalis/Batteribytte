@@ -11,6 +11,7 @@ const SHOTS = {
   shake: ['hatch', 'FEIL 0xBATT', 'BATTERIET SITTER FAST'],
   hold: ['hero', 'LAD OPP', 'HOLD PÅ BATTERIET'],
   flick: ['hero', '100 %', 'DRA FLIKEN OPP'],
+  drink: ['hero', 'SKÅL!', 'TA EN SLURK'],
   done: ['finale', 'FULLT LADET', 'BATTERIET ER BYTTET'],
 };
 
@@ -31,15 +32,15 @@ export function createLite(ui) {
   return {
     async run() {
       S.hum.start();
-      for (const n of ['drag', 'roll', 'press', 'shake', 'hold', 'flick']) {
+      for (const n of ['drag', 'roll', 'press', 'shake', 'hold', 'flick', 'drink']) {
         await step(n);
-        ({ drag: S.suck, roll: S.accept, press: S.click, shake: S.thud, hold: S.full, flick: S.pop })[n]();
+        ({ drag: S.suck, roll: S.accept, press: S.click, shake: S.thud, hold: S.full, flick: S.pop, drink: S.drink })[n]();
       }
       show('done');
       return { time: new Date(), tries: 2, count: bump().total };
     },
     act() { next(); },
-    key(k) { if ((k === 'up' && current === 'flick') || (k === 'shake' && current === 'shake') || ((k === 'up' || k === 'down') && current === 'roll')) next(); },
+    key(k) { if ((k === 'up' && current === 'flick') || (k === 'shake' && current === 'shake') || ((k === 'up' || k === 'down') && (current === 'roll' || current === 'drink'))) next(); },
     hold(v) { clearTimeout(holdT); if (v && current === 'hold') holdT = setTimeout(next, 900); },
     get step() { return current; },
   };

@@ -1,7 +1,7 @@
 # Kreditering
 
 ## Lyd
-Alle lydeffektene i `assets/sfx/` er generert med **ElevenLabs Sound Effects** (<https://elevenlabs.io>) og valgt ut ved lytting (`tools/sfx/selection.json`).
+Lydeffektene i `assets/sfx/` er generert med **ElevenLabs Sound Effects** (<https://elevenlabs.io>) og valgt ut ved lytting (`tools/sfx/selection.json`). Unntaket er slurken (`drink`), som er et CC0-opptak fra Freesound (se under).
 
 - **Lisens:** ElevenLabs gratisplan, ikke-kommersiell bruk, kreditering til elevenlabs.io påkrevd. Batteribytte er en ikke-kommersiell demo. Skal siden brukes kommersielt, må lydene lages på nytt på en betalt plan eller byttes med CC0-lyd.
 - **Kreditering på siden:** «Lyd: ElevenLabs» nederst til høyre.
@@ -18,6 +18,9 @@ Alle lydeffektene i `assets/sfx/` er generert med **ElevenLabs Sound Effects** (
 | rumble, rattle, clank, thud, whoosh | rumble_2, rattle_1, clank_1, thud_2, whoosh_3 | Boksen sitter fast (steg 5–6) |
 | hum, room | hum_3, room_2 | Maskinen og natten rundt (hele veien) |
 | ui | ui_2 | Knappene |
+| drink | Freesound 194808 | Slurken (steg 8b) |
+
+**Slurken:** «Sip of coffee, swallow then 'ah'» av odditonic, <https://freesound.org/people/odditonic/sounds/194808/>, CC0 1.0 (ingen kreditering påkrevd, men den står her). Klippet, støyredusert og tonet ut.
 
 Lyden lages i nettleseren (Web Audio) hvis en fil ikke lastes.
 

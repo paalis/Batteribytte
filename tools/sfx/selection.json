@@ -1,7 +1,7 @@
 {
   "made": "2026-11-18T14:33:57.511Z",
-  "chosen": 27,
-  "of": 27,
+  "chosen": 28,
+  "of": 28,
   "selections": [
     {
       "sound": "pop",
@@ -245,6 +245,15 @@
       "license": "ElevenLabs gratisplan: ikke-kommersiell, kreditering til elevenlabs.io påkrevd",
       "attribution": "Lyd generert med ElevenLabs (elevenlabs.io)",
       "note": ""
+    },
+    {
+      "sound": "drink",
+      "choice": "freesound_194808",
+      "file": "assets/sfx/_candidates/sip/drink.wav",
+      "source": "freesound",
+      "license": "CC0 1.0",
+      "attribution": "\"Sip of coffee, swallow then 'ah'\" by odditonic (freesound.org/people/odditonic/sounds/194808), CC0 1.0",
+      "note": "klippet 0.75–3.79 s, støyredusert (afftdn), uttoning til slutt; ikke lyttet på"
     }
   ]
 }
