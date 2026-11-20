@@ -1064,8 +1064,8 @@ export async function createWorld(canvas, ui) {
     S.drink();
     const r0 = fresh.orient.rotation.x, h0 = fresh.holder.position.clone();
     const c0 = { pos: cam.pos.clone(), tgt: cam.tgt.clone(), fov: cam.fov };
-    const lifted = base.clone().lerp(c0.pos, 0.42).add(V(0, -0.035, 0));
-    const camIn = { pos: c0.pos.clone().lerp(lifted, 0.25), tgt: lifted.clone().add(V(0, 0.03, 0)), fov: c0.fov - 4 };
+    const lifted = base.clone().lerp(c0.pos, 0.3).add(V(0, -0.03, 0));
+    const camIn = { pos: c0.pos.clone().lerp(lifted, 0.12), tgt: lifted.clone().add(V(0, 0.025, 0)), fov: c0.fov - 2 };
     const up = tween(RM ? 0.01 : 0.7, (k) => {
       fresh.holder.position.lerpVectors(h0, lifted, k);
       fresh.orient.rotation.x = MathUtils.lerp(r0, rest + 1.0, k);
