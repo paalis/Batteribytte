@@ -72,7 +72,13 @@ def setup_render():
     world = bpy.data.worlds.new('Night')
     sc.world = world
     world.use_nodes = True
-    world.node_tree.nodes['Background'].inputs['Color'].default_value = (0.004, 0.006, 0.008, 1)
+    bg = world.node_tree.nodes['Background']
+    env = os.path.join(bm.ROOT, 'assets', 'pant', 'env.webp')        # the backyard the page reflects, for the same reflections
+    if os.path.exists(env):
+        t = world.node_tree.nodes.new('ShaderNodeTexEnvironment'); t.image = bpy.data.images.load(env)
+        world.node_tree.links.new(t.outputs['Color'], bg.inputs['Color']); bg.inputs['Strength'].default_value = 0.12
+    else:
+        bg.inputs['Color'].default_value = (0.004, 0.006, 0.008, 1)
     def area(name, loc, target, size, power, color):
         l = bpy.data.lights.new(name, 'AREA'); l.size, l.energy, l.color = size, power, color
         ob = bpy.data.objects.new(name, l); bpy.context.collection.objects.link(ob)
