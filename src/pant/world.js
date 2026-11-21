@@ -16,6 +16,7 @@ import {
   WebGLRenderer, Scene, PerspectiveCamera, Group, DirectionalLight, PointLight, HemisphereLight, PMREMGenerator,
   SRGBColorSpace, NeutralToneMapping, AnimationMixer, LoopOnce, Vector3, Vector2, Quaternion, Euler, Color, FogExp2,
   CanvasTexture, TextureLoader, MeshStandardMaterial, Sprite, SpriteMaterial, Raycaster, MathUtils, Plane, CatmullRomCurve3,
+  EquirectangularReflectionMapping,
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -54,12 +55,13 @@ const P_HERO = V(0, 0.95, 0.45);
 export async function createWorld(canvas, ui) {
   const loader = new GLTFLoader();
   const tl = new TextureLoader();
-  const [machineG, canG, meterTex, sprayTex, sprayMeta] = await Promise.all([
+  const [machineG, canG, meterTex, sprayTex, sprayMeta, envTex] = await Promise.all([
     loader.loadAsync('assets/pant/machine.glb'),
     loader.loadAsync('assets/can/battery-can.glb'),
     tl.loadAsync('assets/pant/meter.webp'),
     tl.loadAsync('assets/can/spray.webp').catch(() => null),
     fetch('assets/can/spray.json').then((r) => r.json()).catch(() => null),
+    tl.loadAsync('assets/pant/env.webp').catch(() => null),
   ]);
 
   // ---------- renderer, scene, light ----------
@@ -74,8 +76,10 @@ export async function createWorld(canvas, ui) {
   scene.background = new Color(0x040506);
   scene.fog = new FogExp2(0x05070a, 0.22);
   const pmrem = new PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.1;
+  // what the metal and the can reflect: the backyard around the machine at night (neon, wet ground, street lights);
+  // the soft studio room if that image is missing
+  if (envTex) { envTex.mapping = EquirectangularReflectionMapping; envTex.colorSpace = SRGBColorSpace; scene.environment = pmrem.fromEquirectangular(envTex).texture; scene.environmentIntensity = 0.35; }
+  else { scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.1; }
   scene.add(new HemisphereLight(0x29404a, 0x050505, 0.5));
   const key = new DirectionalLight(0xd6e8ff, 0.9); key.position.set(-1.2, 2.6, 2.2); scene.add(key);
   const warm = new PointLight(0xffa860, 1.2, 5, 2); warm.position.set(1.4, 1.5, 0.9); scene.add(warm);
@@ -106,6 +110,8 @@ export async function createWorld(canvas, ui) {
   [ring, button, ...lasers, ...tubes].forEach(own);
   // Blender's emission strengths are for Cycles; on the page the neon only just crosses the bloom threshold
   machine.traverse((o) => { if (o.isMesh && o.material && o.material.emissiveIntensity > 1) o.material.emissiveIntensity *= 0.55; });
+  // the stickers: cut out by their alpha, not blended (they sort and shade like the panel they're stuck on)
+  machine.traverse((o) => { if (o.isMesh && /^Sticker/.test(o.name)) Object.assign(o.material, { transparent: false, alphaTest: 0.5, depthWrite: true }); });
   lasers.forEach((l) => { l.visible = false; l.material.transparent = true; l.material.depthWrite = false; });
   const ringBase = ring ? ring.material.emissiveIntensity : 1;
 

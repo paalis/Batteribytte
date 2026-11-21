@@ -20,6 +20,7 @@ import bmesh
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.path.join(ROOT, 'assets', 'pant', 'machine.glb')
 FONT = os.path.join(ROOT, 'fonts', 'ArchivoBlack-400.woff')
+TEX = os.path.join(ROOT, 'tools', 'blender', 'tex')      # textures generated with Higgsfield (see tex/README.md)
 
 W, D, H = 0.9, 0.7, 1.85          # cabinet
 HOLE_Z, HOLE_R = 1.05, 0.07
@@ -51,6 +52,44 @@ def link(ob, material=None, smooth=False):
         for p in ob.data.polygons:
             p.use_smooth = True
     return ob
+
+
+def tex_mat(name, image, metal=0.0, rough=0.5, emit=0.0, tint=None, alpha=False, extension='REPEAT'):
+    """A material from an image: base colour (optionally tinted), its alpha, and the same image as emission."""
+    m = bpy.data.materials.new(name)
+    m.use_nodes = True
+    nt = m.node_tree
+    p = nt.nodes['Principled BSDF']
+    t = nt.nodes.new('ShaderNodeTexImage')
+    t.image = bpy.data.images.load(os.path.join(TEX, image))
+    t.extension = extension
+    col = t.outputs['Color']
+    if tint:
+        mix = nt.nodes.new('ShaderNodeMix'); mix.data_type = 'RGBA'; mix.blend_type = 'MULTIPLY'
+        mix.inputs['Factor'].default_value = 1.0
+        mix.inputs['B'].default_value = (*tint, 1)
+        nt.links.new(col, mix.inputs['A']); col = mix.outputs['Result']
+    nt.links.new(col, p.inputs['Base Color'])
+    p.inputs['Metallic'].default_value = metal
+    p.inputs['Roughness'].default_value = rough
+    if emit:
+        nt.links.new(t.outputs['Color'], p.inputs['Emission Color'])
+        p.inputs['Emission Strength'].default_value = emit
+    if alpha:
+        nt.links.new(t.outputs['Alpha'], p.inputs['Alpha'])
+    return m
+
+
+def planar_uv(ob, ax_u, ax_v, scale_u, scale_v, off_u=0.0, off_v=0.0):
+    """UVs projected from the object's own coordinates (axes 0 x, 1 y, 2 z), in metres per tile."""
+    me = ob.data
+    if not me.uv_layers:
+        me.uv_layers.new()
+    uv = me.uv_layers.active.data
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            co = me.vertices[me.loops[li].vertex_index].co
+            uv[li].uv = ((co[ax_u] - off_u) / scale_u + 0.5, (co[ax_v] - off_v) / scale_v + 0.5)
 
 
 def box(name, x0, x1, y0, y1, z0, z1, material=None, bevel=0.0):
@@ -141,23 +180,27 @@ def build():
     inner = mat('Inner', (0.06, 0.065, 0.07), metal=0.8, rough=0.38)
     red = mat('LaserRed', (0.2, 0.0, 0.0), emit=(1.0, 0.08, 0.06), strength=8.0)
     plexi = mat('Plexi', (0.6, 0.75, 0.8), rough=0.05, alpha=0.28)
-    floor_m = mat('Concrete', (0.035, 0.037, 0.04), rough=0.5)
-    wall_m = mat('Wall', (0.03, 0.033, 0.038), rough=0.75)
+    floor_m = tex_mat('Concrete', 'asphalt.webp', rough=0.32, tint=(0.55, 0.57, 0.6))     # wet asphalt
+    wall_m = tex_mat('Wall', 'wall.webp', rough=0.8, emit=0.9, tint=(0.6, 0.6, 0.6), extension='EXTEND')      # the backyard wall, its neon in it
+    steel_front = tex_mat('SteelFront', 'steel.webp', metal=1.0, rough=0.4, tint=(0.75, 0.78, 0.82))
     tube_m = mat('Fluorescent', (0.9, 0.95, 1.0), emit=(0.85, 0.95, 1.0), strength=6.0)
 
     # ---- room
     bpy.ops.mesh.primitive_plane_add(size=1, location=(0, -0.6, 0))
     floor = bpy.context.active_object; floor.name = 'Floor'; floor.scale = (4.5, 4.0, 1)
     bpy.ops.object.transform_apply(scale=True); link(floor, floor_m)
+    planar_uv(floor, 0, 1, 1.1, 1.1)                 # the asphalt tiles every 1.1 m
     bpy.ops.mesh.primitive_plane_add(size=1, location=(0, D + 0.06, 1.5), rotation=(math.radians(90), 0, 0))
     wall = bpy.context.active_object; wall.name = 'Wall'; wall.scale = (4.5, 3.0, 1)
     bpy.ops.object.transform_apply(scale=True); link(wall, wall_m)
+    planar_uv(wall, 0, 2, 4.0, 2.67, off_v=1.335)    # the picture 4 × 2.67 m round the machine, from the floor up (edges stretched beyond)
     for i, x in enumerate((-0.55, 0.55)):
         cyl(f'Tube{i + 1}', 0.016, 1.0, (x, D + 0.0, 2.35), rot=(0, math.radians(90), 0), material=tube_m, verts=16)
 
     # ---- cabinet
     body = box('Body', -W / 2, W / 2, 0.02, D, 0, H, graphite)
-    front = box('Front', -W / 2 + 0.05, W / 2 - 0.05, -0.012, 0.03, 0.5, 1.58, steel)   # no bevel: a flat face reflects cleanly
+    front = box('Front', -W / 2 + 0.05, W / 2 - 0.05, -0.012, 0.03, 0.5, 1.58, steel_front)   # no bevel: a flat face reflects cleanly
+    planar_uv(front, 0, 2, 0.8, 0.8)
     hole_cut = cyl('cut', HOLE_R, 0.3, (0, 0, HOLE_Z), rot=(math.radians(90), 0, 0))
     cut(front, hole_cut)
     hole_cut2 = cyl('cut2', HOLE_R, 0.2, (0, 0.05, HOLE_Z), rot=(math.radians(90), 0, 0))
@@ -228,6 +271,16 @@ def build():
         bpy.context.collection.objects.link(ob)
         link(ob, red)
     box('Scanner', -0.05, 0.05, 0.27, 0.37, c['z1'] - 0.012, c['z1'], rubber)
+
+    # stickers on the front, a little crooked, peeling: the machine has been around (x, z, width, tilt in degrees)
+    for name, x, z, w, tilt in (('pant-her', -0.25, 1.2, 0.11, 6), ('ikke-sla', -0.25, 0.74, 0.17, -3),
+                                ('lyn', 0.27, 0.6, 0.075, 0), ('maks1', 0.0, 0.86, 0.14, 2)):
+        m = tex_mat(f'Sticker-{name}', f'sticker-{name}.png', rough=0.55, alpha=True)
+        img = m.node_tree.nodes['Image Texture'].image
+        h = w * img.size[1] / img.size[0]
+        bpy.ops.mesh.primitive_plane_add(size=1, location=(x, -0.0135, z), rotation=(math.radians(90), math.radians(tilt), 0))
+        ob = bpy.context.active_object; ob.name = f'Sticker-{name}'; ob.scale = (w, h, 1)
+        bpy.ops.object.transform_apply(scale=True); link(ob, m)
 
     for ob in bpy.data.objects:
         if ob.type == 'MESH':

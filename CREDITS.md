@@ -24,6 +24,10 @@ Lydeffektene i `assets/sfx/` er generert med **ElevenLabs Sound Effects** (<http
 
 Lyden lages i nettleseren (Web Audio) hvis en fil ikke lastes.
 
+## Bilder
+- **Miljø og teksturer:** Bakveggen, asfalten, stålet, klistremerkene og refleksjonspanoramaet er generert med Higgsfield (GPT Image 2.6). Se `tools/blender/tex/README.md`.
+- **Boksen:** Etiketten er fotografert og sydd sammen av oss (`tools/blender/backlabel/`).
+
 ## Skrift
 Archivo Black (Omnibus-Type), SIL Open Font License 1.1.
 
