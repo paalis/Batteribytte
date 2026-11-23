@@ -213,12 +213,12 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
     }
   }
   // and the lid is left wet: drops of the drink round the opening, lying on the panel (x, z: m in the can's frame)
-  function wet(cx = 0, cz = 0.0136, yPanel = 0.0807) {
+  function wet(cx = 0, cz = 0.0114, yPanel = 0.0807) {
     for (let i = 0; i < 70; i++) {
-      const a = rnd(0, Math.PI * 2), d = rnd(0.0075, 0.0125) * (0.75 + 0.25 * Math.abs(Math.cos(a)));
+      const a = rnd(0, Math.PI * 2), d = rnd(0.0095, 0.0145) * (0.8 + 0.2 * Math.abs(Math.sin(a)));
       const x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d;
       if (Math.hypot(x, z) > INNER - 0.002) continue;
-      if ((x / 0.0072) ** 2 + ((z - cz) / 0.0098) ** 2 < 1.15) continue;      // not in the opening itself
+      if ((x / 0.0106) ** 2 + ((z - cz) / 0.0080) ** 2 < 1.15) continue;      // not in the opening itself
       add({ kind: 3, x, y: yPanel, z, s: rnd(0.0008, 0.0026), sh: 2, born: rnd(0, 0.3), life: rnd(14, 22) });
     }
   }

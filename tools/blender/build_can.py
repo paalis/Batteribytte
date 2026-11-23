@@ -44,8 +44,11 @@ OUTER = [
 LID = [(27.0, 168), (26.3, 167.8), (25.9, 167.1), (25.5, 165.4), (25.25, 164.0), (24.9, 163.65), (24.5, 163.9),
        (24.2, 164.5), (23.6, 164.62), (12.0, 164.7), (0.0, 164.75)]
 PANEL = 164.7
-# the opening (mm, on the lid; −y toward the front): a teardrop, its round end by the rim, its point by the rivet
-TEAR = dict(c1=(0.0, -15.6), r1=6.4, c2=(0.0, -6.6), r2=2.6)
+# the opening (mm, on the lid; −y toward the front): a wide mouth, a rounded «D» — broad and flat by the rim, rounder and
+# narrower toward the rivet, where the tab's nose pushes in (after a wide-mouth end: about 20 × 15 mm)
+MOUTH = dict(cy=-11.4, a=10.0, b=7.4, k=0.24)
+# the deboss round the opening and the tab: a guitar-pick-shaped panel, its edge a soft bead
+PICK = dict(grow=2.4, cy=6.5, a=10.8, b=11.8, blend=10.0)
 RIVET_Y = 2.0
 BASE = [(0.0, 5.2), (10, 4.9), (18, 3.6), (22.5, 1.6), (24.0, 0.4), (24.6, 0)]
 
@@ -61,35 +64,61 @@ def densify(prof, step=1.2):
     return out
 
 
-def tear_sdf(x, y, grow=0.0):
-    """Signed distance (mm) to the teardrop opening (iq's uneven capsule): < 0 inside."""
-    (cx, cy), r1, r2 = TEAR['c1'], TEAR['r1'] + grow, TEAR['r2'] + grow
-    h = TEAR['c2'][1] - cy
-    px, py = np.abs(np.asarray(x, float) - cx), np.asarray(y, float) - cy
-    b = (r1 - r2) / h
-    a = math.sqrt(1 - b * b)
-    k = -b * px + a * py
-    d = a * px + b * py - r1
-    d = np.where(k < 0, np.hypot(px, py) - r1, d)
-    d = np.where(k > a * h, np.hypot(px, py - h) - r2, d)
-    return d
+def mouth_poly(n=360):
+    """The opening's outline (x, y) mm, counter-clockwise: x = a·cos t·(1 − k·sin t), y = cy + b·sin t."""
+    m = MOUTH
+    t = np.linspace(0, 2 * math.pi, n, endpoint=False)
+    return np.stack([m['a'] * np.cos(t) * (1 - m['k'] * np.sin(t)), m['cy'] + m['b'] * np.sin(t)], -1)
 
 
-def tear_outline(grow=0.0, n=96):
-    """The teardrop's outline as (x, y) mm, counter-clockwise, found by bisection along rays from inside."""
-    ox, oy = 0.0, -12.0
-    pts = []
-    for k in range(n):
-        a = 2 * math.pi * k / n
-        lo, hi = 0.0, 20.0
-        for _ in range(40):
-            mid = (lo + hi) / 2
-            if tear_sdf(ox + mid * math.cos(a), oy + mid * math.sin(a), grow) < 0:
-                lo = mid
-            else:
-                hi = mid
-        pts.append((ox + lo * math.cos(a), oy + lo * math.sin(a)))
-    return pts
+def poly_sdf(x, y, poly):
+    """Signed distance (mm) from points to a closed polygon: < 0 inside. In row blocks, so it fits in memory."""
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    shape = np.broadcast(x, y).shape
+    px, py = np.broadcast_to(x, shape).ravel(), np.broadcast_to(y, shape).ravel()
+    a, b = poly, np.roll(poly, -1, 0)
+    e = b - a
+    ee = (e * e).sum(1)
+    out = np.empty(px.size)
+    for i in range(0, px.size, 4096):
+        qx, qy = px[i:i + 4096, None], py[i:i + 4096, None]
+        wx, wy = qx - a[None, :, 0], qy - a[None, :, 1]
+        h = np.clip((wx * e[:, 0] + wy * e[:, 1]) / ee, 0, 1)
+        d = np.hypot(wx - e[:, 0] * h, wy - e[:, 1] * h).min(1)
+        c1 = a[None, :, 1] <= qy
+        c2 = b[None, :, 1] > qy
+        cr = e[:, 0] * wy - e[:, 1] * wx
+        wind = ((c1 & c2 & (cr > 0)).sum(1) - (~c1 & ~c2 & (cr < 0)).sum(1))
+        out[i:i + 4096] = np.where(wind != 0, -d, d)
+    return out.reshape(shape)
+
+
+def mouth_sdf(x, y, grow=0.0):
+    return poly_sdf(x, y, mouth_poly()) - grow
+
+
+def pick_sdf(x, y):
+    """The deboss panel: the opening grown, smoothly joined to an ellipse round the tab."""
+    p = PICK
+    d1 = mouth_sdf(x, y, p['grow'])
+    q = np.hypot(np.asarray(x, float) / p['a'], (np.asarray(y, float) - p['cy']) / p['b'])
+    d2 = (q - 1) * min(p['a'], p['b'])
+    k = p['blend']
+    h = np.clip(0.5 + 0.5 * (d2 - d1) / k, 0, 1)
+    return d2 * (1 - h) + d1 * h - k * h * (1 - h)
+
+
+def mouth_outline(grow=0.0, n=128):
+    """The opening's outline grown (or shrunk) by `grow` mm, found by bisection along rays from inside."""
+    ox, oy = 0.0, MOUTH['cy']
+    ang = np.linspace(0, 2 * math.pi, n, endpoint=False)
+    lo, hi = np.zeros(n), np.full(n, 22.0)
+    poly = mouth_poly()
+    for _ in range(36):
+        mid = (lo + hi) / 2
+        inside = poly_sdf(ox + mid * np.cos(ang), oy + mid * np.sin(ang), poly) - grow < 0
+        lo, hi = np.where(inside, mid, lo), np.where(inside, hi, mid)
+    return [(ox + r * math.cos(a), oy + r * math.sin(a)) for r, a in zip(lo, ang)]
 
 
 def lid_normal(n=768, span=54.0):
@@ -102,23 +131,32 @@ def lid_normal(n=768, span=54.0):
     y = (0.5 - j[:, None] / (n - 1)) * span
     x, y = np.broadcast_to(x, (n, n)), np.broadcast_to(y, (n, n))
     r = np.hypot(x, y)
-    d = tear_sdf(x, y)
+    d = mouth_sdf(x, y)
     hgt = np.zeros((n, n), np.float32)
-    hgt -= 0.07 * np.exp(-((d - 0.6) / 0.11) ** 2)                 # the score: where it tears
-    hgt += 0.05 * np.exp(-((d + 1.1) / 0.3) ** 2)                  # the stiffening bead inside it
-    fw = ((x / 8.5) ** 2 + ((y - 15.0) / 7.0) ** 2)                # the finger well behind the tab
-    hgt -= 0.22 * np.clip(1.2 - fw, 0, 1) ** 0.8
+    hgt -= 0.07 * np.exp(-((d - 0.5) / 0.11) ** 2)                 # the score: where it tears
+    hgt += 0.05 * np.exp(-((d + 1.0) / 0.3) ** 2)                  # the stiffening bead inside it
+    pk = pick_sdf(x, y)                                            # the guitar-pick deboss round opening and tab:
+    hgt -= 0.16 * (1 - 1 / (1 + np.exp(-pk / 0.35)))               #   the panel inside sits a little lower
+    hgt += 0.11 * np.exp(-((pk - 0.7) / 0.45) ** 2)                #   and its edge is a soft, shiny bead
+    fw = ((x / 7.0) ** 2 + ((y - 15.0) / 5.0) ** 2)                # the finger well under the tab's end
+    hgt -= 0.14 * np.clip(1.2 - fw, 0, 1) ** 0.8
     rv = np.hypot(x, y - RIVET_Y)
     hgt += 0.07 * np.exp(-((rv - 4.2) / 0.35) ** 2)                # the ring round the rivet
     hgt += 0.12 * np.exp(-((r - 21.2) / 0.55) ** 2)                # the panel bead
-    hgt += 0.004 * np.sin(r * 2 * math.pi / 0.42)                  # turning lines
+    hgt += 0.003 * np.sin(r * 2 * math.pi / 0.42)                  # turning lines
+    rng = np.random.default_rng(5)                                 # brushing: fine straight scratches, one way
+    sc = rng.standard_normal((n, n)).astype(np.float32)
+    sc = np.cumsum(sc, 1); L = 48
+    sc = (sc[:, L:] - sc[:, :-L]) / L
+    sc = np.pad(sc, ((0, 0), (0, L)), mode='wrap')
+    hgt += 0.006 * sc * (rng.random((n, 1)) > 0.55)
     # embossed text, small, either side of the tab
     txt = Image.new('L', (n, n), 0)
     try:
         font = ImageFont.load_default(size=int(n * 2.3 / span))
     except TypeError:
         font = ImageFont.load_default()
-    for word, cx, ang in (('PANT 3 KR', -15.0, 90), ('RESIRKULER', 15.0, -90)):
+    for word, cx, ang in (('PANT 3 KR', -16.0, 90), ('RESIRKULER', 16.0, -90)):
         w = Image.new('L', (int(n * 0.4), int(n * 0.06)), 0)
         ImageDraw.Draw(w).text((w.width / 2, w.height / 2), word, fill=255, font=font, anchor='mm')
         w = w.rotate(ang, expand=True)
@@ -678,6 +716,15 @@ def dark_material():
 
 
 # ---------------------------------------------------------------- the tab
+def tab_material():
+    """Black anodised aluminium, glossy: dark, with sharp white highlights."""
+    m, p, _ = principled('TabBlack')
+    p.inputs['Base Color'].default_value = (0.012, 0.012, 0.014, 1)
+    p.inputs['Metallic'].default_value = 0.3
+    p.inputs['Roughness'].default_value = 0.2
+    return m
+
+
 def tab_object(metal):
     cu = bpy.data.curves.new('TabCurve', 'CURVE')
     cu.dimensions = '2D'
@@ -701,20 +748,41 @@ def tab_object(metal):
         a = math.pi * k / 24
         outer.append((8.2 * math.cos(a), 13.5 + 7.6 * math.sin(a)))
     poly(outer)
-    hole = [(5.4 * math.cos(2 * math.pi * k / 40), 13.2 + 4.9 * math.sin(2 * math.pi * k / 40)) for k in range(40)]
-    poly(hole[::-1])                               # the finger hole
-    # the U-cut round the rivet (the tab bends there): a thin U-shaped slit, open toward the finger end
-    ro, ri, cy = 3.7, 3.1, 0.0                       # (the tab's own frame: the rivet is its origin)
+    # no finger hole: the finger end is solid, with a stamped rib (below). The window round the rivet: a wide U, open
+    # toward the finger end, so the lid shows through as a bright crescent round the rivet's head, as on the real can
+    ro, ri, cy = 4.0, 2.5, 0.0                       # (the tab's own frame: the rivet is its origin)
     arc_o = [(ro * math.cos(math.pi + math.pi * k / 16), cy + ro * math.sin(math.pi + math.pi * k / 16)) for k in range(17)]
     arc_i = [(ri * math.cos(-math.pi * k / 16), cy - ri * math.sin(math.pi * k / 16)) for k in range(17)]
     poly([(-ro, cy + 3.0)] + arc_o + [(ro, cy + 3.0), (ri, cy + 3.0)] + arc_i + [(-ri, cy + 3.0)])
     ob = bpy.data.objects.new('Tab', cu)
     bpy.context.collection.objects.link(ob)
+    # the stamped rib on the finger end: a rounded rectangle standing a hair proud of the tab
+    rc = bpy.data.curves.new('TabRibCurve', 'CURVE')
+    rc.dimensions = '2D'; rc.fill_mode = 'BOTH'; rc.extrude = 0.12 * MM; rc.bevel_depth = 0.22 * MM; rc.bevel_resolution = 2
+    sp = rc.splines.new('POLY')
+    rib = []
+    for c, (cx, cy0) in enumerate(((3.2, 15.2), (-3.2, 15.2), (-3.2, 12.4), (3.2, 12.4))):
+        for k in range(7):
+            a = math.pi / 2 * (c + k / 6)
+            rib.append((cx + 1.5 * math.cos(a), cy0 + 1.5 * math.sin(a)))
+    sp.points.add(len(rib) - 1)
+    for p, (x, y) in zip(sp.points, rib):
+        p.co = (x * MM, y * MM, 0, 1)
+    sp.use_cyclic_u = True
+    rob = bpy.data.objects.new('TabRib', rc)
+    bpy.context.collection.objects.link(rob)
+    rob.location = (0, 0, 0.32 * MM)
+    for o in (ob, rob):
+        o.select_set(True)
     bpy.context.view_layer.objects.active = ob
-    ob.select_set(True)
     bpy.ops.object.convert(target='MESH')
+    bpy.ops.object.join()
     ob = bpy.context.view_layer.objects.active
+    ob.name = 'Tab'
+    ob.data.materials.clear()                      # one material for tab and rib: one mesh in the glTF
     ob.data.materials.append(metal)
+    for p in ob.data.polygons:
+        p.material_index = 0
     for p in ob.data.polygons:
         p.use_smooth = True
     ob.select_set(False)
@@ -759,7 +827,7 @@ def build():
     sol = lid.modifiers.new('sheet', 'SOLIDIFY'); sol.thickness = 0.25 * MM; sol.offset = -1
     bpy.context.view_layer.objects.active = lid; lid.select_set(True)
     bpy.ops.object.modifier_apply(modifier=sol.name)
-    cutter = prism('cut', tear_outline(0.12), PANEL - 3, PANEL + 3)
+    cutter = prism('cut', mouth_outline(0.12), PANEL - 3, PANEL + 3)
     bo = lid.modifiers.new('opening', 'BOOLEAN'); bo.operation = 'DIFFERENCE'; bo.object = cutter; bo.solver = 'EXACT'
     bpy.ops.object.modifier_apply(modifier=bo.name)
     bpy.data.objects.remove(cutter, do_unlink=True)
@@ -783,10 +851,10 @@ def build():
     # the flap: the scored teardrop of the end, hinged at its point; the tab's nose pushes it down into the can
     flap_hinge = bpy.data.objects.new('FlapHinge', None)
     bpy.context.collection.objects.link(flap_hinge)
-    tip_y = TEAR['c2'][1] + TEAR['r2']
+    tip_y = MOUTH['cy'] + MOUTH['b']                 # the flap hinges on the opening's rivet side
     flap_hinge.location = (0, tip_y * MM, PANEL * MM)
     flap_hinge.parent = root
-    flap = prism('Flap', tear_outline(-0.05), PANEL - 0.25, PANEL + 0.02)
+    flap = prism('Flap', mouth_outline(-0.05), PANEL - 0.25, PANEL + 0.02)
     flap.data.materials.append(m_lid)
     planar_uv(flap)
     for v in flap.data.vertices:
@@ -802,7 +870,7 @@ def build():
     bpy.context.collection.objects.link(hinge)
     hinge.location = (0, RIVET_Y * MM, 165.15 * MM)
     hinge.parent = root
-    tab = tab_object(m_metal)
+    tab = tab_object(tab_material())
     tab.parent = hinge
     tab.location = (0, 0, 0)
 
@@ -811,7 +879,8 @@ def build():
 
     # «open»: the tab lifts on its hinge (finger end up), the opening appears under the nose
     act_frames = (1, 10, 18)
-    for f, ang, fl in zip(act_frames, (0.0, 1.3, 1.15), (0.0, 0.95, 0.9)):
+    # the tab lifts, pushes the flap down into the can, then springs back nearly flat, its nose dipped into the mouth
+    for f, ang, fl in zip(act_frames, (0.0, 1.25, 0.14), (0.0, 1.35, 1.45)):
         hinge.rotation_euler = (ang, 0, 0)
         hinge.keyframe_insert('rotation_euler', frame=f)
         flap_hinge.rotation_euler = (fl, 0, 0)          # + turns the round end down, into the can
