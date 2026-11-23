@@ -3,6 +3,7 @@
 // step it is on (ui.step), and when the story is over (run() resolves with the receipt).
 import * as S from './sound.js';
 import { drawReceipt, receiptFonts, shareReceipt } from './receipt.js';
+import { av } from './av.js';
 
 // every step: what the chip says, a short hint, what a screen reader hears, and how the keyboard does it
 const STEPS = {
@@ -95,7 +96,7 @@ async function done(data) {
   const ios = ar.relList && ar.relList.supports && ar.relList.supports('ar');
   if (ios) ar.hidden = false;
   else if (/android/i.test(navigator.userAgent)) {
-    const glb = new URL('assets/can/battery-can-ar.glb', location.href).href;
+    const glb = new URL(av('assets/can/battery-can-ar.glb'), location.href).href;
     ar.removeAttribute('rel');
     ar.href = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(glb)}&mode=ar_preferred&title=${encodeURIComponent('Battery Fresh')}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(location.href)};end;`;
     ar.hidden = false;
