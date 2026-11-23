@@ -237,7 +237,9 @@ export async function createWorld(canvas, ui) {
         roughnessFactor = mix(roughnessFactor, 0.8, fr); metalnessFactor = mix(metalnessFactor, 0.0, fr); }`);
   };
   const opening = freshRoot.getObjectByName('Opening');
-  if (opening && opening.material) Object.assign(opening.material, { color: new Color(0x2a1604), emissive: new Color(0xffa83e), emissiveIntensity: 0, roughness: 0.12, metalness: 0 });
+  // the drink's surface: dark amber and glossy (it is seen by what it reflects), with only a faint glow of its own
+  if (opening && opening.material) Object.assign(opening.material, { color: new Color(0x2c1706), emissive: new Color(0xffa83e), emissiveIntensity: 0, roughness: 0.03, metalness: 0, envMapIntensity: 3 });
+  const liquidY = opening ? opening.position.y : 0;    // its level; it runs up to the opening when the can is tipped
   let liquid = 0;                                      // how much of the drink shows in the opening (0…1)
   const wetBase = fresh.label && fresh.label.normalScale ? fresh.label.normalScale.x : 0.7;
   const setWet = (k) => { if (fresh.label && fresh.label.normalScale) fresh.label.normalScale.setScalar(wetBase * (0.25 + 1.05 * k)); fresh.u.uWet.value = k; };
@@ -266,7 +268,7 @@ export async function createWorld(canvas, ui) {
   if (tab) { tab.material = tab.material.clone(); tab.material.emissive = new Color(1, 0.8, 0.45); tab.material.emissiveIntensity = 0; }
   // the tab stands up toward the camera when it opens: it reflects the dark wall behind, so give it more of the night's
   // light to pick up (it would read black otherwise)
-  if (tab) tab.material.envMapIntensity = 3;
+  if (tab) Object.assign(tab.material, { envMapIntensity: 2.5, roughness: 0.42, metalness: 0.8 });
 
   // the spray: the Cycles flipbook as a sprite standing on the opening
   let spray = null;
@@ -411,7 +413,7 @@ export async function createWorld(canvas, ui) {
     if (fresh.label) fresh.label.emissiveIntensity = energy * (0.75 + 0.25 * Math.random());
     fresh.u.uTime.value = t;
     if (coldMist > 0 && fresh.holder.visible && !RM) mistOff(dt);
-    if (opening) opening.material.emissiveIntensity = liquid * (0.22 + 0.08 * Math.sin(t * 9) + 0.06 * Math.sin(t * 23 + 1));
+    if (opening) opening.material.emissiveIntensity = liquid * (0.07 + 0.03 * Math.sin(t * 9) + 0.02 * Math.sin(t * 23 + 1));
     foam.update(dt, camera, innerHeight * renderer.getPixelRatio());
     fresh.u.uMeterGain.value = meterGlow;
     // neon: the ring breathes; the tubes flicker now and then
@@ -1075,10 +1077,14 @@ export async function createWorld(canvas, ui) {
     const c0 = { pos: cam.pos.clone(), tgt: cam.tgt.clone(), fov: cam.fov };
     const lifted = base.clone().lerp(c0.pos, 0.3).add(V(0, -0.03, 0));
     const camIn = { pos: c0.pos.clone().lerp(lifted, 0.12), tgt: lifted.clone().add(V(0, 0.025, 0)), fov: c0.fov - 2 };
+    // as it comes up: the foam's gone (sipped, or burst), the lid wet round the opening, and the drink runs forward to
+    // fill the opening (the can's tipped toward you: the opening is its lowest point)
+    foam.drain(); foam.wet();
     const up = tween(RM ? 0.01 : 0.7, (k) => {
       fresh.holder.position.lerpVectors(h0, lifted, k);
       fresh.orient.rotation.x = MathUtils.lerp(r0, rest + 1.0, k);
       liquid = 0.35 + 0.65 * k;
+      if (opening) opening.position.y = liquidY + 0.0058 * smooth(0.25, 1, k);
     });
     await fly(camIn, RM ? 0.01 : 0.7);
     await up;
@@ -1107,6 +1113,7 @@ export async function createWorld(canvas, ui) {
       fresh.holder.position.lerpVectors(h1, base, k);
       fresh.orient.rotation.x = MathUtils.lerp(rest + 1.0, rest, k);
       liquid = 1 - 0.65 * k;
+      if (opening) opening.position.y = liquidY + 0.0058 * (1 - smooth(0, 0.6, k));
     });
     await fly(c0, RM ? 0.01 : 0.8);
     await down;

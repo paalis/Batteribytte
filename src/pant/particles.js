@@ -148,12 +148,13 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
     }
     for (let i = 0; i < 260; i++) {                      // the ring that clings round the opening's edge
       const a = rnd(0, Math.PI * 2), s_ = small() * 0.9, d = INNER - s_ / 2 - rnd(0, 0.0015);
-      add({ kind: 0, x: Math.cos(a) * d, z: Math.sin(a) * d, hf: rnd(0, 0.12), s: s_, sh: 1, born: rnd(0.2, 0.6), life: rnd(7, 12) });
+      add({ kind: 0, ring: true, x: Math.cos(a) * d, z: Math.sin(a) * d, hf: rnd(0, 0.12), s: s_, sh: 1, born: rnd(0.2, 0.6), life: rnd(7, 12) });
     }
   }
   const tmp = { x: 0, y: 0, z: 0 };
   const where = (b) => {
     if (b.kind === 0) { tmp.x = b.x; tmp.y = yRim + head(t) * b.hf; tmp.z = b.z; return tmp; }
+    if (b.kind === 3) { tmp.x = b.x; tmp.y = b.y; tmp.z = b.z; return tmp; }
     const r = radiusAt(b.y) + (b.kind === 2 ? 0.0003 : b.s * 0.5 * Math.min(1, (b.age - b.born) / 0.15) + 0.0003);   // on the wall, not in it
     tmp.x = Math.sin(b.a) * r; tmp.y = b.y; tmp.z = Math.cos(b.a) * r; return tmp;
   };
@@ -201,5 +202,25 @@ export function makeFoam(parent, h = 0.168, { max = 3600, onPop = null } = {}) {
     }
     geo.attributes.position.needsUpdate = geo.attributes.size.needsUpdate = geo.attributes.alpha.needsUpdate = geo.attributes.shade.needsUpdate = true;
   }
-  return { start, update };
+  // a sip: what's left of the head is drunk or bursts within half a second (only a few bubbles stay in the ring)
+  function drain() {
+    for (const b of B) {
+      if (!b.on || b.kind !== 0) continue;
+      if (b.ring && Math.random() < 0.35) continue;
+      const a = b.age - b.born;
+      b.life = Math.min(b.life, Math.max(0, a) + rnd(0.1, 0.55));
+      if (a < 0) b.on = false;
+    }
+  }
+  // and the lid is left wet: drops of the drink round the opening, lying on the panel (x, z: m in the can's frame)
+  function wet(cx = 0, cz = 0.0136, yPanel = 0.0807) {
+    for (let i = 0; i < 70; i++) {
+      const a = rnd(0, Math.PI * 2), d = rnd(0.0075, 0.0125) * (0.75 + 0.25 * Math.abs(Math.cos(a)));
+      const x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d;
+      if (Math.hypot(x, z) > INNER - 0.002) continue;
+      if ((x / 0.0072) ** 2 + ((z - cz) / 0.0098) ** 2 < 1.15) continue;      // not in the opening itself
+      add({ kind: 3, x, y: yPanel, z, s: rnd(0.0008, 0.0026), sh: 2, born: rnd(0, 0.3), life: rnd(14, 22) });
+    }
+  }
+  return { start, update, drain, wet };
 }
