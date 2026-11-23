@@ -238,7 +238,7 @@ export async function createWorld(canvas, ui) {
   };
   const opening = freshRoot.getObjectByName('Opening');
   // the drink's surface: dark amber and glossy (it is seen by what it reflects), with only a faint glow of its own
-  if (opening && opening.material) Object.assign(opening.material, { color: new Color(0x3a2108), emissive: new Color(0xffa83e), emissiveIntensity: 0, roughness: 0.04, metalness: 0, envMapIntensity: 2.2 });
+  if (opening && opening.material) Object.assign(opening.material, { color: new Color(0x2c1706), emissive: new Color(0xffa83e), emissiveIntensity: 0, roughness: 0.03, metalness: 0, envMapIntensity: 3 });
   const liquidY = opening ? opening.position.y : 0;    // its level; it runs up to the opening when the can is tipped
   let liquid = 0;                                      // how much of the drink shows in the opening (0…1)
   const wetBase = fresh.label && fresh.label.normalScale ? fresh.label.normalScale.x : 0.7;
@@ -268,7 +268,7 @@ export async function createWorld(canvas, ui) {
   if (tab) { tab.material = tab.material.clone(); tab.material.emissive = new Color(1, 0.8, 0.45); tab.material.emissiveIntensity = 0; }
   // the tab stands up toward the camera when it opens: it reflects the dark wall behind, so give it more of the night's
   // light to pick up (it would read black otherwise)
-  if (tab) tab.material.envMapIntensity = 3;
+  if (tab) Object.assign(tab.material, { envMapIntensity: 2.5, roughness: 0.42, metalness: 0.8 });
 
   // the spray: the Cycles flipbook as a sprite standing on the opening
   let spray = null;
