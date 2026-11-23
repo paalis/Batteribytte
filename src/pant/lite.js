@@ -3,6 +3,7 @@
 // one press of the action chip (or its key); the machine's screen becomes a caption. No movement, no shaking.
 import * as S from './sound.js';
 import { bump } from './counter.js';
+import { av } from './av.js';
 
 const SHOTS = {
   drag: ['start', 'FLATT BATTERI?', 'SETT INN HER'],
@@ -21,7 +22,7 @@ export function createLite(ui) {
   let resolveStep = null, current = null;
   const show = (name) => {
     const [still, title, sub] = SHOTS[name];
-    img.src = `assets/pant/stills/${still}.webp`;
+    img.src = av(`assets/pant/stills/${still}.webp`);
     cap.hidden = false;
     cap.querySelector('b').textContent = title;
     cap.querySelector('span').textContent = sub;

@@ -5,6 +5,7 @@
 // Audio unlocks on the first press, key or touch (browsers, iOS above all, require a gesture) and the files are
 // fetched and decoded right after. The «Lyd» chip turns it off and on. Haptics ride along (vibrate: Android only).
 import MAN from './sfx-manifest.js';
+import { av } from './av.js';
 let ctx = null, master = null, on = true;
 const buzzOk = typeof navigator !== 'undefined' && 'vibrate' in navigator;
 export const buzz = (p) => { if (buzzOk) try { navigator.vibrate(p); } catch (e) { /* ignore */ } };
@@ -52,7 +53,7 @@ const ERR = [];
 async function fetchOne(id) {
   for (const f of FMT === 'ogg' ? ['ogg', 'm4a'] : ['m4a', 'ogg']) {
     try {
-      const r = await fetch(`assets/sfx/${id}.${f}`);
+      const r = await fetch(av(`assets/sfx/${id}.${f}`));
       if (!r.ok) throw new Error(r.status);
       BUF[id] = await decode(await r.arrayBuffer());
       LOOPS.forEach((l) => { if (l.id === id) l.upgrade(); });

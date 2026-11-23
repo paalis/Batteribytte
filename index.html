@@ -11,15 +11,15 @@
 <meta property="og:type" content="website">
 <meta property="og:title" content="Batteribytte">
 <meta property="og:description" content="Flat? Pant det flate batteriet og få et fullt. Din tur?">
-<meta property="og:image" content="https://batteribytte.vercel.app/assets/og.jpg">
+<meta property="og:image" content="https://batteribytte.vercel.app/assets/og.jpg?v=f5e6c48291">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="En pantemaskin under skiltet BATTERIBYTTE, med en fersk Battery Fresh-boks foran">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preload" href="assets/pant/stills/start.webp" as="image" fetchpriority="high">
+<link rel="preload" href="assets/pant/stills/start.webp?v=6c2d6ed993" as="image" fetchpriority="high">
 <link rel="preload" href="fonts/ArchivoBlack-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="modulepreload" href="lib/pant/main.js?v=054a739397">
+<link rel="modulepreload" href="lib/pant/main.js?v=1afdd50c57">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,7 +27,7 @@
      Interaksjonsspesifikasjon: docs/interaction-spec.md. -->
 <main class="stage" id="stage">
   <h1 class="sr-only">Batteribytte – pant det flate batteriet, få et fullt</h1>
-  <img class="poster" id="poster" src="assets/pant/stills/start.webp" width="540" height="960" alt="" fetchpriority="high">
+  <img class="poster" id="poster" src="assets/pant/stills/start.webp?v=6c2d6ed993" width="540" height="960" alt="" fetchpriority="high">
   <canvas class="gl" id="gl" aria-hidden="true"></canvas>
   <div class="flash" id="flash" aria-hidden="true"></div>
 
@@ -52,7 +52,7 @@
     <div class="lapp-actions">
       <button class="big primary" id="share" type="button">Del pantelappen</button>
       <button class="big" id="again" type="button">Bytt igjen</button>
-      <a class="big ar" id="ar" rel="ar" href="assets/can/battery-can.usdz" hidden><img src="assets/battery-fresh.webp" alt="" width="14" height="36">Se den på bordet</a>
+      <a class="big ar" id="ar" rel="ar" href="assets/can/battery-can.usdz?v=10e276c36e" hidden><img src="assets/battery-fresh.webp?v=35894e8126" alt="" width="14" height="36">Se den på bordet</a>
     </div>
   </section>
 
@@ -61,6 +61,6 @@
   <p class="sr-only" id="status" aria-live="polite"></p>
   <noscript><p class="noscript">Batteribytte trenger JavaScript. Flat? Ta en Battery.</p></noscript>
 </main>
-<script type="module" src="lib/pant/main.js?v=054a739397"></script>
+<script type="module" src="lib/pant/main.js?v=1afdd50c57"></script>
 </body>
 </html>
