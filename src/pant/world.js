@@ -25,6 +25,7 @@ import * as S from './sound.js';
 import { drawReceipt } from './receipt.js';
 import { makeParticles, makeFoam } from './particles.js';
 import { bump } from './counter.js';
+import { av } from './av.js';
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
@@ -56,12 +57,12 @@ export async function createWorld(canvas, ui) {
   const loader = new GLTFLoader();
   const tl = new TextureLoader();
   const [machineG, canG, meterTex, sprayTex, sprayMeta, envTex] = await Promise.all([
-    loader.loadAsync('assets/pant/machine.glb'),
-    loader.loadAsync('assets/can/battery-can.glb'),
-    tl.loadAsync('assets/pant/meter.webp'),
-    tl.loadAsync('assets/can/spray.webp').catch(() => null),
-    fetch('assets/can/spray.json').then((r) => r.json()).catch(() => null),
-    tl.loadAsync('assets/pant/env.webp').catch(() => null),
+    loader.loadAsync(av('assets/pant/machine.glb')),
+    loader.loadAsync(av('assets/can/battery-can.glb')),
+    tl.loadAsync(av('assets/pant/meter.webp')),
+    tl.loadAsync(av('assets/can/spray.webp')).catch(() => null),
+    fetch(av('assets/can/spray.json')).then((r) => r.json()).catch(() => null),
+    tl.loadAsync(av('assets/pant/env.webp')).catch(() => null),
   ]);
 
   // ---------- renderer, scene, light ----------
