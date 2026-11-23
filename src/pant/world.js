@@ -266,9 +266,8 @@ export async function createWorld(canvas, ui) {
   setOpen(0); setFoam(0);
   const tab = freshRoot.getObjectByName('Tab');
   if (tab) { tab.material = tab.material.clone(); tab.material.emissive = new Color(1, 0.8, 0.45); tab.material.emissiveIntensity = 0; }
-  // the tab stands up toward the camera when it opens: it reflects the dark wall behind, so give it more of the night's
-  // light to pick up (it would read black otherwise)
-  if (tab) Object.assign(tab.material, { envMapIntensity: 2.5, roughness: 0.42, metalness: 0.8 });
+  // the tab is black anodised aluminium, glossy: dark, with sharp highlights from the night's lights
+  if (tab) Object.assign(tab.material, { envMapIntensity: 1.6, roughness: 0.22, metalness: 0.3 });
 
   // the spray: the Cycles flipbook as a sprite standing on the opening
   let spray = null;
